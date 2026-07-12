@@ -8,9 +8,24 @@ par-dessus les trous, tranche un esprit malveillant au sabre, et rejoint le tori
 niveau.
 
 Eneko a **3 cœurs de vie** (en haut à gauche) : toucher l'esprit sans l'attaquer coûte un cœur ;
-à zéro cœur, on repart au début du niveau. Tomber dans un trou renvoie aussi au départ.
+à zéro cœur, on repart au début du niveau. Tomber dans un trou renvoie aussi au départ. En chemin,
+**Léonie**, la gardienne de la forêt, l'accueille par un court dialogue.
 
 Contrôles tactiles à l'écran : Gauche / Droite / Saut à gauche, Attaque à droite.
+
+### Structure du projet
+
+```
+/scenes   main_menu, player, enemy, leonie
+/levels   level_1 ("La Clairière des Bambous")
+/scripts  logique GDScript (player, enemy, leonie, level, main_menu)
+/ui       boîte de dialogue
+/assets   sprites vectoriels (SVG)
+```
+
+Le jeu démarre sur le **menu principal** ; le bouton *Jouer* charge le niveau 1. Les collisions du
+sol reposent sur des `StaticBody2D` (fiables) ; une migration vers un `TileMap` peint est prévue une
+fois que le rendu pourra être vérifié dans l'éditeur Godot.
 
 ### Récupérer l'APK sur ton téléphone
 

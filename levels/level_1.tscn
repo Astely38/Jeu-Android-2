@@ -1,8 +1,10 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/level.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/leonie.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://ui/dialogue_box.tscn" id="5"]
 
 [sub_resource type="Gradient" id="grad_sky"]
 offsets = PackedFloat32Array(0, 1)
@@ -175,15 +177,35 @@ polygon = PackedVector2Array(-32, -46, 32, -46, 32, -38, -32, -38)
 [node name="Enemy" parent="." instance=ExtResource("3")]
 position = Vector2(1450, 477)
 
+[node name="Leonie" parent="." instance=ExtResource("4")]
+position = Vector2(760, 470)
+
 [node name="Player" parent="." instance=ExtResource("2")]
 position = Vector2(100, 477)
 
+[node name="Dialogue" parent="." instance=ExtResource("5")]
+
 [node name="WinLabel" type="CanvasLayer" parent="."]
+layer = 3
 visible = false
 
 [node name="Label" type="Label" parent="WinLabel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-text = "Bravo, tu as réussi !"
+offset_bottom = -80.0
+text = "Bravo, tu as atteint le torii !"
 horizontal_alignment = 1
 vertical_alignment = 1
+theme_override_font_sizes/font_size = 34
+
+[node name="MenuButton" type="Button" parent="WinLabel"]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -110.0
+offset_top = 40.0
+offset_right = 110.0
+offset_bottom = 96.0
+theme_override_font_sizes/font_size = 26
+text = "Retour au menu"
