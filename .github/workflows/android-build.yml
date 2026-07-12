@@ -31,6 +31,12 @@ jobs:
       - name: Import project resources
         run: godot --headless --verbose --editor --quit
 
+      - name: Bump APK version from build number
+        run: |
+          sed -i "s|^version/code=.*|version/code=${GITHUB_RUN_NUMBER}|" export_presets.cfg
+          sed -i "s|^version/name=.*|version/name=\"0.${GITHUB_RUN_NUMBER}\"|" export_presets.cfg
+          grep '^version/' export_presets.cfg
+
       - name: Build debug APK
         run: |
           mkdir -v -p build/android
@@ -46,8 +52,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: "Build #${{ github.run_number }}"
-          body: "APK généré automatiquement depuis le commit ${{ github.sha }}."
+          name: "Build #${{ github.run_number }} (v0.${{ github.run_number }})"
+          body: "Version 0.${{ github.run_number }} (versionCode ${{ github.run_number }}) — build automatique depuis le commit ${{ github.sha }}."
           prerelease: true
           files: build/android/${{ env.EXPORT_NAME }}.apk
         env:
