@@ -23,3 +23,7 @@ textures/canvas_textures/default_texture_filter=0
 [physics]
 
 2d/default_gravity=980.0
+
+[autoload]
+
+SaveManager="*res://scripts/save/save_manager.gd"

@@ -12,6 +12,7 @@ const GROUND_Y := 550.0    # centre vertical des plateformes
 const SPAWN_Y := 477.0     # hauteur d'apparition des personnages
 const LEVEL_END := 7000.0
 const GOAL_X := 6800.0
+const LEVEL_ID := "level_1"
 
 const DIRT := Color(0.36, 0.25, 0.16)
 const DIRT_DARK := Color(0.27, 0.18, 0.11)
@@ -55,6 +56,7 @@ func _ready() -> void:
 	_spawn_entities()
 	_setup_audio()
 	win_label.visible = false
+	SaveManager.set_last_level(LEVEL_ID)
 	leonie.talk.connect(_on_leonie_talk)
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
@@ -216,6 +218,7 @@ func _on_goal_body_entered(body: Node2D) -> void:
 		win_label.visible = true
 		player.set_physics_process(false)
 		sfx_win.play()
+		SaveManager.complete_level(LEVEL_ID, player.orbs)
 
 func _on_leonie_talk(lines: Array) -> void:
 	# Pause d'Eneko le temps du dialogue.

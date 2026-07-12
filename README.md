@@ -16,19 +16,25 @@ poursuit Eneko. Les **orbes spirituels** rechargent l'énergie du sabre et, tous
 
 Contrôles tactiles à l'écran : Gauche / Droite / Saut à gauche, Attaque à droite.
 
+**Sauvegarde locale** (JSON, `user://save.json`) : niveaux terminés/débloqués et meilleur score
+d'orbes par niveau. Le menu principal propose **Continuer** (reprend le dernier niveau joué, visible
+dès qu'une sauvegarde existe) et **Niveaux** (écran de sélection listant les 5 niveaux prévus —
+seul le niveau 1 existe pour l'instant, les autres apparaissent en "à venir").
+
 ### Structure du projet
 
 ```
-/scenes   main_menu, player, enemy, leonie
+/scenes   main_menu, level_select, player, enemy, shadow, leonie, orb
 /levels   level_1 ("La Clairière des Bambous")
-/scripts  logique GDScript (player, enemy, leonie, level, main_menu)
+/scripts  logique GDScript (player, enemy, shadow, leonie, level, main_menu, level_select)
+/scripts/save  SaveManager (autoload, sauvegarde JSON)
 /ui       boîte de dialogue
-/assets   sprites vectoriels (SVG)
+/assets   sprites (SVG + pixel art), sons (assets/sfx)
 ```
 
-Le jeu démarre sur le **menu principal** ; le bouton *Jouer* charge le niveau 1. Les collisions du
-sol reposent sur des `StaticBody2D` (fiables) ; une migration vers un `TileMap` peint est prévue une
-fois que le rendu pourra être vérifié dans l'éditeur Godot.
+Le jeu démarre sur le **menu principal**. Les collisions du sol reposent sur des `StaticBody2D`
+(fiables) ; une migration vers un `TileMap` peint est prévue une fois que le rendu pourra être
+vérifié dans l'éditeur Godot.
 
 ### Récupérer l'APK sur ton téléphone
 
