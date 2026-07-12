@@ -11,7 +11,7 @@ const SPAWN_Y := 477.0
 @onready var menu_button: Button = $WinLabel/MenuButton
 @onready var dialogue: CanvasLayer = $Dialogue
 @onready var leonie: Area2D = $Leonie
-@onready var checkpoint: Area2D = $Checkpoint
+@onready var checkpoints: Node2D = $Checkpoints
 
 func _ready() -> void:
 	win_label.visible = false
@@ -20,13 +20,14 @@ func _ready() -> void:
 	leonie.talk.connect(_on_leonie_talk)
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
-	checkpoint.body_entered.connect(_on_checkpoint_body_entered)
+	for cp in checkpoints.get_children():
+		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp))
 
-func _on_checkpoint_body_entered(body: Node2D) -> void:
+func _on_checkpoint_body_entered(body: Node2D, cp: Area2D) -> void:
 	if body == player:
-		player.set_checkpoint(Vector2(checkpoint.global_position.x, SPAWN_Y))
+		player.set_checkpoint(Vector2(cp.global_position.x, SPAWN_Y))
 		# Bannière : passe au vert une fois le point de contrôle validé.
-		checkpoint.get_node("Flag").color = Color(0.35, 0.8, 0.4, 1)
+		cp.get_node("Flag").color = Color(0.35, 0.8, 0.4, 1)
 
 func _on_kill_zone_body_entered(body: Node2D) -> void:
 	if body == player:

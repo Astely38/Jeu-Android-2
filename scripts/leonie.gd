@@ -1,9 +1,11 @@
 extends Area2D
-## Léonie, gardienne de la forêt. PNJ qui déclenche un dialogue la
-## première fois qu'Eneko s'approche. Émet "talk" avec les répliques ;
-## c'est le niveau qui met le joueur en pause et affiche la boîte.
+## Léonie, gardienne de la forêt (esprit kitsune). PNJ animé qui déclenche
+## un dialogue la première fois qu'Eneko s'approche. Émet "talk" avec les
+## répliques ; c'est le niveau qui met le joueur en pause et affiche la boîte.
 
 signal talk(lines)
+
+const KITSUNE := "res://assets/character/kitsune/"
 
 ## Répliques de la première rencontre.
 const LINES := [
@@ -16,7 +18,13 @@ const LINES := [
 
 var _triggered := false
 
+@onready var anim: AnimatedSprite2D = $Anim
+
 func _ready() -> void:
+	anim.sprite_frames = SpriteSheet.build([
+		{"name": "idle", "path": KITSUNE + "Idle.png", "frames": 8, "fps": 8.0, "loop": true},
+	])
+	anim.play("idle")
 	body_entered.connect(_on_body_entered)
 
 func _on_body_entered(body: Node2D) -> void:

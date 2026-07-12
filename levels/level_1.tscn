@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/level.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://ui/dialogue_box.tscn" id="5"]
 [ext_resource type="Texture2D" path="res://assets/lantern.svg" id="6"]
 [ext_resource type="PackedScene" path="res://scenes/yurei.tscn" id="7"]
+[ext_resource type="PackedScene" path="res://scenes/orb.tscn" id="8"]
 
 [sub_resource type="Gradient" id="grad_sky"]
 offsets = PackedFloat32Array(0, 1)
@@ -28,11 +29,14 @@ size = Vector2(520, 100)
 [sub_resource type="RectangleShape2D" id="r480"]
 size = Vector2(480, 100)
 
+[sub_resource type="RectangleShape2D" id="r460"]
+size = Vector2(460, 100)
+
 [sub_resource type="RectangleShape2D" id="r700"]
 size = Vector2(700, 100)
 
 [sub_resource type="RectangleShape2D" id="killzone"]
-size = Vector2(3600, 100)
+size = Vector2(4900, 100)
 
 [sub_resource type="RectangleShape2D" id="goal"]
 size = Vector2(60, 140)
@@ -144,6 +148,16 @@ position = Vector2(2600, 512)
 color = Color(0.42, 0.6, 0.35, 1)
 polygon = PackedVector2Array(-7, -360, -43, -382, -7, -344)
 
+[node name="M7" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(3100, 512)
+color = Color(0.35, 0.5, 0.3, 1)
+polygon = PackedVector2Array(-8, -360, 8, -360, 8, 0, -8, 0)
+
+[node name="M8" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(3480, 512)
+color = Color(0.32, 0.47, 0.28, 1)
+polygon = PackedVector2Array(-7, -390, 7, -390, 7, 0, -7, 0)
+
 [node name="Lantern1" type="Sprite2D" parent="ParallaxBackground/MidLayer"]
 position = Vector2(700, 200)
 scale = Vector2(0.85, 0.85)
@@ -162,6 +176,11 @@ texture = ExtResource("6")
 [node name="Lantern4" type="Sprite2D" parent="ParallaxBackground/MidLayer"]
 position = Vector2(2650, 180)
 scale = Vector2(0.9, 0.9)
+texture = ExtResource("6")
+
+[node name="Lantern5" type="Sprite2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(3300, 195)
+scale = Vector2(0.85, 0.85)
 texture = ExtResource("6")
 
 [node name="Ground1" type="StaticBody2D" parent="."]
@@ -221,41 +240,85 @@ color = Color(0.4, 0.62, 0.32, 1)
 polygon = PackedVector2Array(-240, -50, 240, -50, 240, -40, -240, -40)
 
 [node name="Ground5" type="StaticBody2D" parent="."]
-position = Vector2(2850, 550)
+position = Vector2(2800, 550)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground5"]
-shape = SubResource("r700")
+shape = SubResource("r460")
 
 [node name="Visual" type="Polygon2D" parent="Ground5"]
 color = Color(0.36, 0.25, 0.16, 1)
-polygon = PackedVector2Array(-350, -50, 350, -50, 350, 50, -350, 50)
+polygon = PackedVector2Array(-230, -50, 230, -50, 230, 50, -230, 50)
 
 [node name="Grass" type="Polygon2D" parent="Ground5"]
+color = Color(0.4, 0.62, 0.32, 1)
+polygon = PackedVector2Array(-230, -50, 230, -50, 230, -40, -230, -40)
+
+[node name="Ground6" type="StaticBody2D" parent="."]
+position = Vector2(3450, 550)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground6"]
+shape = SubResource("r480")
+
+[node name="Visual" type="Polygon2D" parent="Ground6"]
+color = Color(0.36, 0.25, 0.16, 1)
+polygon = PackedVector2Array(-240, -50, 240, -50, 240, 50, -240, 50)
+
+[node name="Grass" type="Polygon2D" parent="Ground6"]
+color = Color(0.4, 0.62, 0.32, 1)
+polygon = PackedVector2Array(-240, -50, 240, -50, 240, -40, -240, -40)
+
+[node name="Ground7" type="StaticBody2D" parent="."]
+position = Vector2(4150, 550)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground7"]
+shape = SubResource("r700")
+
+[node name="Visual" type="Polygon2D" parent="Ground7"]
+color = Color(0.36, 0.25, 0.16, 1)
+polygon = PackedVector2Array(-350, -50, 350, -50, 350, 50, -350, 50)
+
+[node name="Grass" type="Polygon2D" parent="Ground7"]
 color = Color(0.4, 0.62, 0.32, 1)
 polygon = PackedVector2Array(-350, -50, 350, -50, 350, -40, -350, -40)
 
 [node name="KillZone" type="Area2D" parent="."]
-position = Vector2(1600, 700)
+position = Vector2(2250, 700)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
 shape = SubResource("killzone")
 
-[node name="Checkpoint" type="Area2D" parent="."]
+[node name="Checkpoints" type="Node2D" parent="."]
+
+[node name="Checkpoint1" type="Area2D" parent="Checkpoints"]
 position = Vector2(1650, 430)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Checkpoint"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Checkpoints/Checkpoint1"]
 shape = SubResource("checkpoint")
 
-[node name="Pole" type="Polygon2D" parent="Checkpoint"]
+[node name="Pole" type="Polygon2D" parent="Checkpoints/Checkpoint1"]
 color = Color(0.35, 0.28, 0.2, 1)
 polygon = PackedVector2Array(-3, -60, 3, -60, 3, 70, -3, 70)
 
-[node name="Flag" type="Polygon2D" parent="Checkpoint"]
+[node name="Flag" type="Polygon2D" parent="Checkpoints/Checkpoint1"]
+color = Color(0.85, 0.75, 0.35, 1)
+polygon = PackedVector2Array(3, -60, 40, -50, 3, -38)
+
+[node name="Checkpoint2" type="Area2D" parent="Checkpoints"]
+position = Vector2(3300, 430)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Checkpoints/Checkpoint2"]
+shape = SubResource("checkpoint")
+
+[node name="Pole" type="Polygon2D" parent="Checkpoints/Checkpoint2"]
+color = Color(0.35, 0.28, 0.2, 1)
+polygon = PackedVector2Array(-3, -60, 3, -60, 3, 70, -3, 70)
+
+[node name="Flag" type="Polygon2D" parent="Checkpoints/Checkpoint2"]
 color = Color(0.85, 0.75, 0.35, 1)
 polygon = PackedVector2Array(3, -60, 40, -50, 3, -38)
 
 [node name="Goal" type="Area2D" parent="."]
-position = Vector2(3080, 430)
+position = Vector2(4380, 430)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Goal"]
 shape = SubResource("goal")
@@ -286,8 +349,41 @@ position = Vector2(1400, 477)
 [node name="Yurei" parent="." instance=ExtResource("7")]
 position = Vector2(2150, 477)
 
+[node name="Yurei2" parent="." instance=ExtResource("7")]
+position = Vector2(3450, 477)
+
 [node name="Leonie" parent="." instance=ExtResource("4")]
 position = Vector2(800, 470)
+
+[node name="Orb1" parent="." instance=ExtResource("8")]
+position = Vector2(350, 445)
+
+[node name="Orb2" parent="." instance=ExtResource("8")]
+position = Vector2(580, 410)
+
+[node name="Orb3" parent="." instance=ExtResource("8")]
+position = Vector2(1200, 410)
+
+[node name="Orb4" parent="." instance=ExtResource("8")]
+position = Vector2(1500, 430)
+
+[node name="Orb5" parent="." instance=ExtResource("8")]
+position = Vector2(1835, 400)
+
+[node name="Orb6" parent="." instance=ExtResource("8")]
+position = Vector2(2480, 405)
+
+[node name="Orb7" parent="." instance=ExtResource("8")]
+position = Vector2(2800, 440)
+
+[node name="Orb8" parent="." instance=ExtResource("8")]
+position = Vector2(3120, 405)
+
+[node name="Orb9" parent="." instance=ExtResource("8")]
+position = Vector2(3745, 405)
+
+[node name="Orb10" parent="." instance=ExtResource("8")]
+position = Vector2(4100, 440)
 
 [node name="Player" parent="." instance=ExtResource("2")]
 position = Vector2(100, 477)

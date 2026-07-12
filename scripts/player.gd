@@ -29,12 +29,14 @@ var knockback := 0.0
 var lock_timer := 0.0
 var anim_time := 0.0
 var energy := MAX_ENERGY
+var orbs := 0
 var start_position := Vector2.ZERO
 var _cur := ""
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var energy_fill: Polygon2D = $HUD/EnergyFill
+@onready var orb_label: Label = $HUD/OrbCount
 @onready var hearts: Array = [$HUD/Heart1, $HUD/Heart2, $HUD/Heart3]
 
 func _ready() -> void:
@@ -50,6 +52,7 @@ func _ready() -> void:
 		{"name": "hurt", "path": SAMURAI + "Hurt.png", "frames": 2, "fps": 9.0, "loop": false},
 	])
 	_play("idle")
+	orb_label.text = "x0"
 	_update_hearts()
 
 func _physics_process(delta: float) -> void:
@@ -168,6 +171,11 @@ func respawn() -> void:
 ## Déplace le point de réapparition (checkpoint atteint).
 func set_checkpoint(pos: Vector2) -> void:
 	start_position = pos
+
+## Ramasse un orbe spirituel (appelé par l'orbe).
+func collect_orb() -> void:
+	orbs += 1
+	orb_label.text = "x%d" % orbs
 
 func _update_hearts() -> void:
 	for i in hearts.size():
