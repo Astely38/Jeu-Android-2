@@ -1,21 +1,23 @@
 extends CharacterBody2D
-## Eneko, l'apprenti sabreur. Déplacement gauche/droite, saut, attaque au
-## sabre (Area2D), barre de vie (cœurs) avec invincibilité temporaire et
-## recul. Petites animations procédurales (balancement, éclat de sabre).
+## Eneko, l'apprenti sabreur. Déplacement/saut/attaque au sabre avec un
+## AnimatedSprite2D piloté par une machine à états (idle / run / jump /
+## attack / hurt). Barre de vie (cœurs), énergie du sabre, invincibilité,
+## recul et point de contrôle.
 
 const SPEED := 220.0
-const JUMP_VELOCITY := -420.0
+const JUMP_VELOCITY := -430.0
 const GRAVITY := 980.0
-const ATTACK_DURATION := 0.2
+const ATTACK_DURATION := 0.42
+const HURT_LOCK := 0.28
 const MAX_HEALTH := 3
 const INVULN_TIME := 1.0
 const KNOCKBACK_SPEED := 240.0
 const KNOCKBACK_TIME := 0.18
-const SPRITE_BASE_Y := -6.0
 const MAX_ENERGY := 100.0
 const ENERGY_REGEN := 26.0
 const ATTACK_COST := 22.0
 const HEART_BASE_SCALE := Vector2(1.1, 1.1)
+const SAMURAI := "res://assets/character/samurai/"
 
 var moving_left := false
 var moving_right := false
@@ -24,35 +26,50 @@ var facing := 1.0
 var health := MAX_HEALTH
 var invuln := 0.0
 var knockback := 0.0
+var lock_timer := 0.0
 var anim_time := 0.0
 var energy := MAX_ENERGY
 var start_position := Vector2.ZERO
+var _cur := ""
 
 @onready var attack_area: Area2D = $AttackArea
-@onready var sprite: Sprite2D = $Sprite
-@onready var slash: Polygon2D = $Slash
+@onready var anim: AnimatedSprite2D = $Anim
 @onready var energy_fill: Polygon2D = $HUD/EnergyFill
 @onready var hearts: Array = [$HUD/Heart1, $HUD/Heart2, $HUD/Heart3]
 
 func _ready() -> void:
+	add_to_group("player")
 	start_position = position
 	attack_area.monitoring = false
 	attack_area.body_entered.connect(_on_attack_area_body_entered)
-	slash.visible = false
+	anim.sprite_frames = SpriteSheet.build([
+		{"name": "idle", "path": SAMURAI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
+		{"name": "run", "path": SAMURAI + "Run.png", "frames": 8, "fps": 13.0, "loop": true},
+		{"name": "jump", "path": SAMURAI + "Jump.png", "frames": 12, "fps": 14.0, "loop": false},
+		{"name": "attack", "path": SAMURAI + "Attack_1.png", "frames": 6, "fps": 14.0, "loop": false},
+		{"name": "hurt", "path": SAMURAI + "Hurt.png", "frames": 2, "fps": 9.0, "loop": false},
+	])
+	_play("idle")
 	_update_hearts()
 
 func _physics_process(delta: float) -> void:
-	# Clignotement pendant l'invincibilité.
+	# Invincibilité : clignotement.
 	if invuln > 0.0:
 		invuln -= delta
-		sprite.modulate.a = 0.35 if int(invuln * 12.0) % 2 == 0 else 1.0
+		anim.modulate.a = 0.35 if int(invuln * 12.0) % 2 == 0 else 1.0
 	else:
-		sprite.modulate.a = 1.0
+		anim.modulate.a = 1.0
+
+	# Verrou d'animation (attaque / touché).
+	if lock_timer > 0.0:
+		lock_timer -= delta
+		if lock_timer <= 0.0 and attacking:
+			attacking = false
+			attack_area.monitoring = false
 
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
 
-	# Déplacement horizontal (ou recul si on vient d'être touché).
 	if knockback > 0.0:
 		knockback -= delta
 		velocity.x = move_toward(velocity.x, 0.0, SPEED * 3.0 * delta)
@@ -73,54 +90,51 @@ func _physics_process(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_X):
 		attack()
 
+	_update_animation()
 	_animate(delta)
 
-## Balancement léger + régénération/affichage de l'énergie + pulsation des cœurs.
+## Choisit l'animation selon l'état (sauf pendant un verrou attaque/touché).
+func _update_animation() -> void:
+	if lock_timer > 0.0:
+		return
+	if not is_on_floor():
+		_play("jump")
+	elif absf(velocity.x) > 12.0:
+		_play("run")
+	else:
+		_play("idle")
+
+func _play(n: String) -> void:
+	if _cur != n:
+		_cur = n
+		anim.play(n)
+
 func _animate(delta: float) -> void:
 	anim_time += delta
-
-	# Balancement (idle lent, marche plus vif ; immobile en l'air).
-	if is_on_floor():
-		var moving := absf(velocity.x) > 10.0
-		var freq := 9.0 if moving else 3.0
-		var amp := 2.0 if moving else 1.0
-		sprite.position.y = SPRITE_BASE_Y + sin(anim_time * freq) * amp
-	else:
-		sprite.position.y = SPRITE_BASE_Y
-
-	# Énergie du sabre : se régénère avec le temps (purement visuelle pour l'instant).
 	energy = minf(MAX_ENERGY, energy + ENERGY_REGEN * delta)
 	energy_fill.scale.x = energy / MAX_ENERGY
-
-	# Léger battement des cœurs.
 	var pulse := 1.0 + sin(anim_time * 3.0) * 0.04
 	for h in hearts:
 		h.scale = HEART_BASE_SCALE * pulse
 
 func _set_facing(dir: float) -> void:
 	facing = dir
-	sprite.flip_h = dir < 0.0
+	anim.flip_h = dir < 0.0
 	attack_area.position.x = 26.0 * dir
-	slash.scale.x = dir
 
 func jump() -> void:
 	if is_on_floor():
 		velocity.y = JUMP_VELOCITY
 
-## Attaque au sabre : active la zone de dégâts et l'éclat visuel un court instant.
 func attack() -> void:
-	if attacking:
+	if attacking or lock_timer > 0.0:
 		return
 	attacking = true
+	lock_timer = ATTACK_DURATION
 	energy = maxf(0.0, energy - ATTACK_COST)
 	attack_area.monitoring = true
-	slash.visible = true
-	await get_tree().create_timer(ATTACK_DURATION).timeout
-	attack_area.monitoring = false
-	slash.visible = false
-	attacking = false
+	_play("attack")
 
-## Reçoit des dégâts (contact d'un esprit). Ignoré pendant l'invincibilité.
 func take_damage(amount: int, from_position: Vector2) -> void:
 	if invuln > 0.0:
 		return
@@ -131,21 +145,29 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 		return
 	invuln = INVULN_TIME
 	knockback = KNOCKBACK_TIME
+	lock_timer = HURT_LOCK
+	_play("hurt")
 	var push := signf(global_position.x - from_position.x)
 	if push == 0.0:
 		push = -facing
 	velocity.x = push * KNOCKBACK_SPEED
 	velocity.y = -220.0
 
-## Retour au point de départ avec vie pleine (chute ou 0 cœur).
 func respawn() -> void:
 	position = start_position
 	velocity = Vector2.ZERO
 	health = MAX_HEALTH
 	invuln = 0.0
 	knockback = 0.0
-	sprite.modulate.a = 1.0
+	lock_timer = 0.0
+	attacking = false
+	attack_area.monitoring = false
+	anim.modulate.a = 1.0
 	_update_hearts()
+
+## Déplace le point de réapparition (checkpoint atteint).
+func set_checkpoint(pos: Vector2) -> void:
+	start_position = pos
 
 func _update_hearts() -> void:
 	for i in hearts.size():
