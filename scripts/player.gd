@@ -12,6 +12,10 @@ const INVULN_TIME := 1.0
 const KNOCKBACK_SPEED := 240.0
 const KNOCKBACK_TIME := 0.18
 const SPRITE_BASE_Y := -6.0
+const MAX_ENERGY := 100.0
+const ENERGY_REGEN := 26.0
+const ATTACK_COST := 22.0
+const HEART_BASE_SCALE := Vector2(1.1, 1.1)
 
 var moving_left := false
 var moving_right := false
@@ -21,11 +25,13 @@ var health := MAX_HEALTH
 var invuln := 0.0
 var knockback := 0.0
 var anim_time := 0.0
+var energy := MAX_ENERGY
 var start_position := Vector2.ZERO
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var sprite: Sprite2D = $Sprite
 @onready var slash: Polygon2D = $Slash
+@onready var energy_fill: Polygon2D = $HUD/EnergyFill
 @onready var hearts: Array = [$HUD/Heart1, $HUD/Heart2, $HUD/Heart3]
 
 func _ready() -> void:
@@ -69,9 +75,11 @@ func _physics_process(delta: float) -> void:
 
 	_animate(delta)
 
-## Balancement léger : idle lent, marche plus vif. Immobile en l'air.
+## Balancement léger + régénération/affichage de l'énergie + pulsation des cœurs.
 func _animate(delta: float) -> void:
 	anim_time += delta
+
+	# Balancement (idle lent, marche plus vif ; immobile en l'air).
 	if is_on_floor():
 		var moving := absf(velocity.x) > 10.0
 		var freq := 9.0 if moving else 3.0
@@ -79,6 +87,15 @@ func _animate(delta: float) -> void:
 		sprite.position.y = SPRITE_BASE_Y + sin(anim_time * freq) * amp
 	else:
 		sprite.position.y = SPRITE_BASE_Y
+
+	# Énergie du sabre : se régénère avec le temps (purement visuelle pour l'instant).
+	energy = minf(MAX_ENERGY, energy + ENERGY_REGEN * delta)
+	energy_fill.scale.x = energy / MAX_ENERGY
+
+	# Léger battement des cœurs.
+	var pulse := 1.0 + sin(anim_time * 3.0) * 0.04
+	for h in hearts:
+		h.scale = HEART_BASE_SCALE * pulse
 
 func _set_facing(dir: float) -> void:
 	facing = dir
@@ -95,6 +112,7 @@ func attack() -> void:
 	if attacking:
 		return
 	attacking = true
+	energy = maxf(0.0, energy - ATTACK_COST)
 	attack_area.monitoring = true
 	slash.visible = true
 	await get_tree().create_timer(ATTACK_DURATION).timeout

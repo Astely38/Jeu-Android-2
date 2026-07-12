@@ -1,10 +1,11 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/level.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/leonie.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://ui/dialogue_box.tscn" id="5"]
+[ext_resource type="Texture2D" path="res://assets/lantern.svg" id="6"]
 
 [sub_resource type="Gradient" id="grad_sky"]
 offsets = PackedFloat32Array(0, 1)
@@ -35,74 +36,101 @@ size = Vector2(60, 140)
 [node name="Level" type="Node2D"]
 script = ExtResource("1")
 
-[node name="Background" type="CanvasLayer" parent="."]
-layer = -10
+[node name="ParallaxBackground" type="ParallaxBackground" parent="."]
+layer = -5
 
-[node name="Sky" type="Sprite2D" parent="Background"]
+[node name="SkyLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0, 0)
+
+[node name="Sky" type="Sprite2D" parent="ParallaxBackground/SkyLayer"]
 position = Vector2(480, 270)
 texture = SubResource("tex_sky")
 
-[node name="Decor" type="Node2D" parent="."]
+[node name="FarLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.3, 1)
 
-[node name="Bamboo1" type="Node2D" parent="Decor"]
-position = Vector2(150, 510)
+[node name="F1" type="Polygon2D" parent="ParallaxBackground/FarLayer"]
+position = Vector2(120, 520)
+color = Color(0.52, 0.64, 0.56, 0.6)
+polygon = PackedVector2Array(-6, -320, 6, -320, 6, 0, -6, 0)
 
-[node name="Stalk" type="Polygon2D" parent="Decor/Bamboo1"]
+[node name="F2" type="Polygon2D" parent="ParallaxBackground/FarLayer"]
+position = Vector2(430, 520)
+color = Color(0.52, 0.64, 0.56, 0.6)
+polygon = PackedVector2Array(-5, -280, 5, -280, 5, 0, -5, 0)
+
+[node name="F3" type="Polygon2D" parent="ParallaxBackground/FarLayer"]
+position = Vector2(760, 520)
+color = Color(0.52, 0.64, 0.56, 0.6)
+polygon = PackedVector2Array(-6, -340, 6, -340, 6, 0, -6, 0)
+
+[node name="F4" type="Polygon2D" parent="ParallaxBackground/FarLayer"]
+position = Vector2(1080, 520)
+color = Color(0.52, 0.64, 0.56, 0.6)
+polygon = PackedVector2Array(-5, -300, 5, -300, 5, 0, -5, 0)
+
+[node name="F5" type="Polygon2D" parent="ParallaxBackground/FarLayer"]
+position = Vector2(1420, 520)
+color = Color(0.52, 0.64, 0.56, 0.6)
+polygon = PackedVector2Array(-6, -330, 6, -330, 6, 0, -6, 0)
+
+[node name="MidLayer" type="ParallaxLayer" parent="ParallaxBackground"]
+motion_scale = Vector2(0.6, 1)
+
+[node name="M1" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(220, 512)
 color = Color(0.35, 0.5, 0.3, 1)
-polygon = PackedVector2Array(-8, -390, 8, -390, 8, 0, -8, 0)
+polygon = PackedVector2Array(-8, -380, 8, -380, 8, 0, -8, 0)
 
-[node name="Leaf1" type="Polygon2D" parent="Decor/Bamboo1"]
+[node name="M1Leaf" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(220, 512)
 color = Color(0.42, 0.6, 0.35, 1)
-polygon = PackedVector2Array(8, -360, 44, -382, 8, -344)
+polygon = PackedVector2Array(8, -350, 44, -372, 8, -334)
 
-[node name="Leaf2" type="Polygon2D" parent="Decor/Bamboo1"]
-color = Color(0.42, 0.6, 0.35, 1)
-polygon = PackedVector2Array(-8, -326, -46, -350, -8, -310)
-
-[node name="Bamboo2" type="Node2D" parent="Decor"]
-position = Vector2(520, 510)
-
-[node name="Stalk" type="Polygon2D" parent="Decor/Bamboo2"]
+[node name="M2" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(560, 512)
 color = Color(0.32, 0.47, 0.28, 1)
-polygon = PackedVector2Array(-7, -340, 7, -340, 7, 0, -7, 0)
+polygon = PackedVector2Array(-7, -330, 7, -330, 7, 0, -7, 0)
 
-[node name="Leaf1" type="Polygon2D" parent="Decor/Bamboo2"]
+[node name="M2Leaf" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(560, 512)
 color = Color(0.4, 0.57, 0.33, 1)
-polygon = PackedVector2Array(7, -312, 40, -332, 7, -298)
+polygon = PackedVector2Array(-7, -300, -42, -322, -7, -284)
 
-[node name="Leaf2" type="Polygon2D" parent="Decor/Bamboo2"]
-color = Color(0.4, 0.57, 0.33, 1)
-polygon = PackedVector2Array(-7, -280, -42, -302, -7, -266)
-
-[node name="Bamboo3" type="Node2D" parent="Decor"]
-position = Vector2(1080, 510)
-
-[node name="Stalk" type="Polygon2D" parent="Decor/Bamboo3"]
+[node name="M3" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(1000, 512)
 color = Color(0.35, 0.5, 0.3, 1)
-polygon = PackedVector2Array(-8, -410, 8, -410, 8, 0, -8, 0)
+polygon = PackedVector2Array(-8, -400, 8, -400, 8, 0, -8, 0)
 
-[node name="Leaf1" type="Polygon2D" parent="Decor/Bamboo3"]
+[node name="M3Leaf" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(1000, 512)
 color = Color(0.42, 0.6, 0.35, 1)
-polygon = PackedVector2Array(8, -382, 45, -404, 8, -366)
+polygon = PackedVector2Array(8, -372, 45, -394, 8, -356)
 
-[node name="Leaf2" type="Polygon2D" parent="Decor/Bamboo3"]
-color = Color(0.42, 0.6, 0.35, 1)
-polygon = PackedVector2Array(-8, -346, -48, -370, -8, -330)
-
-[node name="Bamboo4" type="Node2D" parent="Decor"]
-position = Vector2(1650, 510)
-
-[node name="Stalk" type="Polygon2D" parent="Decor/Bamboo4"]
+[node name="M4" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(1500, 512)
 color = Color(0.32, 0.47, 0.28, 1)
-polygon = PackedVector2Array(-7, -360, 7, -360, 7, 0, -7, 0)
+polygon = PackedVector2Array(-7, -350, 7, -350, 7, 0, -7, 0)
 
-[node name="Leaf1" type="Polygon2D" parent="Decor/Bamboo4"]
-color = Color(0.4, 0.57, 0.33, 1)
-polygon = PackedVector2Array(7, -332, 41, -352, 7, -318)
+[node name="M5" type="Polygon2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(1880, 512)
+color = Color(0.35, 0.5, 0.3, 1)
+polygon = PackedVector2Array(-8, -370, 8, -370, 8, 0, -8, 0)
 
-[node name="Leaf2" type="Polygon2D" parent="Decor/Bamboo4"]
-color = Color(0.4, 0.57, 0.33, 1)
-polygon = PackedVector2Array(-7, -300, -43, -322, -7, -286)
+[node name="Lantern1" type="Sprite2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(700, 200)
+scale = Vector2(0.85, 0.85)
+texture = ExtResource("6")
+
+[node name="Lantern2" type="Sprite2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(1250, 165)
+scale = Vector2(0.95, 0.95)
+texture = ExtResource("6")
+
+[node name="Lantern3" type="Sprite2D" parent="ParallaxBackground/MidLayer"]
+position = Vector2(1780, 205)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("6")
 
 [node name="Ground1" type="StaticBody2D" parent="."]
 position = Vector2(250, 550)
@@ -173,6 +201,10 @@ polygon = PackedVector2Array(-42, -70, 42, -70, 38, -58, -38, -58)
 [node name="Nuki" type="Polygon2D" parent="Goal"]
 color = Color(0.85, 0.2, 0.15, 1)
 polygon = PackedVector2Array(-32, -46, 32, -46, 32, -38, -32, -38)
+
+[node name="Glow" type="Polygon2D" parent="Goal"]
+color = Color(1, 0.9, 0.5, 0.25)
+polygon = PackedVector2Array(-40, -60, 40, -60, 40, 66, -40, 66)
 
 [node name="Enemy" parent="." instance=ExtResource("3")]
 position = Vector2(1450, 477)
