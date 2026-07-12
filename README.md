@@ -10,16 +10,15 @@ Contrôles tactiles à l'écran : Gauche / Droite / Saut à gauche, Attaque à d
 
 ### Récupérer l'APK sur ton téléphone
 
-Chaque `push` sur ce dépôt déclenche une compilation automatique (GitHub Actions) qui génère un
-APK de debug, installable directement sans passer par le Play Store :
+Chaque `push` sur ce dépôt déclenche une compilation automatique (GitHub Actions) qui publie un
+APK de debug directement dans les **Releases** du dépôt, installable sans passer par le Play
+Store et sans avoir besoin d'être connecté à GitHub :
 
-1. Va dans l'onglet **Actions** du dépôt GitHub.
-2. Ouvre le run le plus récent du workflow **Build Android APK**.
-3. Télécharge l'artifact **eneko-apk** (un zip contenant `eneko.apk`).
-4. Transfère le fichier `.apk` sur ton téléphone (ou télécharge-le directement depuis le
-   navigateur du téléphone si tu es connecté à ton compte GitHub).
-5. Ouvre le fichier APK sur le téléphone et autorise l'installation depuis une "source inconnue"
-   si demandé.
+1. Depuis le téléphone, ouvre :
+   **https://github.com/Astely38/Jeu-Android-2/releases**
+2. Tout en haut de la liste se trouve le build le plus récent (ex. "Build #4"). Ouvre-le.
+3. Dans la section "Assets", appuie sur **eneko.apk** pour le télécharger (pas besoin de dézipper).
+4. Ouvre le fichier téléchargé et autorise l'installation depuis une "source inconnue" si demandé.
 
 ### Développer le projet
 

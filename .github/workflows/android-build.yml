@@ -8,6 +8,9 @@ env:
   GODOT_VERSION: 4.6.3
   EXPORT_NAME: eneko
 
+permissions:
+  contents: write
+
 jobs:
   export-android:
     name: Export Android APK
@@ -38,3 +41,14 @@ jobs:
         with:
           name: eneko-apk
           path: build/android/${{ env.EXPORT_NAME }}.apk
+
+      - name: Publish APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "Build #${{ github.run_number }}"
+          body: "APK généré automatiquement depuis le commit ${{ github.sha }}."
+          prerelease: true
+          files: build/android/${{ env.EXPORT_NAME }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
