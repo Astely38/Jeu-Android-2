@@ -44,6 +44,7 @@ var sfx_win: AudioStreamPlayer
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
 @onready var menu_button: Button = $WinLabel/MenuButton
+@onready var next_button: Button = $WinLabel/NextButton
 @onready var dialogue: CanvasLayer = $Dialogue
 @onready var leonie: Area2D = $Leonie
 
@@ -60,6 +61,10 @@ func _ready() -> void:
 	leonie.talk.connect(_on_leonie_talk)
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
+	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_2", "")
+	next_button.visible = next_scene != ""
+	if next_scene != "":
+		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
 
 # --- Construction du niveau ---------------------------------------------
 

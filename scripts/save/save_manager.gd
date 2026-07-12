@@ -20,6 +20,7 @@ const LEVEL_NAMES := {
 ## autres s'affichent comme "à venir" dans la sélection de niveaux.
 const LEVEL_SCENES := {
 	"level_1": "res://levels/level_1.tscn",
+	"level_2": "res://levels/level_2.tscn",
 }
 
 var data := {}

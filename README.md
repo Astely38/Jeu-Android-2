@@ -19,14 +19,19 @@ Contrôles tactiles à l'écran : Gauche / Droite / Saut à gauche, Attaque à d
 **Sauvegarde locale** (JSON, `user://save.json`) : niveaux terminés/débloqués et meilleur score
 d'orbes par niveau. Le menu principal propose **Continuer** (reprend le dernier niveau joué, visible
 dès qu'une sauvegarde existe) et **Niveaux** (écran de sélection listant les 5 niveaux prévus —
-seul le niveau 1 existe pour l'instant, les autres apparaissent en "à venir").
+les niveaux 3 à 5 apparaissent encore en "à venir").
+
+**Niveau 2 — Le Temple Oublié** : ascension verticale en zigzag dans des ruines de pierre, avec
+des pièges à pics, les mêmes esprits repositionnés, 4 points de contrôle et une apparition de
+Léonie à mi-parcours. Débloqué en terminant le niveau 1 (bouton "Niveau suivant" sur l'écran de
+victoire).
 
 ### Structure du projet
 
 ```
 /scenes   main_menu, level_select, player, enemy, shadow, leonie, orb
-/levels   level_1 ("La Clairière des Bambous")
-/scripts  logique GDScript (player, enemy, shadow, leonie, level, main_menu, level_select)
+/levels   level_1 ("La Clairière des Bambous"), level_2 ("Le Temple Oublié")
+/scripts  logique GDScript (player, enemy, shadow, leonie, level, level_2, main_menu, level_select)
 /scripts/save  SaveManager (autoload, sauvegarde JSON)
 /ui       boîte de dialogue
 /assets   sprites (SVG + pixel art), sons (assets/sfx)
