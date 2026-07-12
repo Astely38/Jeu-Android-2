@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/heart.svg" id="2"]
@@ -6,6 +6,10 @@
 [ext_resource type="Texture2D" path="res://assets/mist.svg" id="4"]
 [ext_resource type="Texture2D" path="res://assets/orb.svg" id="5"]
 [ext_resource type="Texture2D" path="res://assets/pad.svg" id="6"]
+[ext_resource type="AudioStream" path="res://assets/sfx/jump.wav" id="7"]
+[ext_resource type="AudioStream" path="res://assets/sfx/slash.wav" id="8"]
+[ext_resource type="AudioStream" path="res://assets/sfx/hurt.wav" id="9"]
+[ext_resource type="AudioStream" path="res://assets/sfx/orb.wav" id="10"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(28, 46)
@@ -32,6 +36,22 @@ position = Vector2(26, 0)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
 shape = SubResource("RectangleShape2D_attack")
+
+[node name="SfxJump" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("7")
+volume_db = -8.0
+
+[node name="SfxSlash" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("8")
+volume_db = -6.0
+
+[node name="SfxHurt" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("9")
+volume_db = -5.0
+
+[node name="SfxOrb" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("10")
+volume_db = -7.0
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position_smoothing_enabled = true

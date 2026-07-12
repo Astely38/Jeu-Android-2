@@ -1,22 +1,31 @@
 extends CharacterBody2D
-## Esprit corrompu : patrouille de gauche à droite sur sa plateforme.
-## Inflige des dégâts au joueur au contact, et n'est vaincu qu'au sabre.
+## Esprit Onre : démon corrompu qui patrouille sa plateforme de gauche à
+## droite. Inflige des dégâts au contact ; n'est vaincu qu'au sabre et se
+## dissipe alors dans un fondu spirituel.
 
 @export var patrol_distance := 100.0
 @export var speed := 60.0
 
 const GRAVITY := 980.0
+const ONRE := "res://assets/enemies/onre/"
 
 var start_x := 0.0
 var direction := 1.0
 var _dying := false
+var _cur := ""
 
-@onready var sprite: Sprite2D = $Sprite
+@onready var anim: AnimatedSprite2D = $Anim
 @onready var hitbox: Area2D = $Hitbox
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
+@onready var sfx_die: AudioStreamPlayer = $SfxDie
 
 func _ready() -> void:
 	start_x = position.x
+	anim.sprite_frames = SpriteSheet.build([
+		{"name": "walk", "path": ONRE + "Walk.png", "frames": 7, "fps": 9.0, "loop": true},
+		{"name": "dead", "path": ONRE + "Dead.png", "frames": 6, "fps": 10.0, "loop": false},
+	])
+	_play("walk")
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 
 func _physics_process(delta: float) -> void:
@@ -34,7 +43,12 @@ func _physics_process(delta: float) -> void:
 	if absf(position.x - start_x) >= patrol_distance:
 		direction *= -1.0
 
-	sprite.flip_h = direction < 0.0
+	anim.flip_h = direction < 0.0
+
+func _play(n: String) -> void:
+	if _cur != n:
+		_cur = n
+		anim.play(n)
 
 func _on_hitbox_body_entered(body: Node2D) -> void:
 	if _dying:
@@ -42,7 +56,7 @@ func _on_hitbox_body_entered(body: Node2D) -> void:
 	if body.has_method("take_damage"):
 		body.take_damage(1, global_position)
 
-## Vaincu par le sabre : effet spirituel (dilatation + fondu) puis disparition.
+## Vaincu par le sabre : animation de mort + fondu, puis disparition.
 func die() -> void:
 	if _dying:
 		return
@@ -50,10 +64,8 @@ func die() -> void:
 	velocity = Vector2.ZERO
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
-
+	_play("dead")
+	sfx_die.play()
 	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(sprite, "scale", sprite.scale * 1.8, 0.3)
-	tween.tween_property(sprite, "modulate:a", 0.0, 0.3)
-	tween.tween_property(sprite, "position:y", sprite.position.y - 20.0, 0.3)
+	tween.tween_property(anim, "modulate:a", 0.0, 0.65)
 	tween.finished.connect(queue_free)

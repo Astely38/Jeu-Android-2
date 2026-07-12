@@ -7,12 +7,12 @@ boucles d'oreilles dorées, armé du sabre de son grand-père — traverse une f
 par-dessus les trous, tranche un esprit malveillant au sabre, et rejoint le torii pour terminer le
 niveau.
 
-Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit sans l'attaquer coûte un cœur ;
-à zéro cœur, on repart au dernier **point de contrôle** (bannière). Tomber dans un trou renvoie
-aussi au dernier checkpoint. En chemin, **Léonie**, la gardienne kitsune de la forêt, l'accueille
-par un court dialogue. Deux types d'esprits : le patrouilleur (immobile sur sa plateforme) et le
-**Yurei**, qui poursuit Eneko. On récolte aussi des **orbes spirituels** (compteur en haut à
-droite).
+Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit **ou tomber dans un trou**
+coûte un cœur et renvoie au dernier **point de contrôle** (bannière). En chemin, **Léonie**, la
+gardienne kitsune de la forêt, l'accueille par un court dialogue. Deux types d'ennemis : l'esprit
+**Onre** qui patrouille sa plateforme, et l'**Ombre corrompue** (guerrier spectral sombre) qui
+poursuit Eneko. Les **orbes spirituels** rechargent l'énergie du sabre et, tous les 5 ramassés,
+**rendent un cœur**. Effets sonores et vent ambiant inclus.
 
 Contrôles tactiles à l'écran : Gauche / Droite / Saut à gauche, Attaque à droite.
 

@@ -1,14 +1,14 @@
 extends CharacterBody2D
-## Yurei : esprit errant qui détecte Eneko, le poursuit et l'attaque au
-## contact. Plus mobile que l'esprit patrouilleur. Vaincu au sabre, il
-## disparaît dans un fondu spirituel.
+## Ombre corrompue : un guerrier spectral qui détecte Eneko, le poursuit
+## et frappe au contact. Silhouette sombre (sprite shinobi teinté).
+## Vaincue au sabre, elle se dissipe dans un fondu spirituel.
 
 @export var speed := 92.0
 @export var detect_range := 340.0
 @export var attack_range := 46.0
 
 const GRAVITY := 980.0
-const YUREI := "res://assets/enemies/yurei/"
+const SHINOBI := "res://assets/enemies/shinobi/"
 
 var player: Node2D = null
 var lock_timer := 0.0
@@ -18,13 +18,14 @@ var _cur := ""
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var hitbox: Area2D = $Hitbox
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
+@onready var sfx_die: AudioStreamPlayer = $SfxDie
 
 func _ready() -> void:
 	anim.sprite_frames = SpriteSheet.build([
-		{"name": "idle", "path": YUREI + "Idle.png", "frames": 5, "fps": 7.0, "loop": true},
-		{"name": "walk", "path": YUREI + "Walk.png", "frames": 5, "fps": 9.0, "loop": true},
-		{"name": "attack", "path": YUREI + "Attack_1.png", "frames": 4, "fps": 10.0, "loop": false},
-		{"name": "dead", "path": YUREI + "Dead.png", "frames": 4, "fps": 9.0, "loop": false},
+		{"name": "idle", "path": SHINOBI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
+		{"name": "run", "path": SHINOBI + "Run.png", "frames": 8, "fps": 12.0, "loop": true},
+		{"name": "attack", "path": SHINOBI + "Attack_1.png", "frames": 5, "fps": 11.0, "loop": false},
+		{"name": "dead", "path": SHINOBI + "Dead.png", "frames": 4, "fps": 9.0, "loop": false},
 	])
 	_play("idle")
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
@@ -65,7 +66,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	if lock_timer <= 0.0:
-		_play("walk" if moving else "idle")
+		_play("run" if moving else "idle")
 
 func _attack() -> void:
 	# Petite pause + animation d'attaque ; les dégâts passent par le hitbox.
@@ -83,7 +84,7 @@ func _on_hitbox_body_entered(body: Node2D) -> void:
 	if body.has_method("take_damage"):
 		body.take_damage(1, global_position)
 
-## Vaincu au sabre : fondu spirituel puis disparition.
+## Vaincue au sabre : animation de mort + fondu spirituel puis disparition.
 func die() -> void:
 	if _dying:
 		return
@@ -92,6 +93,7 @@ func die() -> void:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	_play("dead")
+	sfx_die.play()
 	var tween := create_tween()
 	tween.tween_property(anim, "modulate:a", 0.0, 0.6)
 	tween.finished.connect(queue_free)

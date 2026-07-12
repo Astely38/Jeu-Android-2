@@ -38,6 +38,10 @@ var _cur := ""
 @onready var energy_fill: Polygon2D = $HUD/EnergyFill
 @onready var orb_label: Label = $HUD/OrbCount
 @onready var hearts: Array = [$HUD/Heart1, $HUD/Heart2, $HUD/Heart3]
+@onready var sfx_jump: AudioStreamPlayer = $SfxJump
+@onready var sfx_slash: AudioStreamPlayer = $SfxSlash
+@onready var sfx_hurt: AudioStreamPlayer = $SfxHurt
+@onready var sfx_orb: AudioStreamPlayer = $SfxOrb
 
 func _ready() -> void:
 	add_to_group("player")
@@ -128,6 +132,7 @@ func _set_facing(dir: float) -> void:
 func jump() -> void:
 	if is_on_floor():
 		velocity.y = JUMP_VELOCITY
+		sfx_jump.play()
 
 func attack() -> void:
 	if attacking or lock_timer > 0.0:
@@ -136,6 +141,7 @@ func attack() -> void:
 	lock_timer = ATTACK_DURATION
 	energy = maxf(0.0, energy - ATTACK_COST)
 	attack_area.monitoring = true
+	sfx_slash.play()
 	_play("attack")
 
 func take_damage(amount: int, from_position: Vector2) -> void:
@@ -143,6 +149,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 		return
 	health -= amount
 	_update_hearts()
+	sfx_hurt.play()
 	if health <= 0:
 		respawn()
 		return
@@ -156,26 +163,46 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	velocity.x = push * KNOCKBACK_SPEED
 	velocity.y = -220.0
 
+## Chute dans un trou : coûte un cœur et renvoie au dernier checkpoint
+## (les cœurs restants sont conservés ; à zéro, la vie est restaurée).
+func fall_damage() -> void:
+	health -= 1
+	sfx_hurt.play()
+	if health <= 0:
+		health = MAX_HEALTH
+	_update_hearts()
+	_return_to_checkpoint()
+
+## Mort (0 cœur suite aux dégâts) : vie pleine et retour au checkpoint.
 func respawn() -> void:
+	health = MAX_HEALTH
+	_update_hearts()
+	_return_to_checkpoint()
+
+func _return_to_checkpoint() -> void:
 	position = start_position
 	velocity = Vector2.ZERO
-	health = MAX_HEALTH
-	invuln = 0.0
+	invuln = 0.8
 	knockback = 0.0
 	lock_timer = 0.0
 	attacking = false
 	attack_area.monitoring = false
 	anim.modulate.a = 1.0
-	_update_hearts()
 
 ## Déplace le point de réapparition (checkpoint atteint).
 func set_checkpoint(pos: Vector2) -> void:
 	start_position = pos
 
-## Ramasse un orbe spirituel (appelé par l'orbe).
+## Ramasse un orbe spirituel : recharge l'énergie, et tous les 5 orbes
+## Eneko récupère un cœur.
 func collect_orb() -> void:
 	orbs += 1
 	orb_label.text = "x%d" % orbs
+	energy = minf(MAX_ENERGY, energy + 15.0)
+	sfx_orb.play()
+	if orbs % 5 == 0 and health < MAX_HEALTH:
+		health += 1
+		_update_hearts()
 
 func _update_hearts() -> void:
 	for i in hearts.size():
