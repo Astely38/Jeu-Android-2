@@ -47,8 +47,12 @@ func _physics_process(delta: float) -> void:
 	var moving := false
 	if player != null and lock_timer <= 0.0:
 		var dx: float = player.global_position.x - global_position.x
+		var dy: float = player.global_position.y - global_position.y
 		var dist := absf(dx)
-		if dist < detect_range:
+		# Ignore le joueur s'il est sur une plateforme trop différente en
+		# hauteur (sinon l'Ombre "sent" Eneko à travers plusieurs étages
+		# et tombe dans le vide en essayant de le rejoindre).
+		if dist < detect_range and absf(dy) < 90.0:
 			var dir := signf(dx)
 			if dir != 0.0:
 				anim.flip_h = dir < 0.0
