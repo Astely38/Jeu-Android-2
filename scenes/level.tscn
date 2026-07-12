@@ -1,0 +1,85 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/level.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/enemy.tscn" id="3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground1"]
+size = Vector2(500, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground2"]
+size = Vector2(450, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground3"]
+size = Vector2(650, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_killzone"]
+size = Vector2(2500, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_goal"]
+size = Vector2(60, 140)
+
+[node name="Level" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Ground1" type="StaticBody2D" parent="."]
+position = Vector2(250, 550)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground1"]
+shape = SubResource("RectangleShape2D_ground1")
+
+[node name="Visual" type="Polygon2D" parent="Ground1"]
+color = Color(0.36, 0.25, 0.16, 1)
+polygon = PackedVector2Array(-250, -50, 250, -50, 250, 50, -250, 50)
+
+[node name="Ground2" type="StaticBody2D" parent="."]
+position = Vector2(875, 550)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground2"]
+shape = SubResource("RectangleShape2D_ground2")
+
+[node name="Visual" type="Polygon2D" parent="Ground2"]
+color = Color(0.36, 0.25, 0.16, 1)
+polygon = PackedVector2Array(-225, -50, 225, -50, 225, 50, -225, 50)
+
+[node name="Ground3" type="StaticBody2D" parent="."]
+position = Vector2(1575, 550)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground3"]
+shape = SubResource("RectangleShape2D_ground3")
+
+[node name="Visual" type="Polygon2D" parent="Ground3"]
+color = Color(0.36, 0.25, 0.16, 1)
+polygon = PackedVector2Array(-325, -50, 325, -50, 325, 50, -325, 50)
+
+[node name="KillZone" type="Area2D" parent="."]
+position = Vector2(1200, 700)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
+shape = SubResource("RectangleShape2D_killzone")
+
+[node name="Goal" type="Area2D" parent="."]
+position = Vector2(1820, 430)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Goal"]
+shape = SubResource("RectangleShape2D_goal")
+
+[node name="Visual" type="Polygon2D" parent="Goal"]
+color = Color(0.9, 0.75, 0.2, 1)
+polygon = PackedVector2Array(-30, -70, 30, -70, 30, 70, -30, 70)
+
+[node name="Enemy" parent="." instance=ExtResource("3")]
+position = Vector2(1450, 477)
+
+[node name="Player" parent="." instance=ExtResource("2")]
+position = Vector2(100, 477)
+
+[node name="WinLabel" type="CanvasLayer" parent="."]
+visible = false
+
+[node name="Label" type="Label" parent="WinLabel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "Bravo, tu as réussi !"
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -1,0 +1,23 @@
+config_version=5
+
+[application]
+
+config/name="Eneko, la Voie du Sabre"
+run/main_scene="res://scenes/level.tscn"
+config/features=PackedStringArray("4.3", "Mobile")
+config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=960
+window/size/viewport_height=540
+window/stretch/mode="canvas_items"
+window/handheld/orientation="landscape"
+
+[rendering]
+
+renderer/rendering_method="mobile"
+
+[physics]
+
+2d/default_gravity=980.0

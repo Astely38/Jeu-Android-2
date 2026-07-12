@@ -1,0 +1,76 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(28, 46)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_attack"]
+size = Vector2(30, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_button"]
+size = Vector2(100, 100)
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1")
+
+[node name="Body" type="Polygon2D" parent="."]
+color = Color(0.2, 0.45, 0.85, 1)
+polygon = PackedVector2Array(-14, -23, 14, -23, 14, 23, -14, 23)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="AttackArea" type="Area2D" parent="."]
+position = Vector2(26, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
+shape = SubResource("RectangleShape2D_attack")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="LeftButton" type="TouchScreenButton" parent="HUD"]
+position = Vector2(70, 470)
+shape = SubResource("RectangleShape2D_button")
+shape_centered = true
+
+[node name="Visual" type="Polygon2D" parent="HUD/LeftButton"]
+color = Color(1, 1, 1, 0.3)
+polygon = PackedVector2Array(-50, -50, 50, -50, 50, 50, -50, 50)
+
+[node name="RightButton" type="TouchScreenButton" parent="HUD"]
+position = Vector2(190, 470)
+shape = SubResource("RectangleShape2D_button")
+shape_centered = true
+
+[node name="Visual" type="Polygon2D" parent="HUD/RightButton"]
+color = Color(1, 1, 1, 0.3)
+polygon = PackedVector2Array(-50, -50, 50, -50, 50, 50, -50, 50)
+
+[node name="JumpButton" type="TouchScreenButton" parent="HUD"]
+position = Vector2(770, 470)
+shape = SubResource("RectangleShape2D_button")
+shape_centered = true
+
+[node name="Visual" type="Polygon2D" parent="HUD/JumpButton"]
+color = Color(0.3, 0.85, 0.4, 0.4)
+polygon = PackedVector2Array(-50, -50, 50, -50, 50, 50, -50, 50)
+
+[node name="AttackButton" type="TouchScreenButton" parent="HUD"]
+position = Vector2(890, 470)
+shape = SubResource("RectangleShape2D_button")
+shape_centered = true
+
+[node name="Visual" type="Polygon2D" parent="HUD/AttackButton"]
+color = Color(0.9, 0.3, 0.3, 0.4)
+polygon = PackedVector2Array(-50, -50, 50, -50, 50, 50, -50, 50)
+
+[connection signal="pressed" from="HUD/LeftButton" to="." method="_on_left_pressed"]
+[connection signal="released" from="HUD/LeftButton" to="." method="_on_left_released"]
+[connection signal="pressed" from="HUD/RightButton" to="." method="_on_right_pressed"]
+[connection signal="released" from="HUD/RightButton" to="." method="_on_right_released"]
+[connection signal="pressed" from="HUD/JumpButton" to="." method="_on_jump_pressed"]
+[connection signal="pressed" from="HUD/AttackButton" to="." method="_on_attack_pressed"]
