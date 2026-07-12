@@ -18,10 +18,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup export templates
+      - name: Setup export templates and Android/Java editor config
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -v -p ~/.config/
+          mv /root/.config/godot ~/.config/godot
 
       - name: Import project resources
         run: godot --headless --verbose --editor --quit
