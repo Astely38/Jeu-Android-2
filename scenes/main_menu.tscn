@@ -3,8 +3,8 @@
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1"]
 
 [sub_resource type="Gradient" id="grad_bg"]
-offsets = PackedFloat32Array(0, 1)
-colors = PackedColorArray(0.1, 0.09, 0.18, 1, 0.45, 0.26, 0.24, 1)
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0.07, 0.07, 0.2, 1, 0.44, 0.2, 0.32, 1, 0.96, 0.56, 0.3, 1)
 
 [sub_resource type="GradientTexture2D" id="tex_bg"]
 gradient = SubResource("grad_bg")
@@ -24,72 +24,69 @@ script = ExtResource("1")
 position = Vector2(480, 270)
 texture = SubResource("tex_bg")
 
-[node name="BambooL" type="Polygon2D" parent="."]
-color = Color(0.12, 0.2, 0.15, 1)
-polygon = PackedVector2Array(40, 120, 72, 120, 72, 540, 40, 540)
-
-[node name="BambooR" type="Polygon2D" parent="."]
-color = Color(0.12, 0.2, 0.15, 1)
-polygon = PackedVector2Array(890, 90, 922, 90, 922, 540, 890, 540)
-
-[node name="ToriiPostL" type="Polygon2D" parent="."]
-color = Color(0.55, 0.14, 0.11, 1)
-polygon = PackedVector2Array(400, 250, 416, 250, 416, 440, 400, 440)
-
-[node name="ToriiPostR" type="Polygon2D" parent="."]
-color = Color(0.55, 0.14, 0.11, 1)
-polygon = PackedVector2Array(544, 250, 560, 250, 560, 440, 544, 440)
-
-[node name="ToriiKasagi" type="Polygon2D" parent="."]
-color = Color(0.48, 0.11, 0.09, 1)
-polygon = PackedVector2Array(360, 228, 600, 228, 592, 258, 368, 258)
-
-[node name="ToriiNuki" type="Polygon2D" parent="."]
-color = Color(0.55, 0.14, 0.11, 1)
-polygon = PackedVector2Array(384, 286, 576, 286, 576, 306, 384, 306)
-
 [node name="Title" type="Label" parent="."]
 offset_left = 80.0
-offset_top = 56.0
+offset_top = 42.0
 offset_right = 880.0
-offset_bottom = 200.0
-theme_override_colors/font_color = Color(0.97, 0.93, 0.85, 1)
-theme_override_font_sizes/font_size = 54
+offset_bottom = 180.0
+theme_override_colors/font_color = Color(0.98, 0.94, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0.2, 0.08, 0.1, 1)
+theme_override_constants/outline_size = 10
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.45)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 4
+theme_override_font_sizes/font_size = 58
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "Eneko
 la Voie du Sabre"
 
+[node name="Subtitle" type="Label" parent="."]
+offset_left = 80.0
+offset_top = 182.0
+offset_right = 880.0
+offset_bottom = 214.0
+theme_override_colors/font_color = Color(0.95, 0.8, 0.55, 0.9)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.4)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+text = "~ Un conte de sabre et d'esprits ~"
+
 [node name="ContinueButton" type="Button" parent="."]
-offset_left = 380.0
-offset_top = 288.0
-offset_right = 580.0
-offset_bottom = 340.0
+offset_left = 370.0
+offset_top = 272.0
+offset_right = 590.0
+offset_bottom = 328.0
 theme_override_font_sizes/font_size = 26
 text = "Continuer"
 
 [node name="LevelsButton" type="Button" parent="."]
-offset_left = 380.0
-offset_top = 352.0
-offset_right = 580.0
-offset_bottom = 404.0
+offset_left = 370.0
+offset_top = 340.0
+offset_right = 590.0
+offset_bottom = 396.0
 theme_override_font_sizes/font_size = 26
 text = "Niveaux"
 
 [node name="QuitButton" type="Button" parent="."]
-offset_left = 400.0
-offset_top = 416.0
-offset_right = 560.0
-offset_bottom = 462.0
+offset_left = 395.0
+offset_top = 408.0
+offset_right = 565.0
+offset_bottom = 456.0
 theme_override_font_sizes/font_size = 22
 text = "Quitter"
 
 [node name="Hint" type="Label" parent="."]
 offset_left = 80.0
-offset_top = 486.0
+offset_top = 490.0
 offset_right = 880.0
-offset_bottom = 516.0
-theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 0.8)
+offset_bottom = 520.0
+theme_override_colors/font_color = Color(0.95, 0.9, 0.82, 0.75)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 18
 horizontal_alignment = 1
 text = "Contrôles tactiles : Gauche / Droite / Saut · Attaque"

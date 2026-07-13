@@ -43,6 +43,7 @@ const ORBS := [
 ]
 
 var sfx_win: AudioStreamPlayer
+var petals: CPUParticles2D
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -101,6 +102,38 @@ func _build_decor() -> void:
 	sun.position = Vector2(700.0, -60.0)
 	sky_layer.add_child(sun)
 
+	# Montagnes lointaines bleutées, avec sommets enneigés.
+	var mountains := ParallaxLayer.new()
+	mountains.motion_scale = Vector2(0.1, 0.4)
+	bg.add_child(mountains)
+	var mx := -200.0
+	var mi := 0
+	while mx < LEVEL_END + 900.0:
+		var mh := 220.0 + float(mi * 53 % 100)
+		_poly(mountains, PackedVector2Array([
+			Vector2(-280, 0), Vector2(0, -mh), Vector2(280, 0),
+		]), Color(0.55, 0.62, 0.74, 0.6), Vector2(mx, 560))
+		_poly(mountains, PackedVector2Array([
+			Vector2(-34, -mh + 34), Vector2(0, -mh), Vector2(34, -mh + 34), Vector2(0, -mh + 48),
+		]), Color(0.92, 0.94, 0.98, 0.55), Vector2(mx, 560))
+		mx += 400.0 + float(mi * 41 % 130)
+		mi += 1
+
+	# Deuxième crête, plus proche et plus verte.
+	var hills := ParallaxLayer.new()
+	hills.motion_scale = Vector2(0.18, 0.6)
+	bg.add_child(hills)
+	mx = -100.0
+	mi = 0
+	while mx < LEVEL_END + 900.0:
+		var hh := 150.0 + float(mi * 37 % 70)
+		_poly(hills, PackedVector2Array([
+			Vector2(-240, 0), Vector2(-80, -hh + 30), Vector2(0, -hh),
+			Vector2(110, -hh + 40), Vector2(240, 0),
+		]), Color(0.44, 0.56, 0.5, 0.55), Vector2(mx, 570))
+		mx += 340.0 + float(mi * 29 % 90)
+		mi += 1
+
 	# Nuages : quelques amas ovales qui dérivent très lentement.
 	var clouds := ParallaxLayer.new()
 	clouds.motion_scale = Vector2(0.15, 0.15)
@@ -136,6 +169,13 @@ func _build_decor() -> void:
 		var h := 330.0 + float(int(x) * 7 % 90)
 		var green := Color(0.35, 0.5, 0.3) if i % 2 == 0 else Color(0.32, 0.47, 0.28)
 		_poly(mid, _rect_points(8.0, -h, 0.0), green, Vector2(x, 512))
+		# Nœuds du bambou.
+		var jy := -60.0
+		while jy > -h + 30.0:
+			_poly(mid, PackedVector2Array([
+				Vector2(-8, jy), Vector2(8, jy), Vector2(8, jy + 3), Vector2(-8, jy + 3),
+			]), Color(0.24, 0.36, 0.22), Vector2(x, 512))
+			jy -= 74.0
 		if i % 2 == 0:
 			var side := 1.0 if i % 4 == 0 else -1.0
 			_poly(mid, PackedVector2Array([
@@ -151,6 +191,41 @@ func _build_decor() -> void:
 		s.scale = Vector2(0.85, 0.85)
 		mid.add_child(s)
 		x += 620.0
+
+	# Nappes de brume près du sol.
+	var mist_layer := ParallaxLayer.new()
+	mist_layer.motion_scale = Vector2(0.5, 1)
+	bg.add_child(mist_layer)
+	var mist_tex: Texture2D = load("res://assets/mist.svg")
+	x = 300.0
+	while x < LEVEL_END:
+		var m := Sprite2D.new()
+		m.texture = mist_tex
+		m.position = Vector2(x, 495.0)
+		m.scale = Vector2(6.5, 1.8)
+		m.modulate = Color(1, 1, 1, 0.14)
+		mist_layer.add_child(m)
+		x += 520.0
+
+	# Pétales de cerisier portés par le vent (suivent le joueur).
+	petals = CPUParticles2D.new()
+	petals.texture = load("res://assets/leaf.svg")
+	petals.amount = 24
+	petals.lifetime = 9.0
+	petals.preprocess = 9.0
+	petals.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	petals.emission_rect_extents = Vector2(560, 12)
+	petals.direction = Vector2(0.3, 1.0)
+	petals.spread = 15.0
+	petals.gravity = Vector2(8, 16)
+	petals.initial_velocity_min = 24.0
+	petals.initial_velocity_max = 50.0
+	petals.angular_velocity_min = -70.0
+	petals.angular_velocity_max = 70.0
+	petals.scale_amount_min = 0.5
+	petals.scale_amount_max = 0.9
+	petals.color = Color(0.95, 0.74, 0.78)
+	add_child(petals)
 
 ## Plateformes : collision + pilier de terre profond (fini le sol flottant),
 ## avec touffes d'herbe et cailloux pour casser la platitude des blocs.
@@ -175,6 +250,24 @@ func _build_platforms() -> void:
 				Vector2(tx - 6, -40), Vector2(tx - 2, -54), Vector2(tx + 2, -42),
 				Vector2(tx + 6, -56), Vector2(tx + 10, -40),
 			]), Color(0.46, 0.68, 0.36))
+
+		# Fleurs sauvages parmi l'herbe.
+		var flower_count: int = maxi(1, int(p.y / 150.0))
+		for f in flower_count:
+			var fx: float = -p.y + 70.0 + f * ((p.y * 2.0 - 140.0) / maxf(1.0, float(flower_count)))
+			_poly(body, PackedVector2Array([
+				Vector2(fx - 1, -40), Vector2(fx + 1, -40), Vector2(fx + 1, -54), Vector2(fx - 1, -54),
+			]), Color(0.36, 0.52, 0.3))
+			var petal_pts := PackedVector2Array()
+			for k in 6:
+				var a := k * TAU / 6.0
+				petal_pts.append(Vector2(fx + cos(a) * 6.0, -58.0 + sin(a) * 6.0))
+			_poly(body, petal_pts, Color(0.95, 0.66, 0.72))
+			var core_pts := PackedVector2Array()
+			for k in 6:
+				var a := k * TAU / 6.0
+				core_pts.append(Vector2(fx + cos(a) * 2.5, -58.0 + sin(a) * 2.5))
+			_poly(body, core_pts, Color(1.0, 0.85, 0.4))
 
 		# Petits cailloux dans la terre.
 		var rock_count: int = maxi(1, int(p.y / 110.0))
@@ -241,6 +334,11 @@ func _build_goal() -> void:
 	rect.size = Vector2(60, 140)
 	shape.shape = rect
 	goal.add_child(shape)
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(1.0, 0.85, 0.45, 0.5)
+	glow.scale = Vector2(4.5, 4.5)
+	goal.add_child(glow)
 	_poly(goal, PackedVector2Array([Vector2(-40, -60), Vector2(40, -60), Vector2(40, 66), Vector2(-40, 66)]), Color(1, 0.9, 0.5, 0.25))
 	_poly(goal, PackedVector2Array([Vector2(-28, -55), Vector2(-20, -55), Vector2(-20, 70), Vector2(-28, 70)]), Color(0.85, 0.2, 0.15))
 	_poly(goal, PackedVector2Array([Vector2(20, -55), Vector2(28, -55), Vector2(28, 70), Vector2(20, 70)]), Color(0.85, 0.2, 0.15))
@@ -288,6 +386,10 @@ func _setup_audio() -> void:
 	add_child(sfx_win)
 
 # --- Déroulement ----------------------------------------------------------
+
+func _physics_process(_delta: float) -> void:
+	if petals != null and is_instance_valid(player):
+		petals.position = Vector2(player.position.x, player.position.y - 340.0)
 
 func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
 	if body == player:

@@ -12,8 +12,9 @@ Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit, marcher sur
 En chemin, **Léonie**, la gardienne kitsune de la forêt, l'accueille par un court dialogue. Deux
 types d'ennemis, désormais plus nombreux : l'esprit **Onre** qui patrouille sa plateforme, et
 l'**Ombre corrompue** (guerrier spectral sombre) qui poursuit Eneko. Les **orbes spirituels**
-rechargent l'énergie du sabre et, tous les 5 ramassés, **rendent un cœur**. Décor enrichi (soleil,
-nuages, touffes d'herbe, cailloux) et effets sonores et vent ambiant inclus.
+rechargent l'énergie du sabre et, tous les 5 ramassés, **rendent un cœur**. Décor peint : montagnes
+enneigées, collines, nuages, nappes de brume, bambous noueux, fleurs sauvages et **pétales de
+cerisier** portés par le vent. Effets sonores et vent ambiant inclus.
 
 Contrôles tactiles à l'écran : Gauche / Droite / Saut à gauche, Attaque à droite.
 
@@ -22,11 +23,14 @@ d'orbes par niveau. Le menu principal propose **Continuer** (reprend le dernier 
 dès qu'une sauvegarde existe) et **Niveaux** (écran de sélection listant les 5 niveaux prévus —
 les niveaux 3 à 5 apparaissent encore en "à venir").
 
-**Niveau 2 — Le Temple Oublié** : ascension dans un temple ancien éclairé par des **torches** aux
-halos orangés. Les plateformes sont des dalles de pierre fines en zigzag gauche-droite. Nouvel
-ennemi : le **mort-vivant** (guerrier squelettique verdâtre, dessiné en Polygon2D), plus lent mais
-résistant (2 coups de sabre). 3 points de contrôle, pièges à pieux, ombres corrompues et
-apparition de Léonie à mi-parcours. Débloqué en terminant le niveau 1.
+**Niveau 2 — Le Temple Oublié** : ascension nocturne d'une tour en ruine sous un **ciel étoilé**,
+jusqu'à la **lune** qui veille sur le sanctuaire. Torches aux **flammes animées** et halos pulsants,
+**braises flottantes**, piliers de pierre, statues gardiennes aux yeux luisants, bannières rouge et
+or, dalles fissurées et moussues. 3 points de contrôle, pièges à pieux, esprits et ombres
+corrompues, apparition de Léonie à mi-parcours. Débloqué en terminant le niveau 1.
+
+Le **menu principal** est un tableau de crépuscule : soleil couchant derrière un torii sur la
+colline, montagnes, rivière aux reflets dorés et pétales portés par le vent.
 
 ### Structure du projet
 
