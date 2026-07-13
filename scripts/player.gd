@@ -33,6 +33,8 @@ var orbs := 0
 var start_position := Vector2.ZERO
 var _cur := ""
 var _dead := false
+## Force horizontale imposée par le niveau (rafales de vent du niveau 4).
+var wind_force := 0.0
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
@@ -89,7 +91,7 @@ func _physics_process(delta: float) -> void:
 			direction -= 1.0
 		if moving_right or Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D):
 			direction += 1.0
-		velocity.x = direction * SPEED
+		velocity.x = direction * SPEED + wind_force
 		if direction != 0.0:
 			_set_facing(direction)
 

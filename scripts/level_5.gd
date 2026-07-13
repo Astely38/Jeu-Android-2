@@ -9,6 +9,7 @@ const ORB_SCENE := preload("res://scenes/orb.tscn")
 const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const BOSS_SCENE := preload("res://scenes/boss.tscn")
+const CRUMBLE_SCENE := preload("res://scenes/crumble_platform.tscn")
 
 const GROUND_Y := 550.0
 const SPAWN_Y := 477.0
@@ -18,26 +19,34 @@ const MARBLE := Color(0.82, 0.8, 0.74)
 const MARBLE_DARK := Color(0.62, 0.6, 0.54)
 const GOLD_TRIM := Color(0.82, 0.66, 0.28)
 
-## Approche courte (3 plateformes) puis une grande arène unique.
+## Approche en 6 plateformes — dont un grand vide de 400 px franchissable
+## uniquement par deux dalles effondrables — puis la grande arène du boss.
 const PLATFORMS := [
-	Vector2(230, 230), Vector2(820, 210), Vector2(1400, 220),
-	Vector2(2450, 900),  # l'arène du combat final
+	Vector2(230, 230), Vector2(850, 210), Vector2(1470, 230),
+	Vector2(2090, 210), Vector2(2900, 200), Vector2(3520, 190),
+	Vector2(4700, 900),  # l'arène du combat final
 ]
-const CHECKPOINT_XS := [1400.0]
-const PATROL_XS := [650.0, 1300.0]
-const SHADOW_XS := [900.0]
-const TRAP_XS := [350.0]
-const PILLAR_XS := [1750.0, 2100.0, 2800.0, 3150.0]
+const CHECKPOINT_XS := [1470.0, 3520.0]
+const PATROL_XS := [850.0, 1470.0, 2090.0, 2900.0, 3520.0]
+const SHADOW_XS := [1300.0, 2150.0, 2950.0, 3600.0]
+const TRAP_XS := [700.0, 1950.0, 2800.0, 3450.0]
+const PILLAR_XS := [3900.0, 4250.0, 5150.0, 5500.0]
+## Dalles effondrables : x = centre, y = demi-largeur. Les deux premières
+## sont le seul chemin au-dessus du grand vide — il faut enchaîner les
+## sauts avant qu'elles ne s'écroulent.
+const CRUMBLES := [Vector2(2430, 70), Vector2(2600, 70), Vector2(3215, 70)]
 const ORBS := [
-	Vector2(300, 420), Vector2(500, 385), Vector2(820, 420),
-	Vector2(1050, 385), Vector2(1400, 420), Vector2(1600, 385),
+	Vector2(320, 420), Vector2(560, 385), Vector2(850, 420),
+	Vector2(1150, 385), Vector2(1470, 420), Vector2(1800, 385),
+	Vector2(2090, 420), Vector2(2430, 340), Vector2(2600, 340),
+	Vector2(2900, 420), Vector2(3215, 340), Vector2(3520, 420),
 ]
 
-const ARENA_TRIGGER_X := 1650.0
-const ARENA_MIN_X := 1620.0
-const ARENA_MAX_X := 3280.0
-const BOSS_SPAWN_X := 3100.0
-const LEVEL_END := 3650.0
+const ARENA_TRIGGER_X := 3950.0
+const ARENA_MIN_X := 3830.0
+const ARENA_MAX_X := 5570.0
+const BOSS_SPAWN_X := 5250.0
+const LEVEL_END := 6000.0
 
 const BOSS_INTRO_LINES := [
 	{ "name": "???", "text": "Qui ose troubler le dernier repos du sanctuaire ?" },
@@ -64,6 +73,7 @@ func _ready() -> void:
 	_build_decor()
 	_build_platforms()
 	_build_pillars()
+	_build_crumbles()
 	_build_checkpoints()
 	_build_traps()
 	_build_arena_trigger()
@@ -189,6 +199,14 @@ func _build_platforms() -> void:
 		_poly(body, _rect_points(p.y, -50.0, -40.0), GOLD_TRIM)
 		_poly(body, _rect_points(p.y, -40.0, -34.0), MARBLE)
 		add_child(body)
+
+## Dalles effondrables (voir CRUMBLES) : posées au niveau du sol.
+func _build_crumbles() -> void:
+	for c in CRUMBLES:
+		var pad := CRUMBLE_SCENE.instantiate()
+		pad.half_width = c.y
+		pad.position = Vector2(c.x, GROUND_Y - 44.0)
+		add_child(pad)
 
 ## Colonnes de marbre décoratives bordant l'arène (sans collision).
 func _build_pillars() -> void:

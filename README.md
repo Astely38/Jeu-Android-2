@@ -41,12 +41,19 @@ et froid**. Pics enneigés, crêtes rocheuses, **drapeaux de prière** déchiré
 **stalactites de glace**. Léonie apparaît une dernière fois à mi-parcours avant de laisser Eneko
 continuer seul vers le sommet. Débloqué en terminant le niveau 3.
 
-**Niveau 5 — Le Sanctuaire Final** : courte traversée de marbre pâle et d'or menant à une arène où
-Eneko affronte seul le **Gardien Corrompu**, boss final doté de **8 points de vie**. Une seconde
-phase se déclenche à mi-vie : le Gardien accélère, charge, et invoque deux Ombres corrompues dans
-l'arène. Une barre de vie s'affiche en haut de l'écran pendant le combat. Léonie n'apparaît pas —
-elle l'a annoncé au sommet de la montagne, Eneko termine seul. Débloqué en terminant le niveau 4 ;
-dernier niveau de la progression.
+**Niveau 5 — Le Sanctuaire Final** : traversée de marbre pâle et d'or — dont un grand vide
+franchissable uniquement par des **dalles effondrables** — menant à l'arène du **Gardien Corrompu**,
+boss final doté de **12 points de vie et 3 phases** : marche, puis charges, puis charges rapprochées
+et coups enchaînés, avec des Ombres invoquées en renfort à chaque changement de phase. Une barre de
+vie s'affiche en haut de l'écran pendant le combat. Léonie n'apparaît pas — elle l'a annoncé au
+sommet de la montagne, Eneko termine seul. Débloqué en terminant le niveau 4 ; dernier niveau de la
+progression.
+
+**Nouvelles mécaniques** : **ponts de corde praticables** au-dessus des grandes brèches et **dalles
+effondrables** qui tremblent puis s'écroulent sous les pieds avant de se reformer (niveaux 4-5),
+**rafales de vent** alternées qui poussent Eneko sur la montagne — la brume et la neige filent dans
+le sens du vent pour l'annoncer (niveau 4). Les esprits Onre et les Ombres corrompues sont
+globalement plus rapides.
 
 Le **système de défi** note chaque niveau terminé (Bronze/Argent/Or/Platine) selon les orbes
 récoltés et les dégâts subis, affiché sur l'écran de victoire. **Toute défaite (chute ou 0 cœur)

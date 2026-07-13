@@ -3,8 +3,8 @@ extends CharacterBody2D
 ## et frappe au contact. Silhouette sombre (sprite shinobi teinté).
 ## Vaincue au sabre, elle se dissipe dans un fondu spirituel.
 
-@export var speed := 92.0
-@export var detect_range := 340.0
+@export var speed := 104.0
+@export var detect_range := 380.0
 @export var attack_range := 46.0
 
 const GRAVITY := 980.0

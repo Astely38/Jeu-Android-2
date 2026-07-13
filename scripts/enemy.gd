@@ -4,7 +4,7 @@ extends CharacterBody2D
 ## dissipe alors dans un fondu spirituel.
 
 @export var patrol_distance := 100.0
-@export var speed := 60.0
+@export var speed := 74.0
 
 const GRAVITY := 980.0
 const ONRE := "res://assets/enemies/onre/"

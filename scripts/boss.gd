@@ -1,8 +1,9 @@
 extends CharacterBody2D
 ## Le Gardien Corrompu, boss final du Sanctuaire. Version massive et
-## assombrie du guerrier spectral (Ombre) : plusieurs points de vie, une
-## seconde phase plus agressive à mi-vie (charge + invocation d'Ombres),
-## et une attaque de contact classique.
+## assombrie du guerrier spectral (Ombre) : 12 points de vie et trois
+## phases de plus en plus agressives — marche, puis charges, puis charges
+## rapprochées et coups enchaînés. Chaque changement de phase invoque des
+## Ombres en renfort (géré par le niveau via le signal phase_changed).
 
 signal defeated
 signal health_changed(current: int, max_health: int)
@@ -10,12 +11,16 @@ signal phase_changed(new_phase: int)
 
 const GRAVITY := 980.0
 const SHINOBI := "res://assets/enemies/shinobi/"
-const MAX_HEALTH := 8
-const SPEED_PHASE1 := 70.0
-const SPEED_PHASE2 := 108.0
-const DASH_SPEED := 340.0
+const MAX_HEALTH := 12
+## Trois phases : la 2 s'active aux 2/3 de la vie, la 3 au dernier tiers.
+## Chaque phase augmente la vitesse de marche et raccourcit le délai entre
+## deux charges (la phase 1 ne charge jamais).
+const PHASE2_HEALTH := 8
+const PHASE3_HEALTH := 4
+const PHASE_SPEED := [80.0, 125.0, 155.0]
+const PHASE_DASH_CD := [0.0, 2.6, 1.6]
+const DASH_SPEED := 380.0
 const DASH_DURATION := 0.45
-const DASH_COOLDOWN := 3.2
 const ATTACK_RANGE := 60.0
 
 var health := MAX_HEALTH
@@ -111,12 +116,12 @@ func _physics_process(delta: float) -> void:
 	if dist <= ATTACK_RANGE:
 		velocity.x = 0.0
 		_attack()
-	elif phase == 2 and _dash_cd <= 0.0 and dist > 160.0 and dist < 420.0:
-		_dash_cd = DASH_COOLDOWN
+	elif phase >= 2 and _dash_cd <= 0.0 and dist > 150.0 and dist < 450.0:
+		_dash_cd = PHASE_DASH_CD[phase - 1]
 		_dash_timer = DASH_DURATION
 		_play("run")
 	else:
-		var speed := SPEED_PHASE2 if phase == 2 else SPEED_PHASE1
+		var speed: float = PHASE_SPEED[phase - 1]
 		velocity.x = dir * speed
 		_play("run")
 
@@ -127,7 +132,8 @@ func _clamp_to_arena() -> void:
 	position.x = clampf(position.x, arena_min_x, arena_max_x)
 
 func _attack() -> void:
-	_attack_lock = 0.6
+	# En phase 3 le Gardien enchaîne ses coups plus vite.
+	_attack_lock = 0.6 if phase < 3 else 0.4
 	_play("attack")
 
 func _play(n: String) -> void:
@@ -151,8 +157,13 @@ func die() -> void:
 	if health <= 0:
 		_die_for_real()
 		return
-	if phase == 1 and health <= MAX_HEALTH / 2:
-		phase = 2
+	var new_phase := 1
+	if health <= PHASE3_HEALTH:
+		new_phase = 3
+	elif health <= PHASE2_HEALTH:
+		new_phase = 2
+	if new_phase > phase:
+		phase = new_phase
 		phase_changed.emit(phase)
 	_hurt_timer = 0.3
 	sfx_hurt.play()

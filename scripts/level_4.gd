@@ -8,6 +8,7 @@ const ORB_SCENE := preload("res://scenes/orb.tscn")
 const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
+const CRUMBLE_SCENE := preload("res://scenes/crumble_platform.tscn")
 
 const GROUND_Y := 550.0    # centre vertical des plateformes
 const SPAWN_Y := 477.0     # hauteur d'apparition des personnages
@@ -19,22 +20,26 @@ const ROCK := Color(0.42, 0.42, 0.46)
 const ROCK_DARK := Color(0.3, 0.3, 0.34)
 const SNOW := Color(0.92, 0.94, 0.98)
 
-## Plateformes : x = centre, y = demi-largeur. L'altitude monte lentement
-## (GROUND_Y légèrement variable) pour donner l'impression d'ascension sans
-## complexifier la physique. Trous de 140 à 170 px, un cran plus exigeant
-## que le niveau 3.
+## Plateformes : x = centre, y = demi-largeur. Trous courants de 140 à
+## 170 px (portée de saut max ≈ 190 px) ; les trois brèches larges sont
+## franchies par de vrais ponts de corde, et deux passages proposent des
+## dalles effondrables en appui.
 const PLATFORMS := [
-	Vector2(230, 230), Vector2(850, 220), Vector2(1470, 210),
-	Vector2(2080, 200), Vector2(2680, 220), Vector2(3300, 200),
-	Vector2(3920, 210), Vector2(4540, 200), Vector2(5160, 220),
-	Vector2(5780, 210), Vector2(6420, 240), Vector2(7040, 280),
+	Vector2(230, 230), Vector2(850, 250), Vector2(1470, 230),
+	Vector2(2080, 200), Vector2(2680, 240), Vector2(3300, 230),
+	Vector2(3920, 210), Vector2(4540, 200), Vector2(5160, 250),
+	Vector2(5780, 200), Vector2(6420, 240), Vector2(7040, 280),
 ]
-const CHECKPOINT_XS := [1600.0, 3550.0, 5500.0]
-const PATROL_XS := [900.0, 1500.0, 2150.0, 2900.0, 3800.0, 4600.0, 5300.0, 6100.0]
-const SHADOW_XS := [1420.0, 2200.0, 3300.0, 4300.0, 5200.0, 6000.0, 6800.0]
-const TRAP_XS := [700.0, 2000.0, 3150.0, 4350.0, 5650.0, 6700.0]
-const CAIRN_XS := [500.0, 1750.0, 2680.0, 3920.0, 5160.0, 6420.0]
-const BRIDGE_XS := [1980.0, 4230.0]  # ponts de corde décoratifs entre deux plateformes
+const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
+const PATROL_XS := [900.0, 1500.0, 2150.0, 2750.0, 3850.0, 4600.0, 5300.0, 6300.0]
+const SHADOW_XS := [1420.0, 2200.0, 3300.0, 4450.0, 5200.0, 6350.0, 6900.0]
+const TRAP_XS := [700.0, 2000.0, 3150.0, 4400.0, 5650.0, 6850.0]
+const CAIRN_XS := [800.0, 2680.0, 3920.0, 5160.0, 6420.0, 7150.0]
+## Ponts de corde praticables : x = centre du trou, y = demi-largeur du
+## tablier (déborde de ~10 px sur chaque plateforme voisine).
+const BRIDGES := [Vector2(1790, 100), Vector2(4235, 115), Vector2(6080, 110)]
+## Dalles effondrables en appui au milieu de deux trous exigeants.
+const CRUMBLES := [Vector2(3620, 70), Vector2(4825, 70)]
 const ORBS := [
 	Vector2(320, 420), Vector2(540, 385), Vector2(850, 420),
 	Vector2(1150, 385), Vector2(1470, 420), Vector2(1780, 385),
@@ -54,9 +59,19 @@ const LEONIE_LINES := [
 	{ "name": "Eneko", "text": "Je continuerai. Pour tous ceux que j'ai croisés en chemin." },
 ]
 
+## Rafales de vent : toutes les WIND_PERIOD secondes, une bourrasque pousse
+## Eneko horizontalement pendant WIND_DURATION secondes, en alternant le
+## sens à chaque rafale. La brume s'accélère visiblement pendant la rafale.
+const WIND_PERIOD := 7.0
+const WIND_DURATION := 1.8
+const WIND_STRENGTH := 130.0
+
 var sfx_win: AudioStreamPlayer
 var mist_wisps: CPUParticles2D
 var snow: CPUParticles2D
+var _wind_t := 0.0
+var _wind_dir := 1.0
+var _wind_active := false
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -69,6 +84,7 @@ func _ready() -> void:
 	_build_platforms()
 	_build_cairns()
 	_build_bridges()
+	_build_crumbles()
 	_build_checkpoints()
 	_build_traps()
 	_build_goal()
@@ -85,13 +101,30 @@ func _ready() -> void:
 	if next_scene != "":
 		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not is_instance_valid(player):
 		return
 	if mist_wisps != null:
 		mist_wisps.position = Vector2(player.position.x, player.position.y - 40.0)
 	if snow != null:
 		snow.position = Vector2(player.position.x, player.position.y - 340.0)
+
+	# Cycle des rafales de vent.
+	_wind_t += delta
+	var in_gust := fmod(_wind_t, WIND_PERIOD) < WIND_DURATION
+	if in_gust and not _wind_active:
+		_wind_active = true
+	elif not in_gust and _wind_active:
+		_wind_active = false
+		_wind_dir *= -1.0  # la prochaine rafale soufflera dans l'autre sens
+	player.wind_force = _wind_dir * WIND_STRENGTH if in_gust else 0.0
+	# Indice visuel : la brume file dans le sens du vent pendant la rafale.
+	if mist_wisps != null:
+		mist_wisps.direction = Vector2(_wind_dir, 0)
+		mist_wisps.initial_velocity_min = 90.0 if in_gust else 10.0
+		mist_wisps.initial_velocity_max = 160.0 if in_gust else 26.0
+	if snow != null:
+		snow.gravity = Vector2(_wind_dir * 160.0, 26) if in_gust else Vector2(4, 26)
 
 # --- Construction du niveau ---------------------------------------------
 
@@ -290,35 +323,58 @@ func _build_cairns() -> void:
 			y -= s * 0.8
 		add_child(cairn)
 
-## Ponts de corde décoratifs tendus entre deux plateformes voisines (pas de
-## collision propre : ils flottent visuellement au-dessus du vide).
+## Ponts de corde PRATICABLES : un vrai tablier avec collision, aligné sur
+## le dessus des plateformes, tendu exactement au-dessus des brèches larges.
 func _build_bridges() -> void:
-	for bx in BRIDGE_XS:
-		var bridge := Node2D.new()
-		bridge.position = Vector2(bx, GROUND_Y - 40.0)
-		var half := 90.0
-		# Deux cordes porteuses qui pendent légèrement.
-		for row in [-14.0, 14.0]:
-			var pts := PackedVector2Array()
-			var steps := 8
-			for k in steps + 1:
-				var t := float(k) / float(steps)
-				var px := lerpf(-half, half, t)
-				var py := float(row) + sin(t * PI) * 16.0
-				pts.append(Vector2(px, py))
-			for k in steps:
-				_poly(bridge, PackedVector2Array([
-					pts[k] + Vector2(0, -1.5), pts[k + 1] + Vector2(0, -1.5),
-					pts[k + 1] + Vector2(0, 1.5), pts[k] + Vector2(0, 1.5),
-				]), Color(0.32, 0.24, 0.16))
-		# Planches transversales.
-		var plank_count := 7
-		for k in plank_count:
-			var t := float(k) / float(plank_count - 1)
-			var px := lerpf(-half, half, t)
-			var py := sin(t * PI) * 16.0
-			_poly(bridge, _rect_points(10.0, -3.0, 3.0), Color(0.4, 0.3, 0.2), Vector2(px, py))
-		add_child(bridge)
+	for b in BRIDGES:
+		var half: float = b.y
+		var body := StaticBody2D.new()
+		body.position = Vector2(b.x, GROUND_Y)
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(half * 2.0, 12.0)
+		shape.shape = rect
+		shape.position = Vector2(0, -44.0)  # tablier au niveau du sol (-50 → -38)
+		body.add_child(shape)
+		# Planches du tablier, teintes alternées.
+		var px := -half
+		var pi := 0
+		while px < half:
+			var pw := minf(22.0, half - px)
+			var c := Color(0.42, 0.31, 0.2) if pi % 2 == 0 else Color(0.36, 0.26, 0.17)
+			_poly(body, PackedVector2Array([
+				Vector2(px, -50), Vector2(px + pw, -50),
+				Vector2(px + pw, -38), Vector2(px, -38),
+			]), c)
+			px += 24.0
+			pi += 1
+		# Poteaux aux deux extrémités + corde de garde qui pend légèrement.
+		for side in [-1.0, 1.0]:
+			_poly(body, PackedVector2Array([
+				Vector2(side * half - 4, -50), Vector2(side * half + 4, -50),
+				Vector2(side * half + 3, -108), Vector2(side * half - 3, -108),
+			]), Color(0.3, 0.22, 0.15))
+		var steps := 8
+		var k := 0
+		while k < steps:
+			var t0 := float(k) / float(steps)
+			var t1 := float(k + 1) / float(steps)
+			var a := Vector2(lerpf(-half, half, t0), -104.0 + sin(t0 * PI) * 18.0)
+			var bb := Vector2(lerpf(-half, half, t1), -104.0 + sin(t1 * PI) * 18.0)
+			_poly(body, PackedVector2Array([
+				a + Vector2(0, -1.5), bb + Vector2(0, -1.5),
+				bb + Vector2(0, 1.5), a + Vector2(0, 1.5),
+			]), Color(0.32, 0.24, 0.16))
+			k += 1
+		add_child(body)
+
+## Dalles effondrables posées au milieu des trous les plus exigeants.
+func _build_crumbles() -> void:
+	for c in CRUMBLES:
+		var pad := CRUMBLE_SCENE.instantiate()
+		pad.half_width = c.y
+		pad.position = Vector2(c.x, GROUND_Y - 44.0)
+		add_child(pad)
 
 func _build_checkpoints() -> void:
 	for x in CHECKPOINT_XS:
