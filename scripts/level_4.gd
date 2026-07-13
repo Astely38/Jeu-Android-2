@@ -225,7 +225,7 @@ func _build_prayer_flags(parent: Node, base: Vector2, seed_i: int) -> void:
 	var count := 6
 	for k in count:
 		var t := float(k) / float(count - 1)
-		var fx := lerp(0.0, span, t)
+		var fx := lerpf(0.0, span, t)
 		var fy := top + 6.0 + sin(t * PI) * 14.0
 		var c: Color = colors[(seed_i + k) % colors.size()]
 		c.a = 0.7
@@ -303,8 +303,8 @@ func _build_bridges() -> void:
 			var steps := 8
 			for k in steps + 1:
 				var t := float(k) / float(steps)
-				var px := lerp(-half, half, t)
-				var py := row + sin(t * PI) * 16.0
+				var px := lerpf(-half, half, t)
+				var py := float(row) + sin(t * PI) * 16.0
 				pts.append(Vector2(px, py))
 			for k in steps:
 				_poly(bridge, PackedVector2Array([
@@ -315,7 +315,7 @@ func _build_bridges() -> void:
 		var plank_count := 7
 		for k in plank_count:
 			var t := float(k) / float(plank_count - 1)
-			var px := lerp(-half, half, t)
+			var px := lerpf(-half, half, t)
 			var py := sin(t * PI) * 16.0
 			_poly(bridge, _rect_points(10.0, -3.0, 3.0), Color(0.4, 0.3, 0.2), Vector2(px, py))
 		add_child(bridge)
