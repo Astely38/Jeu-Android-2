@@ -21,7 +21,7 @@ offset_bottom = 2600.0
 color = Color(0.2, 0.18, 0.26, 1)
 
 [node name="Player" parent="." instance=ExtResource("2")]
-position = Vector2(300, 1827)
+position = Vector2(300, 1824)
 
 [node name="Dialogue" parent="." instance=ExtResource("3")]
 
