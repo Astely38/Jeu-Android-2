@@ -9,6 +9,7 @@ const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 const CRUMBLE_SCENE := preload("res://scenes/crumble_platform.tscn")
+const SPIRIT_SCENE := preload("res://scenes/spirit.tscn")
 
 const GROUND_Y := 550.0    # centre vertical des plateformes
 const SPAWN_Y := 477.0     # hauteur d'apparition des personnages
@@ -40,6 +41,8 @@ const CAIRN_XS := [800.0, 2680.0, 3920.0, 5160.0, 6420.0, 7150.0]
 const BRIDGES := [Vector2(1790, 100), Vector2(4235, 115), Vector2(6080, 110)]
 ## Dalles effondrables en appui au milieu de deux trous exigeants.
 const CRUMBLES := [Vector2(3620, 70), Vector2(4825, 70)]
+## Yūrei tireurs en sentinelles au-dessus des ponts de corde.
+const SPIRIT_XS := [1790.0, 4235.0, 6080.0]
 const ORBS := [
 	Vector2(320, 420), Vector2(540, 385), Vector2(850, 420),
 	Vector2(1150, 385), Vector2(1470, 420), Vector2(1780, 385),
@@ -495,6 +498,10 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = Vector2(x, SPAWN_Y)
 		add_child(s)
+	for x in SPIRIT_XS:
+		var sp := SPIRIT_SCENE.instantiate()
+		sp.position = Vector2(x, SPAWN_Y - 145.0)
+		add_child(sp)
 	var leonie := LEONIE_SCENE.instantiate()
 	leonie.position = Vector2(3550.0, SPAWN_Y)
 	leonie.set_lines(LEONIE_LINES)

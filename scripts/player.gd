@@ -79,6 +79,7 @@ func _ready() -> void:
 	start_position = position
 	attack_area.monitoring = false
 	attack_area.body_entered.connect(_on_attack_area_body_entered)
+	attack_area.area_entered.connect(_on_attack_area_area_entered)
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SAMURAI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
 		{"name": "run", "path": SAMURAI + "Run.png", "frames": 8, "fps": 13.0, "loop": true},
@@ -495,6 +496,12 @@ func _on_attack_area_body_entered(body: Node2D) -> void:
 		body.die()
 		_shake = 3.5  # impact ressenti à chaque coup qui porte
 		_hit_stop()
+
+## Le sabre dissipe aussi les projectiles (orbes corrompus des Yūrei).
+func _on_attack_area_area_entered(area: Area2D) -> void:
+	if area.has_method("die"):
+		area.die()
+		_shake = 2.0
 
 func _on_left_pressed() -> void:
 	moving_left = true

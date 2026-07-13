@@ -10,6 +10,7 @@ const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const BOSS_SCENE := preload("res://scenes/boss.tscn")
 const CRUMBLE_SCENE := preload("res://scenes/crumble_platform.tscn")
+const SPIRIT_SCENE := preload("res://scenes/spirit.tscn")
 
 const GROUND_Y := 550.0
 const SPAWN_Y := 477.0
@@ -29,6 +30,9 @@ const PLATFORMS := [
 const CHECKPOINT_XS := [1470.0, 3520.0]
 const PATROL_XS := [850.0, 1470.0, 2090.0, 2900.0, 3520.0]
 const SHADOW_XS := [1300.0, 2150.0, 2950.0, 3600.0]
+## Yūrei tireurs : l'un garde l'approche, l'autre surplombe le grand vide
+## aux dalles effondrables.
+const SPIRIT_XS := [1150.0, 2515.0]
 const TRAP_XS := [700.0, 1950.0, 2800.0, 3450.0]
 const PILLAR_XS := [3900.0, 4250.0, 5150.0, 5500.0]
 ## Dalles effondrables : x = centre, y = demi-largeur. Les deux premières
@@ -320,6 +324,10 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = Vector2(x, SPAWN_Y)
 		add_child(s)
+	for x in SPIRIT_XS:
+		var sp := SPIRIT_SCENE.instantiate()
+		sp.position = Vector2(x, SPAWN_Y - 130.0)
+		add_child(sp)
 	for o in ORBS:
 		var orb := ORB_SCENE.instantiate()
 		orb.position = o
@@ -399,33 +407,125 @@ func _play_victory_cinematic() -> void:
 	Engine.time_scale = 1.0
 	sfx_win.play()
 	SaveManager.complete_level(LEVEL_ID, player.orbs)
-	_display_challenge_results()
-	win_label.visible = true
+	var results := Challenge.finish_level()
+	_show_endgame_recap(results)
 	var t2 := create_tween()
 	t2.tween_property(flash, "color:a", 0.0, 0.7)
 	t2.finished.connect(layer.queue_free)
 
-func _display_challenge_results() -> void:
-	var results := Challenge.finish_level()
+## Écran de fin de jeu : à la place du simple écran de victoire, le
+## récapitulatif complet du périple — grade et meilleur temps de chacun
+## des cinq niveaux — avec la performance du combat final en tête.
+func _show_endgame_recap(results: Dictionary) -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 3
+	add_child(layer)
 
-	var challenge_stats = win_label.find_child("ChallengeStats", true, false)
-	if challenge_stats == null:
-		return
+	var bg := ColorRect.new()
+	bg.color = Color(0.07, 0.06, 0.11, 0.92)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(bg)
 
-	var grade_label = challenge_stats.find_child("Grade", true, false)
-	var orbs_label = challenge_stats.find_child("Orbs", true, false)
-	var damage_label = challenge_stats.find_child("Damage", true, false)
-	var time_label = challenge_stats.find_child("Time", true, false)
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.offset_left = -330.0
+	box.offset_right = 330.0
+	box.offset_top = -235.0
+	box.offset_bottom = 235.0
+	box.add_theme_constant_override("separation", 6)
+	layer.add_child(box)
 
-	if grade_label:
-		grade_label.text = "Grade : %s" % Challenge.grade_name(results["grade"])
-		grade_label.add_theme_color_override("font_color", Challenge.grade_color(results["grade"]))
-	if orbs_label:
-		orbs_label.text = "Orbes : %d/%d" % [results["orbs"], results["total_orbs"]]
-	if damage_label:
-		damage_label.text = "Dégâts : %d" % results["damage"]
-	if time_label:
-		time_label.text = "Temps : %s" % _format_time(results["time"])
+	var title := Label.new()
+	title.text = "La Voie du Sabre est accomplie !"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
+	box.add_child(title)
+
+	var run := Label.new()
+	run.text = "Gardien vaincu — Grade : %s — %s — Orbes : %d/%d" % [
+		Challenge.grade_name(results["grade"]), _format_time(results["time"]),
+		results["orbs"], results["total_orbs"],
+	]
+	run.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	run.add_theme_font_size_override("font_size", 18)
+	box.add_child(run)
+
+	box.add_child(_spacer(10.0))
+
+	var header := Label.new()
+	header.text = "Ton périple :"
+	header.add_theme_font_size_override("font_size", 20)
+	box.add_child(header)
+
+	for id in SaveManager.LEVEL_ORDER:
+		var lid: String = id
+		box.add_child(_recap_row(lid))
+
+	box.add_child(_spacer(12.0))
+
+	var buttons := HBoxContainer.new()
+	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons.add_theme_constant_override("separation", 20)
+	box.add_child(buttons)
+
+	var replay := _recap_button("Rejouer le niveau", Color(0.92, 0.65, 0.3))
+	replay.pressed.connect(func(): get_tree().reload_current_scene())
+	buttons.add_child(replay)
+	var menu_b := _recap_button("Retour au menu", Color(0.6, 0.5, 0.45))
+	menu_b.pressed.connect(_on_menu_pressed)
+	buttons.add_child(menu_b)
+
+## Une ligne du récapitulatif : nom du niveau, meilleur grade (coloré) et
+## meilleur temps.
+func _recap_row(row_level_id: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var name_l := Label.new()
+	name_l.text = str(SaveManager.LEVEL_NAMES.get(row_level_id, row_level_id))
+	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_l.add_theme_font_size_override("font_size", 18)
+	row.add_child(name_l)
+	var grade := SaveManager.best_grade(row_level_id)
+	var grade_l := Label.new()
+	grade_l.text = Challenge.grade_name(grade) if grade != "" else "—"
+	if grade != "":
+		grade_l.add_theme_color_override("font_color", Challenge.grade_color(grade))
+	grade_l.add_theme_font_size_override("font_size", 18)
+	row.add_child(grade_l)
+	var bt := SaveManager.best_time(row_level_id)
+	var time_l := Label.new()
+	time_l.text = _format_time(bt) if bt > 0.0 else "—"
+	time_l.custom_minimum_size = Vector2(70, 0)
+	time_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	time_l.add_theme_font_size_override("font_size", 18)
+	row.add_child(time_l)
+	return row
+
+func _spacer(h: float) -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(0, h)
+	return c
+
+func _recap_button(label_text: String, accent: Color) -> Button:
+	var b := Button.new()
+	b.text = label_text
+	b.custom_minimum_size = Vector2(220, 52)
+	b.add_theme_font_size_override("font_size", 22)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.1, 0.09, 0.17, 0.92)
+	sb.border_color = accent
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(10)
+	sb.set_content_margin_all(8.0)
+	var hov: StyleBoxFlat = sb.duplicate()
+	hov.bg_color = Color(0.2, 0.15, 0.22, 0.95)
+	var prs: StyleBoxFlat = sb.duplicate()
+	prs.bg_color = Color(0.34, 0.2, 0.18, 0.95)
+	b.add_theme_stylebox_override("normal", sb)
+	b.add_theme_stylebox_override("hover", hov)
+	b.add_theme_stylebox_override("pressed", prs)
+	return b
 
 func _format_time(seconds: float) -> String:
 	var mins: int = int(seconds) / 60

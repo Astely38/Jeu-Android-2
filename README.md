@@ -9,10 +9,11 @@ torii pour terminer le niveau.
 
 Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit, marcher sur un **piège à pieux de bois**,
 **ou tomber dans un trou** coûte un cœur et renvoie au dernier **point de contrôle** (bannière).
-En chemin, **Léonie**, la gardienne kitsune de la forêt, l'accueille par un court dialogue. Deux
-types d'ennemis, désormais plus nombreux : l'esprit **Onre** qui patrouille sa plateforme, et
-l'**Ombre corrompue** (guerrier spectral sombre) qui poursuit Eneko. Les **orbes spirituels**
-comptent pour le grade de fin de niveau et, tous les 5 ramassés, **rendent un cœur**. Décor peint : montagnes
+En chemin, **Léonie**, la gardienne kitsune de la forêt, l'accueille par un court dialogue. Trois
+types d'ennemis : l'esprit **Onre** qui patrouille sa plateforme, l'**Ombre corrompue** (guerrier
+spectral sombre) qui poursuit Eneko, et le **Yūrei tireur** (niveaux 3 à 5), esprit flottant qui
+crache des **orbes corrompus** — esquivables d'une ruée ou **tranchables au sabre**. Les **orbes
+spirituels** comptent pour le grade de fin de niveau et, tous les 5 ramassés, **rendent un cœur**. Décor peint : montagnes
 enneigées, collines, nuages, nappes de brume, bambous noueux, fleurs sauvages et **pétales de
 cerisier** portés par le vent. Effets sonores et vent ambiant inclus.
 
@@ -55,7 +56,8 @@ boss final doté de **12 points de vie et 3 phases** : marche, puis charges, pui
 et coups enchaînés, avec des Ombres invoquées en renfort à chaque changement de phase. Une barre de
 vie s'affiche en haut de l'écran pendant le combat. Léonie n'apparaît pas — elle l'a annoncé au
 sommet de la montagne, Eneko termine seul. Débloqué en terminant le niveau 4 ; dernier niveau de la
-progression.
+progression. La victoire ouvre un **écran de fin de jeu** : récapitulatif du périple complet avec
+le meilleur grade (coloré) et le meilleur temps de chacun des cinq niveaux.
 
 **Nouvelles mécaniques** : **ponts de corde praticables** au-dessus des grandes brèches et **dalles
 effondrables** qui tremblent puis s'écroulent sous les pieds avant de se reformer (niveaux 4-5),
