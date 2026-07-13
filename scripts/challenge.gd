@@ -1,8 +1,8 @@
 extends Node
 ## Système de défi : track les performances du joueur dans un niveau
 ## (orbes, dégâts, temps) et calcule une note/grade.
-
-class_name Challenge
+## Autoload (singleton) enregistré sous le nom "Challenge" dans project.godot.
+## Pas de class_name ici : ça entrerait en conflit avec le nom de l'autoload.
 
 var level_id: String = ""
 var start_time: float = 0.0
