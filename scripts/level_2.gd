@@ -2,10 +2,14 @@ extends Node2D
 ## Niveau 2 : « Le Temple Oublié ».
 ## Ascension verticale en zigzag dans les ruines d'un temple de pierre.
 ## Même schéma data-driven que level.gd (niveau 1) : PLATFORMS liste des
-## plateformes à gravir, chacune (x, y, demi-largeur). Les paliers ont été
-## calibrés pour rester atteignables avec le saut d'Eneko (vitesse initiale
-## -430, gravité 980 ⇒ hauteur max ≈ 94 px par saut) : montées de 55-80 px
-## avec un décalage horizontal borné en conséquence.
+## plateformes à gravir, chacune (x, y, demi-largeur). Les paliers sont
+## calibrés pour rester largement atteignables avec le saut d'Eneko (vitesse
+## initiale -480, gravité 980 ⇒ portée max ≈ 170-185 px selon la montée) :
+## chaque saut ne demande jamais plus de 80 px de décalage horizontal pour
+## 60-80 px de montée, soit une marge confortable (35-47 % de la portée max)
+## plutôt qu'un timing au pixel près. Les plateformes normales sont larges
+## (demi-largeur 110, 220 px de large) et les paliers de repos/checkpoints
+## encore plus (demi-largeur 200).
 
 const ORB_SCENE := preload("res://scenes/orb.tscn")
 const PATROL_SCENE := preload("res://scenes/enemy.tscn")
@@ -23,16 +27,16 @@ const STONE_TOP := Color(0.56, 0.58, 0.64)
 ## Plateformes de pierre, du bas (entrée) vers le haut (sanctuaire).
 ## x = centre, y = centre vertical, hw = demi-largeur.
 const PLATFORMS := [
-	Vector2(150, 1900), Vector2(270, 1840), Vector2(150, 1780), Vector2(270, 1720),
-	Vector2(390, 1660), Vector2(390, 1580), Vector2(560, 1580), Vector2(440, 1520),
-	Vector2(560, 1460), Vector2(440, 1400), Vector2(560, 1340), Vector2(560, 1260),
-	Vector2(440, 1200), Vector2(560, 1140), Vector2(440, 1080), Vector2(560, 1020),
-	Vector2(560, 940), Vector2(410, 880), Vector2(560, 820), Vector2(410, 760),
-	Vector2(480, 680), Vector2(480, 600),
+	Vector2(150, 1900), Vector2(230, 1840), Vector2(150, 1780), Vector2(230, 1720),
+	Vector2(310, 1660), Vector2(390, 1580), Vector2(460, 1580), Vector2(380, 1520),
+	Vector2(460, 1460), Vector2(380, 1400), Vector2(460, 1340), Vector2(460, 1260),
+	Vector2(380, 1200), Vector2(460, 1140), Vector2(380, 1080), Vector2(460, 1020),
+	Vector2(460, 940), Vector2(380, 880), Vector2(460, 820), Vector2(380, 760),
+	Vector2(440, 680), Vector2(440, 600),
 ]
 const HALF_WIDTHS := [
-	220, 90, 85, 90, 90, 230, 95, 85, 90, 85, 90, 230,
-	85, 90, 85, 90, 230, 85, 90, 85, 230, 150,
+	220, 110, 110, 110, 110, 200, 110, 110, 110, 110, 110, 200,
+	110, 110, 110, 110, 200, 110, 110, 110, 200, 150,
 ]
 const CHECKPOINT_IDX := [5, 11, 16, 20]
 const LEONIE_IDX := 11

@@ -37,6 +37,7 @@ var _cur := ""
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var energy_fill: Polygon2D = $HUD/EnergyFill
 @onready var orb_label: Label = $HUD/OrbCount
+@onready var game_over_label: Label = $HUD/GameOverLabel
 @onready var hearts: Array = [$HUD/Heart1, $HUD/Heart2, $HUD/Heart3]
 @onready var sfx_jump: AudioStreamPlayer = $SfxJump
 @onready var sfx_slash: AudioStreamPlayer = $SfxSlash
@@ -171,14 +172,26 @@ func fall_damage() -> void:
 	sfx_hurt.play()
 	if health <= 0:
 		health = MAX_HEALTH
+		_flash_game_over()
 	_update_hearts()
 	_return_to_checkpoint()
 
 ## Mort (0 cœur suite aux dégâts) : vie pleine et retour au checkpoint.
 func respawn() -> void:
 	health = MAX_HEALTH
+	_flash_game_over()
 	_update_hearts()
 	_return_to_checkpoint()
+
+## Message temporaire "vous avez perdu" affiché quand les 3 cœurs tombent à
+## zéro (sinon la vie revient au max sans que le joueur comprenne pourquoi).
+func _flash_game_over() -> void:
+	game_over_label.modulate.a = 1.0
+	game_over_label.visible = true
+	var tween := create_tween()
+	tween.tween_interval(1.2)
+	tween.tween_property(game_over_label, "modulate:a", 0.0, 0.6)
+	tween.finished.connect(func(): game_over_label.visible = false)
 
 func _return_to_checkpoint() -> void:
 	position = start_position
@@ -234,3 +247,6 @@ func _on_jump_pressed() -> void:
 
 func _on_attack_pressed() -> void:
 	attack()
+
+func _on_menu_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
