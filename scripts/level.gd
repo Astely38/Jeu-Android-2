@@ -18,6 +18,14 @@ const DIRT := Color(0.36, 0.25, 0.16)
 const DIRT_DARK := Color(0.27, 0.18, 0.11)
 const GRASS := Color(0.4, 0.62, 0.32)
 
+const LEONIE_LINES := [
+	{ "name": "Léonie", "text": "Eneko, c'est bon de te voir." },
+	{ "name": "Léonie", "text": "La Clairière des Bambous est belle, mais ses secrets sont anciens et douloureux." },
+	{ "name": "Léonie", "text": "Tes ancêtres ont marché sur ce chemin. Ton sabre porte leur force." },
+	{ "name": "Léonie", "text": "Traverse cette forêt avec respect. Le torii t'attend." },
+	{ "name": "Eneko", "text": "Je suis prêt, Léonie." },
+]
+
 ## Plateformes : x = centre, y = demi-largeur. Trous de 120 à 150 px
 ## (portée de saut max ≈ 190 px).
 const PLATFORMS := [
@@ -64,6 +72,7 @@ func _ready() -> void:
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
 	Challenge.start_level(LEVEL_ID, ORBS.size())
+	leonie.set_lines(LEONIE_LINES)
 	leonie.talk.connect(_on_leonie_talk)
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)

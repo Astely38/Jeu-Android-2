@@ -45,9 +45,11 @@ const ORBS := [
 ]
 
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "Ce village fut prospère, avant que les Ombres ne dévorent ses lumières." },
-	{ "name": "Léonie", "text": "Les habitants ont fui. Seules les lanternes se souviennent d'eux." },
-	{ "name": "Eneko", "text": "Alors je rallumerai leur mémoire, une ombre à la fois." },
+	{ "name": "Léonie", "text": "Le Village des Ombres... autrefois chaleureux et vivant, maintenant rongé par la corruption." },
+	{ "name": "Léonie", "text": "Les Ombres y sont nombreuses, mais elles fuient devant la lumière du sabre. Fais briller ta lame." },
+	{ "name": "Léonie", "text": "Ma lumière t'entoure. Les esprits des habitants veillent aussi sur toi. Sois courageux." },
+	{ "name": "Léonie", "text": "Traverse ce village avec respect. Ramène la paix que les Ombres lui ont volée." },
+	{ "name": "Eneko", "text": "Je n'oublierai pas les âmes qui habitent ce lieu." },
 ]
 
 var sfx_win: AudioStreamPlayer

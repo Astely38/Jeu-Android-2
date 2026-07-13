@@ -44,9 +44,11 @@ const TRAP_IDX := [3, 8, 11, 16]
 const BANNER_IDX := [2, 7, 12, 17]
 
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "Tu tiens bon, Eneko. Ce temple était un lieu de recueillement." },
-	{ "name": "Léonie", "text": "Le sanctuaire t'attend tout en haut. Les torches guideront ton chemin." },
-	{ "name": "Eneko", "text": "Je n'aime pas cet endroit..." },
+	{ "name": "Léonie", "text": "Tu progresses bien, Eneko. Ce temple ancien respire d'une malveillance ancienne." },
+	{ "name": "Léonie", "text": "Les Ombres y ont établi leur repaire depuis longtemps. Mais tu n'es pas seul." },
+	{ "name": "Léonie", "text": "Je veille sur toi. Ma lumière te protégera un moment. Utilise ce temps pour avancer." },
+	{ "name": "Léonie", "text": "Le sanctuaire au sommet attend ta purification. Les torches te guideront." },
+	{ "name": "Eneko", "text": "Merci, Léonie. Je vais les chasser de ce lieu." },
 ]
 
 const STONE := Color(0.45, 0.42, 0.38)
