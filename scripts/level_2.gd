@@ -413,7 +413,7 @@ func _build_torches() -> void:
 
 	# Nappes de brume nocturne accrochées à la tour, à plusieurs hauteurs
 	# (une passe devant la lune pour lui donner de la profondeur).
-	var mist_tex: Texture2D = load("res://assets/mist.svg")
+	# NB : mist_tex est déjà déclarée en tête de cette fonction (torches).
 	var my := 260.0
 	var mj := 0
 	while my < 2000.0:

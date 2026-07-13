@@ -362,9 +362,7 @@ func intro_pan(from: Vector2, duration := 1.8) -> void:
 func _input(event: InputEvent) -> void:
 	if _pan_tween == null or not _pan_tween.is_valid() or not _pan_tween.is_running():
 		return
-	var tapped := event is InputEventScreenTouch and event.pressed
-	var keyed := event is InputEventKey and event.pressed
-	if tapped or keyed:
+	if (event is InputEventScreenTouch or event is InputEventKey) and event.is_pressed():
 		_pan_tween.custom_step(999.0)
 
 func attack() -> void:
