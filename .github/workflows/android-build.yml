@@ -31,6 +31,21 @@ jobs:
       - name: Import project resources
         run: godot --headless --verbose --editor --quit
 
+      # Exécute réellement chaque scène quelques secondes en headless et
+      # remonte les erreurs runtime (les erreurs de compilation seules ne
+      # suffisent pas : un niveau peut compiler et planter au chargement).
+      - name: Smoke test des scènes (headless)
+        run: |
+          set +e
+          for scene in scenes/main_menu levels/level_1 levels/level_2 levels/level_3 levels/level_4 levels/level_5; do
+            echo "=== SMOKE TEST: $scene ==="
+            timeout 12 godot --headless --path . "res://$scene.tscn" > "/tmp/smoke.log" 2>&1
+            grep -E "SCRIPT ERROR|Parse Error|Invalid|Nonexistent|Cannot call|null instance|Out of bounds" /tmp/smoke.log \
+              && echo "!!! ERREURS RUNTIME dans $scene !!!" \
+              || echo "$scene : OK (aucune erreur runtime)"
+          done
+          exit 0
+
       - name: Bump APK version from build number
         run: |
           sed -i "s|^version/code=.*|version/code=${GITHUB_RUN_NUMBER}|" export_presets.cfg
