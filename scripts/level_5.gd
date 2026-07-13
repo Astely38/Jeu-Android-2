@@ -91,6 +91,9 @@ func _ready() -> void:
 	next_button.visible = next_scene != ""
 	if next_scene != "":
 		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+	# Survol d'introduction : de l'arène du Gardien jusqu'à Eneko — le
+	# joueur voit sa destination avant de faire le premier pas.
+	player.intro_pan(Vector2(BOSS_SPAWN_X, 350.0), 2.2)
 
 func _physics_process(_delta: float) -> void:
 	if motes != null and is_instance_valid(player):
@@ -376,11 +379,31 @@ func _on_boss_phase_changed(_new_phase: int) -> void:
 
 func _on_boss_defeated() -> void:
 	player.set_physics_process(false)
-	sfx_win.play()
 	boss_ui.visible = false
+	_play_victory_cinematic()
+
+## Ralenti dramatique + fondu blanc, puis l'écran de victoire.
+func _play_victory_cinematic() -> void:
+	Engine.time_scale = 0.3
+	var layer := CanvasLayer.new()
+	layer.layer = 4
+	add_child(layer)
+	var flash := ColorRect.new()
+	flash.color = Color(1, 1, 1, 0.0)
+	flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(flash)
+	var t := create_tween()
+	t.tween_property(flash, "color:a", 0.85, 0.3)
+	# Attente en temps réel (insensible au ralenti) avant de reprendre.
+	await get_tree().create_timer(1.0, true, false, true).timeout
+	Engine.time_scale = 1.0
+	sfx_win.play()
 	SaveManager.complete_level(LEVEL_ID, player.orbs)
 	_display_challenge_results()
 	win_label.visible = true
+	var t2 := create_tween()
+	t2.tween_property(flash, "color:a", 0.0, 0.7)
+	t2.finished.connect(layer.queue_free)
 
 func _display_challenge_results() -> void:
 	var results := Challenge.finish_level()

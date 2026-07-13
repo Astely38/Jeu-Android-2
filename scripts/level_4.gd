@@ -100,6 +100,8 @@ func _ready() -> void:
 	next_button.visible = next_scene != ""
 	if next_scene != "":
 		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+	# Survol d'introduction : du torii du sommet jusqu'à Eneko.
+	player.intro_pan(Vector2(GOAL_X, 380.0))
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(player):

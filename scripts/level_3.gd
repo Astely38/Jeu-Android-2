@@ -84,6 +84,8 @@ func _ready() -> void:
 	next_button.visible = next_scene != ""
 	if next_scene != "":
 		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+	# Survol d'introduction : du torii, à travers le village, jusqu'à Eneko.
+	player.intro_pan(Vector2(GOAL_X, 380.0))
 
 func _process(delta: float) -> void:
 	_t += delta

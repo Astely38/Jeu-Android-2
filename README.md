@@ -16,7 +16,10 @@ rechargent l'énergie du sabre et, tous les 5 ramassés, **rendent un cœur**. D
 enneigées, collines, nuages, nappes de brume, bambous noueux, fleurs sauvages et **pétales de
 cerisier** portés par le vent. Effets sonores et vent ambiant inclus.
 
-Contrôles tactiles à l'écran : Gauche / Droite / Saut à gauche, Attaque à droite.
+Contrôles tactiles à l'écran : Gauche / Droite à gauche ; **Ruée** (dash éclair avec images
+rémanentes, invincible pendant l'élan, coûte de l'énergie), Saut et Attaque à droite. Maintenir
+le saut permet de sauter plus haut. Chaque niveau s'ouvre sur un **survol de caméra** depuis
+l'objectif jusqu'à Eneko, et chaque coup de sabre qui porte marque un bref **arrêt du temps**.
 
 **Sauvegarde locale** (JSON, `user://save.json`) : niveaux terminés/débloqués et meilleur score
 d'orbes par niveau. Le menu principal propose **Continuer** (reprend le dernier niveau joué, visible

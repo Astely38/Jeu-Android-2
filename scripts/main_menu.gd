@@ -10,6 +10,9 @@ var _sun_glow: Sprite2D
 var _t := 0.0
 
 func _ready() -> void:
+	# Garde-fou : si on arrive ici pendant un ralenti (hit-stop, mort du
+	# boss), le temps reprend son cours normal.
+	Engine.time_scale = 1.0
 	_build_scenery()
 	$ContinueButton.visible = SaveManager.has_save()
 	_style_button($ContinueButton, Color(0.92, 0.65, 0.3))

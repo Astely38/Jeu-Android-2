@@ -25,6 +25,12 @@ const COYOTE_TIME := 0.12
 const JUMP_BUFFER := 0.15
 const JUMP_CUT_VELOCITY := -160.0
 const ANIM_BASE_SCALE := Vector2(0.8, 0.8)
+## Ruée du sabreur : élan horizontal éclair avec images rémanentes et
+## invincibilité, contre un peu d'énergie.
+const DASH_SPEED := 520.0
+const DASH_TIME := 0.18
+const DASH_COOLDOWN := 0.9
+const DASH_COST := 20.0
 
 var moving_left := false
 var moving_right := false
@@ -52,6 +58,9 @@ var _touch_jump_held := false
 var _was_on_floor := false
 var _fall_speed := 0.0
 var _shake := 0.0
+var _dash_timer := 0.0
+var _dash_cd := 0.0
+var _ghost_timer := 0.0
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
@@ -66,6 +75,9 @@ var _shake := 0.0
 @onready var camera: Camera2D = $Camera2D
 
 func _ready() -> void:
+	# Garde-fou : un rechargement de scène pendant un hit-stop ou un
+	# ralenti ne doit jamais laisser le temps figé.
+	Engine.time_scale = 1.0
 	add_to_group("player")
 	start_position = position
 	attack_area.monitoring = false
@@ -150,6 +162,20 @@ func _physics_process(delta: float) -> void:
 			attacking = false
 			attack_area.monitoring = false
 
+	# Ruée du sabreur : trajectoire horizontale figée, gravité suspendue,
+	# images rémanentes semées derrière Eneko.
+	_dash_cd = maxf(0.0, _dash_cd - delta)
+	if _dash_timer > 0.0:
+		_dash_timer -= delta
+		velocity = Vector2(facing * DASH_SPEED, 0)
+		move_and_slide()
+		_ghost_timer -= delta
+		if _ghost_timer <= 0.0:
+			_ghost_timer = 0.045
+			_spawn_ghost()
+		_play("run")
+		return
+
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
 		_fall_speed = velocity.y
@@ -199,6 +225,8 @@ func _physics_process(delta: float) -> void:
 		jump()
 	if Input.is_physical_key_pressed(KEY_X):
 		attack()
+	if Input.is_physical_key_pressed(KEY_SHIFT) or Input.is_physical_key_pressed(KEY_C):
+		dash()
 
 	_update_animation()
 	_animate(delta)
@@ -261,6 +289,67 @@ func _jump_held() -> bool:
 	return _touch_jump_held \
 		or Input.is_physical_key_pressed(KEY_UP) \
 		or Input.is_physical_key_pressed(KEY_SPACE)
+
+## Ruée du sabreur : élan éclair dans la direction du regard, invincible
+## pendant l'élan, contre DASH_COST d'énergie.
+func dash() -> void:
+	if _dash_timer > 0.0 or _dash_cd > 0.0 or _dead:
+		return
+	if energy < DASH_COST:
+		return
+	energy -= DASH_COST
+	_dash_timer = DASH_TIME
+	_dash_cd = DASH_COOLDOWN
+	_ghost_timer = 0.0
+	invuln = maxf(invuln, DASH_TIME + 0.08)
+	velocity.y = 0.0
+	sfx_slash.play()
+
+## Image rémanente bleutée semée pendant la ruée, qui s'estompe vite.
+func _spawn_ghost() -> void:
+	var tex := anim.sprite_frames.get_frame_texture(anim.animation, anim.frame)
+	if tex == null:
+		return
+	var g := Sprite2D.new()
+	g.texture = tex
+	g.global_position = anim.global_position
+	g.flip_h = anim.flip_h
+	g.scale = anim.scale
+	g.texture_filter = anim.texture_filter
+	g.modulate = Color(0.55, 0.85, 1.0, 0.55)
+	g.z_index = z_index - 1
+	get_parent().add_child(g)
+	var t := g.create_tween()
+	t.tween_property(g, "modulate:a", 0.0, 0.3)
+	t.finished.connect(g.queue_free)
+
+## Micro-arrêt du temps à l'impact d'un coup qui porte (le "crunch" des
+## jeux d'action). Durée mesurée en temps réel, insensible au time_scale.
+func _hit_stop() -> void:
+	if Engine.time_scale < 1.0:
+		return
+	Engine.time_scale = 0.15
+	await get_tree().create_timer(0.06, true, false, true).timeout
+	Engine.time_scale = 1.0
+
+## Panoramique d'introduction : la caméra part d'un point fort du niveau
+## (torii, sommet, arène du boss...) et glisse jusqu'à Eneko. Le niveau
+## l'appelle en fin de _ready ; Eneko est figé pendant le survol.
+func intro_pan(from: Vector2, duration := 1.8) -> void:
+	set_physics_process(false)
+	var smoothing := camera.position_smoothing_enabled
+	camera.position_smoothing_enabled = false
+	camera.top_level = true
+	camera.global_position = from
+	var t := create_tween()
+	t.tween_property(camera, "global_position", global_position + Vector2(0, -40), duration) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	await t.finished
+	camera.top_level = false
+	camera.position = Vector2.ZERO
+	camera.position_smoothing_enabled = smoothing
+	camera.reset_smoothing()
+	set_physics_process(true)
 
 func attack() -> void:
 	if attacking or lock_timer > 0.0:
@@ -390,6 +479,7 @@ func _on_attack_area_body_entered(body: Node2D) -> void:
 	if body.has_method("die"):
 		body.die()
 		_shake = 3.5  # impact ressenti à chaque coup qui porte
+		_hit_stop()
 
 func _on_left_pressed() -> void:
 	moving_left = true
@@ -409,6 +499,9 @@ func _on_jump_pressed() -> void:
 
 func _on_jump_released() -> void:
 	_touch_jump_held = false
+
+func _on_dash_pressed() -> void:
+	dash()
 
 func _on_attack_pressed() -> void:
 	attack()
