@@ -15,19 +15,22 @@ func _ready() -> void:
 
 func start_level(id: String, total_orbs_count: int) -> void:
 	level_id = id
-	start_time = Time.get_ticks_msec() / 1000.0
+	start_time = float(Time.get_ticks_msec()) / 1000.0
 	orbs_collected = 0
-	total_orbs = total_orbs_count
+	total_orbs = maxf(1.0, float(total_orbs_count))
 	damage_taken = 0
 
 func register_damage() -> void:
-	damage_taken += 1
+	if damage_taken >= 0:
+		damage_taken += 1
 
 func register_orb() -> void:
-	orbs_collected += 1
+	if orbs_collected >= 0:
+		orbs_collected += 1
 
 func get_time_elapsed() -> float:
-	return (Time.get_ticks_msec() / 1000.0) - start_time
+	var now := float(Time.get_ticks_msec()) / 1000.0
+	return maxf(0.0, now - start_time)
 
 func get_results() -> Dictionary:
 	var elapsed := get_time_elapsed()
