@@ -22,17 +22,18 @@ d'orbes par niveau. Le menu principal propose **Continuer** (reprend le dernier 
 dès qu'une sauvegarde existe) et **Niveaux** (écran de sélection listant les 5 niveaux prévus —
 les niveaux 3 à 5 apparaissent encore en "à venir").
 
-**Niveau 2 — Le Temple Oublié** : ascension verticale en zigzag dans des ruines de pierre, avec
-des pièges à pieux, les mêmes esprits repositionnés, 4 points de contrôle et une apparition de
-Léonie à mi-parcours. Débloqué en terminant le niveau 1 (bouton "Niveau suivant" sur l'écran de
-victoire).
+**Niveau 2 — Le Temple Oublié** : ascension dans un temple ancien éclairé par des **torches** aux
+halos orangés. Les plateformes sont des dalles de pierre fines en zigzag gauche-droite. Nouvel
+ennemi : le **mort-vivant** (guerrier squelettique verdâtre, dessiné en Polygon2D), plus lent mais
+résistant (2 coups de sabre). 3 points de contrôle, pièges à pieux, ombres corrompues et
+apparition de Léonie à mi-parcours. Débloqué en terminant le niveau 1.
 
 ### Structure du projet
 
 ```
-/scenes   main_menu, level_select, player, enemy, shadow, leonie, orb
+/scenes   main_menu, level_select, player, enemy, shadow, undead, leonie, orb
 /levels   level_1 ("La Clairière des Bambous"), level_2 ("Le Temple Oublié")
-/scripts  logique GDScript (player, enemy, shadow, leonie, level, level_2, main_menu, level_select)
+/scripts  logique GDScript (player, enemy, shadow, undead, leonie, level, level_2, main_menu, level_select)
 /scripts/save  SaveManager (autoload, sauvegarde JSON)
 /ui       boîte de dialogue
 /assets   sprites (SVG + pixel art), sons (assets/sfx)
