@@ -27,8 +27,11 @@ const PLATFORMS := [
 	Vector2(5910, 260), Vector2(6600, 300),
 ]
 const CHECKPOINT_XS := [1650.0, 3400.0, 5100.0]
-const PATROL_XS := [1000.0, 2200.0, 3450.0, 4700.0, 5900.0]
-const SHADOW_XS := [1600.0, 2850.0, 4100.0, 5300.0, 6480.0]
+const PATROL_XS := [1000.0, 1550.0, 2200.0, 2750.0, 3450.0, 4050.0, 4700.0, 5900.0, 6500.0]
+const SHADOW_XS := [1600.0, 2560.0, 2850.0, 3820.0, 4100.0, 5300.0, 5680.0, 6480.0]
+## Pièges à pics : proches d'un bord de plateforme, contournables en marchant
+## ou en sautant par-dessus (jamais un passage obligé).
+const TRAP_XS := [980.0, 2680.0, 3900.0, 5220.0, 6520.0]
 const ORBS := [
 	Vector2(350, 440), Vector2(565, 405), Vector2(890, 440),
 	Vector2(1210, 405), Vector2(1520, 440), Vector2(1835, 405),
@@ -52,6 +55,7 @@ func _ready() -> void:
 	_build_decor()
 	_build_platforms()
 	_build_checkpoints()
+	_build_traps()
 	_build_goal()
 	_build_kill_zone()
 	_spawn_entities()
@@ -82,9 +86,37 @@ func _rect_points(half_w: float, top: float, bottom: float) -> PackedVector2Arra
 		Vector2(half_w, bottom), Vector2(-half_w, bottom),
 	])
 
-## Bambous et lanternes en parallaxe, répartis sur toute la longueur.
+## Bambous, soleil, nuages et lanternes en parallaxe, sur toute la longueur.
 func _build_decor() -> void:
 	var bg: ParallaxBackground = $ParallaxBackground
+
+	# Soleil : lueur douce fixe, loin en arrière-plan.
+	var sky_layer := ParallaxLayer.new()
+	sky_layer.motion_scale = Vector2(0.05, 0.05)
+	bg.add_child(sky_layer)
+	var sun := Sprite2D.new()
+	sun.texture = load("res://assets/mist.svg")
+	sun.modulate = Color(1.0, 0.92, 0.6, 0.55)
+	sun.scale = Vector2(9.0, 9.0)
+	sun.position = Vector2(700.0, -60.0)
+	sky_layer.add_child(sun)
+
+	# Nuages : quelques amas ovales qui dérivent très lentement.
+	var clouds := ParallaxLayer.new()
+	clouds.motion_scale = Vector2(0.15, 0.15)
+	bg.add_child(clouds)
+	var cx := 200.0
+	var ci := 0
+	while cx < LEVEL_END:
+		var cy := 60.0 + float(ci % 3) * 40.0
+		for k in 3:
+			_poly(clouds, PackedVector2Array([
+				Vector2(-40 + k * 34, -18), Vector2(-14 + k * 34, -30), Vector2(20 + k * 34, -30),
+				Vector2(40 + k * 34, -14), Vector2(30 + k * 34, 4), Vector2(-30 + k * 34, 4),
+			]), Color(1, 1, 1, 0.55), Vector2(cx, cy))
+		cx += 650.0 + float(ci * 37 % 140)
+		ci += 1
+
 	var far := ParallaxLayer.new()
 	far.motion_scale = Vector2(0.3, 1)
 	bg.add_child(far)
@@ -120,7 +152,8 @@ func _build_decor() -> void:
 		mid.add_child(s)
 		x += 620.0
 
-## Plateformes : collision + pilier de terre profond (fini le sol flottant).
+## Plateformes : collision + pilier de terre profond (fini le sol flottant),
+## avec touffes d'herbe et cailloux pour casser la platitude des blocs.
 func _build_platforms() -> void:
 	for p in PLATFORMS:
 		var body := StaticBody2D.new()
@@ -133,6 +166,24 @@ func _build_platforms() -> void:
 		_poly(body, _rect_points(p.y, -50.0, 450.0), DIRT)
 		_poly(body, _rect_points(p.y, 250.0, 450.0), DIRT_DARK)
 		_poly(body, _rect_points(p.y, -50.0, -40.0), GRASS)
+
+		# Touffes d'herbe le long du bord supérieur.
+		var tuft_count: int = maxi(2, int(p.y / 55.0))
+		for t in tuft_count:
+			var tx: float = -p.y + 30.0 + t * ((p.y * 2.0 - 60.0) / maxf(1.0, float(tuft_count - 1)))
+			_poly(body, PackedVector2Array([
+				Vector2(tx - 6, -40), Vector2(tx - 2, -54), Vector2(tx + 2, -42),
+				Vector2(tx + 6, -56), Vector2(tx + 10, -40),
+			]), Color(0.46, 0.68, 0.36))
+
+		# Petits cailloux dans la terre.
+		var rock_count: int = maxi(1, int(p.y / 110.0))
+		for r in rock_count:
+			var rx: float = -p.y + 50.0 + r * ((p.y * 2.0 - 100.0) / maxf(1.0, float(rock_count)))
+			_poly(body, PackedVector2Array([
+				Vector2(rx - 9, 90), Vector2(rx, 82), Vector2(rx + 9, 90), Vector2(rx, 100),
+			]), Color(0.42, 0.4, 0.38))
+
 		add_child(body)
 
 func _build_checkpoints() -> void:
@@ -152,6 +203,29 @@ func _build_checkpoints() -> void:
 		]), Color(0.85, 0.75, 0.35))
 		add_child(cp)
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
+
+## Pics : petite zone de dégâts posée sur le sol, à contourner ou sauter.
+func _build_traps() -> void:
+	for i in TRAP_XS.size():
+		var x: float = TRAP_XS[i]
+		var trap := Area2D.new()
+		trap.position = Vector2(x, GROUND_Y - 66.0)
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(44, 24)
+		shape.shape = rect
+		trap.add_child(shape)
+		for k in 3:
+			var ox := -16.0 + k * 16.0
+			_poly(trap, PackedVector2Array([
+				Vector2(ox - 7, 12), Vector2(ox + 7, 12), Vector2(ox, -12),
+			]), Color(0.62, 0.6, 0.58))
+		add_child(trap)
+		trap.body_entered.connect(_on_trap_body_entered)
+
+func _on_trap_body_entered(body: Node2D) -> void:
+	if body == player and body.has_method("take_damage"):
+		body.take_damage(1, body.global_position + Vector2(0, 40))
 
 func _build_goal() -> void:
 	var goal := Area2D.new()

@@ -4,15 +4,16 @@
 
 Petit platformer 2D fait avec [Godot 4](https://godotengine.org/). Eneko — un jeune samouraï aux
 boucles d'oreilles dorées, armé du sabre de son grand-père — traverse une forêt de bambous, saute
-par-dessus les trous, tranche un esprit malveillant au sabre, et rejoint le torii pour terminer le
-niveau.
+par-dessus les trous et les **pics**, tranche des esprits malveillants au sabre, et rejoint le
+torii pour terminer le niveau.
 
-Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit **ou tomber dans un trou**
-coûte un cœur et renvoie au dernier **point de contrôle** (bannière). En chemin, **Léonie**, la
-gardienne kitsune de la forêt, l'accueille par un court dialogue. Deux types d'ennemis : l'esprit
-**Onre** qui patrouille sa plateforme, et l'**Ombre corrompue** (guerrier spectral sombre) qui
-poursuit Eneko. Les **orbes spirituels** rechargent l'énergie du sabre et, tous les 5 ramassés,
-**rendent un cœur**. Effets sonores et vent ambiant inclus.
+Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit, marcher sur un **piège à pics**,
+**ou tomber dans un trou** coûte un cœur et renvoie au dernier **point de contrôle** (bannière).
+En chemin, **Léonie**, la gardienne kitsune de la forêt, l'accueille par un court dialogue. Deux
+types d'ennemis, désormais plus nombreux : l'esprit **Onre** qui patrouille sa plateforme, et
+l'**Ombre corrompue** (guerrier spectral sombre) qui poursuit Eneko. Les **orbes spirituels**
+rechargent l'énergie du sabre et, tous les 5 ramassés, **rendent un cœur**. Décor enrichi (soleil,
+nuages, touffes d'herbe, cailloux) et effets sonores et vent ambiant inclus.
 
 Contrôles tactiles à l'écran : Gauche / Droite / Saut à gauche, Attaque à droite.
 
