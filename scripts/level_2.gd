@@ -14,6 +14,7 @@ const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 
 const LEVEL_ID := "level_2"
 const STAND_OFFSET := 73.0   # écart entre le centre d'une plateforme et la hauteur où se tient un personnage
+const COLLISION_H := 6.0     # demi-épaisseur de la collision des plateformes (voir _build_platforms)
 
 const STONE := Color(0.42, 0.44, 0.5)
 const STONE_DARK := Color(0.3, 0.32, 0.38)
@@ -104,6 +105,11 @@ func _build_decor() -> void:
 		y += 560.0
 
 ## Plateformes de pierre : bloc massif + face plus claire en surface.
+## La collision réelle est volontairement fine (12px, ancrée sur la surface
+## du dessus) : avec des marches en zigzag rapprochées verticalement, une
+## collision aussi épaisse que le bloc visuel (100px) faisait chevaucher la
+## plateforme du dessus avec un personnage debout 1-2 marches plus bas,
+## le coinçant en étau (bloqué en place malgré une vitesse non nulle).
 func _build_platforms() -> void:
 	for i in PLATFORMS.size():
 		var p: Vector2 = PLATFORMS[i]
@@ -111,8 +117,9 @@ func _build_platforms() -> void:
 		var body := StaticBody2D.new()
 		body.position = p
 		var shape := CollisionShape2D.new()
+		shape.position = Vector2(0, -50.0 + COLLISION_H)
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(hw * 2.0, 100.0)
+		rect.size = Vector2(hw * 2.0, COLLISION_H * 2.0)
 		shape.shape = rect
 		body.add_child(shape)
 		_poly(body, _rect_points(hw, -50.0, 450.0), STONE)
