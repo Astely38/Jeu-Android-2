@@ -27,3 +27,4 @@ textures/canvas_textures/default_texture_filter=0
 [autoload]
 
 SaveManager="*res://scripts/save/save_manager.gd"
+Challenge="*res://scripts/challenge.gd"

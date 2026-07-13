@@ -149,6 +149,7 @@ func attack() -> void:
 func take_damage(amount: int, from_position: Vector2) -> void:
 	if invuln > 0.0:
 		return
+	Challenge.register_damage()
 	health -= amount
 	_update_hearts()
 	sfx_hurt.play()
@@ -165,23 +166,17 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	velocity.x = push * KNOCKBACK_SPEED
 	velocity.y = -220.0
 
-## Chute dans un trou : coûte un cœur et renvoie au dernier checkpoint
-## (les cœurs restants sont conservés ; à zéro, la vie est restaurée).
+## Chute dans un trou : redémarrage complet du niveau.
 func fall_damage() -> void:
-	health -= 1
-	sfx_hurt.play()
-	if health <= 0:
-		health = MAX_HEALTH
-		_flash_game_over()
-	_update_hearts()
-	_return_to_checkpoint()
-
-## Mort (0 cœur suite aux dégâts) : vie pleine et retour au checkpoint.
-func respawn() -> void:
-	health = MAX_HEALTH
 	_flash_game_over()
-	_update_hearts()
-	_return_to_checkpoint()
+	await create_tween().tween_interval(0.8).finished
+	get_tree().reload_current_scene()
+
+## Mort (0 cœur suite aux dégâts) : redémarrage complet du niveau.
+func respawn() -> void:
+	_flash_game_over()
+	await create_tween().tween_interval(0.8).finished
+	get_tree().reload_current_scene()
 
 ## Message temporaire "vous avez perdu" affiché quand les 3 cœurs tombent à
 ## zéro (sinon la vie revient au max sans que le joueur comprenne pourquoi).
@@ -214,6 +209,7 @@ func set_checkpoint(pos: Vector2) -> void:
 ## Ramasse un orbe spirituel : recharge l'énergie, et tous les 5 orbes
 ## Eneko récupère un cœur.
 func collect_orb() -> void:
+	Challenge.register_orb()
 	orbs += 1
 	orb_label.text = "x%d" % orbs
 	energy = minf(MAX_ENERGY, energy + 15.0)

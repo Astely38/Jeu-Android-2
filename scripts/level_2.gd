@@ -80,6 +80,8 @@ func _ready() -> void:
 	_setup_audio()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
+	var orb_count := _count_orbs()
+	Challenge.start_level(LEVEL_ID, orb_count)
 	menu_button.pressed.connect(_on_menu_pressed)
 	dialogue.finished.connect(_on_dialogue_finished)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_3", "")
@@ -581,10 +583,36 @@ func _on_kill(body: Node2D) -> void:
 
 func _on_goal(body: Node2D) -> void:
 	if body == player:
-		win_label.visible = true
 		player.set_physics_process(false)
 		sfx_win.play()
 		SaveManager.complete_level(LEVEL_ID, player.orbs)
+		_display_challenge_results()
+		win_label.visible = true
+
+func _count_orbs() -> int:
+	var count := 0
+	for i in range(1, PLATFORMS.size() - 1):
+		if i not in CHECKPOINT_IDX and i != TOP_IDX:
+			count += 1
+	return count
+
+func _display_challenge_results() -> void:
+	var results := Challenge.get_results()
+	var grade_label: Label = win_label.get_node("ChallengeStats/Grade")
+	var orbs_label: Label = win_label.get_node("ChallengeStats/Orbs")
+	var damage_label: Label = win_label.get_node("ChallengeStats/Damage")
+	var time_label: Label = win_label.get_node("ChallengeStats/Time")
+
+	grade_label.text = "Grade: %s" % results["grade"]
+	orbs_label.text = "Orbes: %d/%d" % [results["orbs"], results["total_orbs"]]
+	damage_label.text = "Dégâts: %d" % results["damage"]
+	time_label.text = "Temps: %s" % _format_time(results["time"])
+	Challenge.reset()
+
+func _format_time(seconds: float) -> String:
+	var mins: int = int(seconds) / 60
+	var secs: int = int(seconds) % 60
+	return "%d:%02d" % [mins, secs]
 
 func _on_leonie_talk(lines: Array) -> void:
 	player.velocity = Vector2.ZERO
