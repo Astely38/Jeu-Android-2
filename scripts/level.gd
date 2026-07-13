@@ -73,7 +73,6 @@ func _ready() -> void:
 	SaveManager.set_last_level(LEVEL_ID)
 	Challenge.start_level(LEVEL_ID, ORBS.size())
 	leonie.set_lines(LEONIE_LINES)
-	leonie.talk.connect(_on_leonie_talk)
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_2", "")

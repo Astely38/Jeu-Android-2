@@ -63,6 +63,7 @@ var _pause_layer: CanvasLayer
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var orb_label: Label = $HUD/OrbCount
 @onready var time_label: Label = $HUD/TimeLabel
+@onready var heart_hint: Label = $HUD/HeartHint
 @onready var game_over_label: Label = $HUD/GameOverLabel
 @onready var hearts: Array = [$HUD/Heart1, $HUD/Heart2, $HUD/Heart3]
 @onready var sfx_jump: AudioStreamPlayer = $SfxJump
@@ -90,6 +91,7 @@ func _ready() -> void:
 	_play("idle")
 	orb_label.text = "x0"
 	_update_hearts()
+	_update_heart_hint()
 
 	# Petits nuages de poussière aux pieds pendant la course.
 	_dust = CPUParticles2D.new()
@@ -420,9 +422,25 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	velocity.x = push * KNOCKBACK_SPEED
 	velocity.y = -220.0
 
-## Chute dans un trou : redémarrage complet du niveau.
+## Chute dans un trou : coûte un cœur et renvoie au dernier checkpoint.
+## Le niveau ne recommence en entier que si les cœurs tombent à zéro.
 func fall_damage() -> void:
-	_die_and_restart()
+	if _dead:
+		return
+	Challenge.register_damage()
+	health -= 1
+	_update_hearts()
+	sfx_hurt.play()
+	_shake = 7.0
+	if health <= 0:
+		_die_and_restart()
+		return
+	_return_to_checkpoint()
+
+## Soin complet (accordé par Léonie au passage).
+func heal_full() -> void:
+	health = MAX_HEALTH
+	_update_hearts()
 
 ## Mort (0 cœur suite aux dégâts) : redémarrage complet du niveau.
 func respawn() -> void:
@@ -486,6 +504,12 @@ func collect_orb() -> void:
 	if orbs % 5 == 0 and health < MAX_HEALTH:
 		health += 1
 		_update_hearts()
+	_update_heart_hint()
+
+## Compte à rebours vers le prochain cœur (un tous les 5 orbes).
+func _update_heart_hint() -> void:
+	var remaining := 5 - (orbs % 5)
+	heart_hint.text = "Prochain cœur : %d orbe%s" % [remaining, "s" if remaining > 1 else ""]
 
 func _update_hearts() -> void:
 	for i in hearts.size():

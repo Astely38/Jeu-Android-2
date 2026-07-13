@@ -565,7 +565,6 @@ func _spawn_entities() -> void:
 	var leonie := LEONIE_SCENE.instantiate()
 	leonie.position = _stand_y(LEONIE_IDX) + Vector2(60, 0)
 	leonie.set_lines(LEONIE_LINES)
-	leonie.talk.connect(_on_leonie_talk)
 	add_child(leonie)
 	var i := 1
 	while i < PLATFORMS.size() - 1:

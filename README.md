@@ -9,7 +9,8 @@ torii pour terminer le niveau.
 
 Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit, marcher sur un **piège à pieux de bois**,
 **ou tomber dans un trou** coûte un cœur et renvoie au dernier **point de contrôle** (bannière).
-En chemin, **Léonie**, la gardienne kitsune de la forêt, l'accueille par un court dialogue. Trois
+En chemin, **Léonie**, la gardienne kitsune, **soigne Eneko** (tous les cœurs restaurés, éclat
+doré) et parle dans une **bulle flottante non bloquante** — le joueur garde la main. Trois
 types d'ennemis : l'esprit **Onre** qui patrouille sa plateforme, l'**Ombre corrompue** (guerrier
 spectral sombre) qui poursuit Eneko, et le **Yūrei tireur** (niveaux 3 à 5), esprit flottant qui
 crache des **orbes corrompus** — esquivables d'une ruée ou **tranchables au sabre**. Les **orbes
@@ -66,8 +67,9 @@ le sens du vent pour l'annoncer (niveau 4). Les esprits Onre et les Ombres corro
 globalement plus rapides.
 
 Le **système de défi** note chaque niveau terminé (Bronze/Argent/Or/Platine) selon les orbes
-récoltés et les dégâts subis, affiché sur l'écran de victoire. **Toute défaite (chute ou 0 cœur)
-redémarre intégralement le niveau** — plus de retour au dernier checkpoint.
+récoltés et les dégâts subis, affiché sur l'écran de victoire. **Tomber dans un trou coûte un
+cœur et renvoie au dernier checkpoint ; le niveau ne recommence en entier qu'à 0 cœur.** Le HUD
+affiche un compte à rebours vers le prochain cœur ("Prochain cœur : 3 orbes").
 
 Le **menu principal** est un tableau de crépuscule : soleil couchant derrière un torii sur la
 colline, montagnes, rivière aux reflets dorés et pétales portés par le vent.

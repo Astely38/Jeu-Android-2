@@ -533,7 +533,6 @@ func _spawn_entities() -> void:
 	var leonie := LEONIE_SCENE.instantiate()
 	leonie.position = Vector2(3550.0, SPAWN_Y)
 	leonie.set_lines(LEONIE_LINES)
-	leonie.talk.connect(_on_leonie_talk)
 	add_child(leonie)
 	for o in ORBS:
 		var orb := ORB_SCENE.instantiate()
