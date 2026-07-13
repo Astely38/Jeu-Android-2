@@ -160,6 +160,19 @@ func _build_decor() -> void:
 		cx += 650.0 + float(ci * 37 % 140)
 		ci += 1
 
+	# Vols d'oiseaux : petits chevrons sombres par groupes de trois.
+	var bx := 500.0
+	var bi := 0
+	while bx < LEVEL_END:
+		var by := 70.0 + float(bi * 47 % 110)
+		for w in 3:
+			var off := Vector2(float(w) * 18.0, float(w % 2) * 7.0 - 3.0)
+			_poly(clouds, PackedVector2Array([
+				Vector2(-7, 0), Vector2(0, -4), Vector2(7, 0), Vector2(0, -1),
+			]), Color(0.25, 0.28, 0.32, 0.75), Vector2(bx, by) + off)
+		bx += 850.0 + float(bi * 53 % 300)
+		bi += 1
+
 	var far := ParallaxLayer.new()
 	far.motion_scale = Vector2(0.3, 1)
 	bg.add_child(far)

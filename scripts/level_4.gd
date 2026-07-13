@@ -149,6 +149,35 @@ func _build_decor() -> void:
 	var mist_tex: Texture2D = load("res://assets/mist.svg")
 
 	# Ciel pâle et froid, déjà posé par le sky du .tscn.
+	# Soleil blanc voilé par la brume d'altitude, et quelques rapaces qui
+	# planent très haut.
+	var sky := ParallaxLayer.new()
+	sky.motion_scale = Vector2(0.05, 0.05)
+	bg.add_child(sky)
+	var sun_halo := Sprite2D.new()
+	sun_halo.texture = mist_tex
+	sun_halo.modulate = Color(1.0, 1.0, 0.96, 0.5)
+	sun_halo.scale = Vector2(7.0, 7.0)
+	sun_halo.position = Vector2(680.0, 80.0)
+	sky.add_child(sun_halo)
+	var sun_pts := PackedVector2Array()
+	var sk := 0
+	while sk < 20:
+		var sa := sk * TAU / 20.0
+		sun_pts.append(Vector2(cos(sa) * 30.0, sin(sa) * 30.0))
+		sk += 1
+	_poly(sky, sun_pts, Color(1.0, 1.0, 0.94, 0.65), Vector2(680, 80))
+	var bx := 350.0
+	var bi := 0
+	while bx < LEVEL_END:
+		var by := 60.0 + float(bi * 61 % 100)
+		for w in 2:
+			var off := Vector2(float(w) * 22.0, float(w) * 8.0)
+			_poly(sky, PackedVector2Array([
+				Vector2(-8, 0), Vector2(0, -5), Vector2(8, 0), Vector2(0, -1),
+			]), Color(0.3, 0.32, 0.38, 0.7), Vector2(bx, by) + off)
+		bx += 1100.0 + float(bi * 71 % 350)
+		bi += 1
 
 	# Pics lointains, bleu-gris, sommets enneigés.
 	var far := ParallaxLayer.new()

@@ -35,6 +35,8 @@ var _cur := ""
 var _dead := false
 ## Force horizontale imposée par le niveau (rafales de vent du niveau 4).
 var wind_force := 0.0
+## Poussière soulevée par la course (construite en code dans _ready).
+var _dust: CPUParticles2D
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
@@ -63,6 +65,23 @@ func _ready() -> void:
 	_play("idle")
 	orb_label.text = "x0"
 	_update_hearts()
+
+	# Petits nuages de poussière aux pieds pendant la course.
+	_dust = CPUParticles2D.new()
+	_dust.position = Vector2(0, 22)
+	_dust.amount = 10
+	_dust.lifetime = 0.45
+	_dust.local_coords = false
+	_dust.direction = Vector2(0, -1)
+	_dust.spread = 40.0
+	_dust.gravity = Vector2(0, -14)
+	_dust.initial_velocity_min = 8.0
+	_dust.initial_velocity_max = 22.0
+	_dust.scale_amount_min = 1.6
+	_dust.scale_amount_max = 3.0
+	_dust.color = Color(0.78, 0.72, 0.6, 0.45)
+	_dust.emitting = false
+	add_child(_dust)
 
 func _physics_process(delta: float) -> void:
 	# Invincibilité : clignotement.
@@ -96,6 +115,9 @@ func _physics_process(delta: float) -> void:
 			_set_facing(direction)
 
 	move_and_slide()
+
+	if _dust != null:
+		_dust.emitting = is_on_floor() and absf(velocity.x) > 40.0
 
 	if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_SPACE):
 		jump()

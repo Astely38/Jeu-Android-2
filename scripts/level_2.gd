@@ -408,6 +408,21 @@ func _build_torches() -> void:
 	embers.color = Color(1.0, 0.62, 0.2, 0.5)
 	add_child(embers)
 
+	# Nappes de brume nocturne accrochées à la tour, à plusieurs hauteurs
+	# (une passe devant la lune pour lui donner de la profondeur).
+	var mist_tex: Texture2D = load("res://assets/mist.svg")
+	var my := 260.0
+	var mj := 0
+	while my < 2000.0:
+		var m := Sprite2D.new()
+		m.texture = mist_tex
+		m.position = Vector2(90.0 + float((mj * 173) % 440), my)
+		m.scale = Vector2(4.5 + float(mj % 3), 1.5)
+		m.modulate = Color(0.75, 0.78, 0.95, 0.1)
+		add_child(m)
+		my += 340.0
+		mj += 1
+
 func _build_checkpoints() -> void:
 	for idx in CHECKPOINT_IDX:
 		var p: Vector2 = PLATFORMS[idx]

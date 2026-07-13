@@ -36,12 +36,14 @@ var _attack_lock := 0.0
 var _dash_timer := 0.0
 var _dash_cd := 2.0
 var _cur := ""
+var _t := 0.0
 
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var hitbox: Area2D = $Hitbox
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
 @onready var sfx_die: AudioStreamPlayer = $SfxDie
 @onready var sfx_hurt: AudioStreamPlayer = $SfxHurt
+@onready var aura: Sprite2D = get_node_or_null("Aura")
 
 func _ready() -> void:
 	anim.sprite_frames = SpriteSheet.build([
@@ -65,6 +67,11 @@ func activate() -> void:
 	active = true
 
 func _physics_process(delta: float) -> void:
+	# Aura sombre pulsante, plus intense à chaque phase.
+	_t += delta
+	if aura != null:
+		aura.modulate.a = 0.18 + 0.07 * float(phase) + 0.08 * sin(_t * 3.0)
+
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
 	else:
@@ -178,8 +185,11 @@ func _die_for_real() -> void:
 	body_shape.set_deferred("disabled", true)
 	_play("dead")
 	sfx_die.play()
+	set_physics_process(false)  # fige l'aura et le corps pendant le fondu
 	var tween := create_tween()
 	tween.tween_property(anim, "modulate:a", 0.0, 1.0)
+	if aura != null:
+		tween.parallel().tween_property(aura, "modulate:a", 0.0, 1.0)
 	tween.finished.connect(func():
 		defeated.emit()
 		queue_free()

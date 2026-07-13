@@ -216,6 +216,28 @@ func _build_decor() -> void:
 	wisps.color = Color(0.4, 0.25, 0.5, 0.3)
 	add_child(wisps)
 
+	# Lucioles chaudes qui dansent autour des cordées de lanternes :
+	# petites lumières vivantes au milieu du village mort.
+	var fx := 600.0
+	while fx < LEVEL_END - 300.0:
+		var ff := CPUParticles2D.new()
+		ff.position = Vector2(fx, 420.0)
+		ff.amount = 6
+		ff.lifetime = 5.0
+		ff.preprocess = 5.0
+		ff.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		ff.emission_rect_extents = Vector2(170, 70)
+		ff.direction = Vector2(0, -1)
+		ff.spread = 180.0
+		ff.gravity = Vector2.ZERO
+		ff.initial_velocity_min = 4.0
+		ff.initial_velocity_max = 11.0
+		ff.scale_amount_min = 1.4
+		ff.scale_amount_max = 2.4
+		ff.color = Color(1.0, 0.85, 0.4, 0.55)
+		add_child(ff)
+		fx += 950.0
+
 ## Maison de village : pignon, toit débordant, fenêtre qui luit.
 func _build_house(parent: Node, base: Vector2, seed_i: int) -> void:
 	var h := 130.0 + float(seed_i * 37 % 60)

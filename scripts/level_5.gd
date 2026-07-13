@@ -132,6 +132,22 @@ func _build_decor() -> void:
 		mx += 380.0 + float(mi * 41 % 120)
 		mi += 1
 
+	# Rais de lumière dorée qui tombent en diagonale depuis le ciel,
+	# comme au travers des verrières d'un sanctuaire.
+	var shafts := ParallaxLayer.new()
+	shafts.motion_scale = Vector2(0.2, 0.4)
+	bg.add_child(shafts)
+	var sx := 300.0
+	var si := 0
+	while sx < LEVEL_END:
+		var sw := 55.0 + float(si * 31 % 45)
+		_poly(shafts, PackedVector2Array([
+			Vector2(-sw, 0), Vector2(sw * 0.4, 0),
+			Vector2(sw * 1.7, 560), Vector2(sw * 0.3, 560),
+		]), Color(1.0, 0.95, 0.75, 0.09), Vector2(sx, -10))
+		sx += 520.0 + float(si * 43 % 240)
+		si += 1
+
 	# Grand portique doré en fond, derrière l'arène : dernière image que
 	# le joueur voit avant le combat.
 	var gate := ParallaxLayer.new()
