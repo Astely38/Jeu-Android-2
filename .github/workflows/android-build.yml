@@ -40,13 +40,13 @@ jobs:
       - name: Build debug APK
         run: |
           mkdir -v -p build/android
-          godot --headless --verbose --export-debug "Android" "$(readlink -f build)/android/${EXPORT_NAME}.apk"
+          godot --headless --verbose --export-debug "Android" "$(readlink -f build)/android/${EXPORT_NAME}-v0.${GITHUB_RUN_NUMBER}.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: eneko-apk
-          path: build/android/${{ env.EXPORT_NAME }}.apk
+          path: build/android/${{ env.EXPORT_NAME }}-v0.${{ github.run_number }}.apk
 
       - name: Publish APK to GitHub Release
         uses: softprops/action-gh-release@v2
@@ -55,6 +55,6 @@ jobs:
           name: "Build #${{ github.run_number }} (v0.${{ github.run_number }})"
           body: "Version 0.${{ github.run_number }} (versionCode ${{ github.run_number }}) — build automatique depuis le commit ${{ github.sha }}."
           prerelease: true
-          files: build/android/${{ env.EXPORT_NAME }}.apk
+          files: build/android/${{ env.EXPORT_NAME }}-v0.${{ github.run_number }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

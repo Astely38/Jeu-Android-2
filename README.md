@@ -56,7 +56,8 @@ Store et sans avoir besoin d'être connecté à GitHub :
 1. Depuis le téléphone, ouvre :
    **https://github.com/Astely38/Jeu-Android-2/releases**
 2. Tout en haut de la liste se trouve le build le plus récent (ex. "Build #4"). Ouvre-le.
-3. Dans la section "Assets", appuie sur **eneko.apk** pour le télécharger (pas besoin de dézipper).
+3. Dans la section "Assets", appuie sur **eneko-v0.NN.apk** (NN = numéro du build) pour le
+   télécharger (pas besoin de dézipper).
 4. Ouvre le fichier téléchargé et autorise l'installation depuis une "source inconnue" si demandé.
 
 ### Développer le projet
