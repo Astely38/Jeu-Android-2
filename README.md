@@ -41,6 +41,13 @@ et froid**. Pics enneigés, crêtes rocheuses, **drapeaux de prière** déchiré
 **stalactites de glace**. Léonie apparaît une dernière fois à mi-parcours avant de laisser Eneko
 continuer seul vers le sommet. Débloqué en terminant le niveau 3.
 
+**Niveau 5 — Le Sanctuaire Final** : courte traversée de marbre pâle et d'or menant à une arène où
+Eneko affronte seul le **Gardien Corrompu**, boss final doté de **8 points de vie**. Une seconde
+phase se déclenche à mi-vie : le Gardien accélère, charge, et invoque deux Ombres corrompues dans
+l'arène. Une barre de vie s'affiche en haut de l'écran pendant le combat. Léonie n'apparaît pas —
+elle l'a annoncé au sommet de la montagne, Eneko termine seul. Débloqué en terminant le niveau 4 ;
+dernier niveau de la progression.
+
 Le **système de défi** note chaque niveau terminé (Bronze/Argent/Or/Platine) selon les orbes
 récoltés et les dégâts subis, affiché sur l'écran de victoire. **Toute défaite (chute ou 0 cœur)
 redémarre intégralement le niveau** — plus de retour au dernier checkpoint.
@@ -51,11 +58,12 @@ colline, montagnes, rivière aux reflets dorés et pétales portés par le vent.
 ### Structure du projet
 
 ```
-/scenes   main_menu, level_select, player, enemy, shadow, undead, leonie, orb
+/scenes   main_menu, level_select, player, enemy, shadow, undead, leonie, orb, boss
 /levels   level_1 ("La Clairière des Bambous"), level_2 ("Le Temple Oublié"),
-          level_3 ("Le Village des Ombres"), level_4 ("La Montagne des Brumes")
-/scripts  logique GDScript (player, enemy, shadow, undead, leonie, level, level_2, level_3,
-          level_4, main_menu, level_select, challenge)
+          level_3 ("Le Village des Ombres"), level_4 ("La Montagne des Brumes"),
+          level_5 ("Le Sanctuaire Final")
+/scripts  logique GDScript (player, enemy, shadow, undead, leonie, boss, level, level_2, level_3,
+          level_4, level_5, main_menu, level_select, challenge)
 /scripts/save  SaveManager (autoload, sauvegarde JSON)
 /ui       boîte de dialogue
 /assets   sprites (SVG + pixel art), sons (assets/sfx)
