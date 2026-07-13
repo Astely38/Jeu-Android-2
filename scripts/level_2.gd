@@ -5,9 +5,11 @@ extends Node2D
 ## Morts-vivants squelettiques en guise de gardiens du temple.
 
 const ORB_SCENE := preload("res://scenes/orb.tscn")
-const UNDEAD_SCENE := preload("res://scenes/undead.tscn")
+const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
+
+var UNDEAD_SCENE: PackedScene = null
 
 const LEVEL_ID := "level_2"
 const STAND_OFFSET := 73.0
@@ -90,6 +92,7 @@ var sfx_win: AudioStreamPlayer
 @onready var dialogue: CanvasLayer = $Dialogue
 
 func _ready() -> void:
+	UNDEAD_SCENE = load("res://scenes/undead.tscn")
 	_build_walls()
 	_build_platforms()
 	_build_torches()
@@ -327,9 +330,10 @@ func _build_kill_zone() -> void:
 	kz.body_entered.connect(_on_kill_zone_body_entered)
 
 func _spawn_entities() -> void:
+	var enemy_scene: PackedScene = UNDEAD_SCENE if UNDEAD_SCENE != null else PATROL_SCENE
 	for idx in UNDEAD_IDX:
 		var pos := _stand_pos(idx)
-		var e := UNDEAD_SCENE.instantiate()
+		var e := enemy_scene.instantiate()
 		e.patrol_distance = maxf(30.0, HALF_WIDTHS[idx] - 45.0)
 		e.position = pos
 		add_child(e)
