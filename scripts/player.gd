@@ -43,6 +43,8 @@ var _cur := ""
 @onready var sfx_hurt: AudioStreamPlayer = $SfxHurt
 @onready var sfx_orb: AudioStreamPlayer = $SfxOrb
 @onready var camera: Camera2D = $Camera2D
+@onready var debug_info: Label = $HUD/DebugInfo
+var _debug_frame := 0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -59,6 +61,7 @@ func _ready() -> void:
 	_play("idle")
 	orb_label.text = "x0"
 	_update_hearts()
+	debug_info.text = "waiting for first physics frame..."
 
 func _physics_process(delta: float) -> void:
 	# Invincibilité : clignotement.
@@ -100,6 +103,12 @@ func _physics_process(delta: float) -> void:
 
 	_update_animation()
 	_animate(delta)
+
+	_debug_frame += 1
+	debug_info.text = "f%d pos(%d,%d) vel(%d,%d) floor=%s L=%s R=%s a=%.1f anim=%s" % [
+		_debug_frame, int(position.x), int(position.y), int(velocity.x), int(velocity.y),
+		is_on_floor(), moving_left, moving_right, anim.modulate.a, _cur,
+	]
 
 ## Choisit l'animation selon l'état (sauf pendant un verrou attaque/touché).
 func _update_animation() -> void:
