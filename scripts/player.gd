@@ -32,6 +32,7 @@ var energy := MAX_ENERGY
 var orbs := 0
 var start_position := Vector2.ZERO
 var _cur := ""
+var _dead := false
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
@@ -168,14 +169,25 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 
 ## Chute dans un trou : redémarrage complet du niveau.
 func fall_damage() -> void:
-	_flash_game_over()
-	await create_tween().tween_interval(0.8).finished
-	get_tree().reload_current_scene()
+	_die_and_restart()
 
 ## Mort (0 cœur suite aux dégâts) : redémarrage complet du niveau.
 func respawn() -> void:
+	_die_and_restart()
+
+## Mort unifiée : fige Eneko, vide les cœurs, affiche le message, puis
+## recharge la scène. Le garde _dead évite les déclenchements multiples
+## (kill zone + ennemi dans la même frame, par exemple).
+func _die_and_restart() -> void:
+	if _dead:
+		return
+	_dead = true
+	health = 0
+	_update_hearts()
+	sfx_hurt.play()
 	_flash_game_over()
-	await create_tween().tween_interval(0.8).finished
+	set_physics_process(false)
+	await get_tree().create_timer(1.1).timeout
 	get_tree().reload_current_scene()
 
 ## Message temporaire "vous avez perdu" affiché quand les 3 cœurs tombent à

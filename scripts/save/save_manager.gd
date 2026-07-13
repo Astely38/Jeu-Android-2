@@ -36,6 +36,7 @@ func load_data() -> void:
 		"unlocked_levels": ["level_1"],
 		"completed_levels": [],
 		"best_orbs": {},
+		"best_grades": {},
 		"last_level": "level_1",
 	}
 	if not FileAccess.file_exists(SAVE_PATH):
@@ -69,6 +70,14 @@ func is_completed(level_id: String) -> bool:
 
 func best_orbs(level_id: String) -> int:
 	return int(data["best_orbs"].get(level_id, 0))
+
+## Meilleur grade obtenu sur un niveau ("" si jamais terminé).
+func best_grade(level_id: String) -> String:
+	return str(data["best_grades"].get(level_id, ""))
+
+func set_best_grade(level_id: String, grade: String) -> void:
+	data["best_grades"][level_id] = grade
+	save_data()
 
 ## Appelé quand Eneko atteint le torii : marque le niveau terminé, débloque
 ## le suivant dans LEVEL_ORDER, et retient le meilleur score d'orbes.

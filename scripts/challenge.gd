@@ -4,6 +4,23 @@ extends Node
 ## Autoload (singleton) enregistré sous le nom "Challenge" dans project.godot.
 ## Pas de class_name ici : ça entrerait en conflit avec le nom de l'autoload.
 
+## Ordre croissant des grades, pour comparer deux performances.
+const GRADE_ORDER := ["BRONZE", "SILVER", "GOLD", "PLATINUM"]
+
+## Noms affichés (français) et couleurs associées à chaque grade.
+const GRADE_NAMES := {
+	"BRONZE": "Bronze",
+	"SILVER": "Argent",
+	"GOLD": "Or",
+	"PLATINUM": "Platine",
+}
+const GRADE_COLORS := {
+	"BRONZE": Color(0.8, 0.55, 0.35),
+	"SILVER": Color(0.8, 0.82, 0.88),
+	"GOLD": Color(1.0, 0.8, 0.3),
+	"PLATINUM": Color(0.75, 0.9, 1.0),
+}
+
 var level_id: String = ""
 var start_time: float = 0.0
 var orbs_collected: int = 0
@@ -54,6 +71,25 @@ func _calculate_grade() -> String:
 		return "SILVER"
 	else:
 		return "BRONZE"
+
+## Nom affiché (français) d'un grade interne.
+func grade_name(grade: String) -> String:
+	return GRADE_NAMES.get(grade, grade)
+
+## Couleur associée à un grade (pour teinter le label de l'écran de victoire).
+func grade_color(grade: String) -> Color:
+	return GRADE_COLORS.get(grade, Color.WHITE)
+
+## Termine le niveau : calcule les résultats, retient le meilleur grade
+## dans la sauvegarde, remet les compteurs à zéro et renvoie les résultats.
+func finish_level() -> Dictionary:
+	var results := get_results()
+	var grade := String(results["grade"])
+	var prev := SaveManager.best_grade(level_id)
+	if prev == "" or GRADE_ORDER.find(grade) > GRADE_ORDER.find(prev):
+		SaveManager.set_best_grade(level_id, grade)
+	reset()
+	return results
 
 func reset() -> void:
 	level_id = ""

@@ -419,12 +419,11 @@ func _on_goal_body_entered(body: Node2D) -> void:
 		win_label.visible = true
 
 func _display_challenge_results() -> void:
-	var results := Challenge.get_results()
+	var results := Challenge.finish_level()
 
-	# Chercher les nœuds d'affichage des stats
 	var challenge_stats = win_label.find_child("ChallengeStats", true, false)
 	if challenge_stats == null:
-		return  # Pas de nœud ChallengeStats, passer
+		return
 
 	var grade_label = challenge_stats.find_child("Grade", true, false)
 	var orbs_label = challenge_stats.find_child("Orbs", true, false)
@@ -432,15 +431,14 @@ func _display_challenge_results() -> void:
 	var time_label = challenge_stats.find_child("Time", true, false)
 
 	if grade_label:
-		grade_label.text = "Grade: %s" % results["grade"]
+		grade_label.text = "Grade : %s" % Challenge.grade_name(results["grade"])
+		grade_label.add_theme_color_override("font_color", Challenge.grade_color(results["grade"]))
 	if orbs_label:
-		orbs_label.text = "Orbes: %d/%d" % [results["orbs"], results["total_orbs"]]
+		orbs_label.text = "Orbes : %d/%d" % [results["orbs"], results["total_orbs"]]
 	if damage_label:
-		damage_label.text = "Dégâts: %d" % results["damage"]
+		damage_label.text = "Dégâts : %d" % results["damage"]
 	if time_label:
-		time_label.text = "Temps: %s" % _format_time(results["time"])
-
-	Challenge.reset()
+		time_label.text = "Temps : %s" % _format_time(results["time"])
 
 func _format_time(seconds: float) -> String:
 	var mins: int = int(seconds) / 60

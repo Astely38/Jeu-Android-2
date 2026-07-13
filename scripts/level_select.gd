@@ -59,6 +59,9 @@ func _build_row(level_id: String) -> Control:
 		sub.text = "Verrouillé"
 	elif completed:
 		sub.text = "Terminé — %d orbes récoltés" % SaveManager.best_orbs(level_id)
+		var grade := SaveManager.best_grade(level_id)
+		if grade != "":
+			sub.text += " — %s" % Challenge.grade_name(grade)
 	else:
 		sub.text = "Disponible"
 	sub.add_theme_font_size_override("font_size", 16)
