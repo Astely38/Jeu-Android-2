@@ -49,6 +49,7 @@ var _left_presses := 0
 var _right_presses := 0
 var _jump_presses := 0
 var _max_abs_x := 0.0
+var _dbg_last_line2 := ""
 
 func _ready() -> void:
 	add_to_group("player")
@@ -85,20 +86,29 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
 
+	var _dbg_branch := "kb"
+	var _dbg_dir := 0.0
 	if knockback > 0.0:
 		knockback -= delta
 		velocity.x = move_toward(velocity.x, 0.0, SPEED * 3.0 * delta)
 	else:
+		_dbg_branch = "free"
 		var direction := 0.0
 		if moving_left or Input.is_physical_key_pressed(KEY_LEFT) or Input.is_physical_key_pressed(KEY_A):
 			direction -= 1.0
 		if moving_right or Input.is_physical_key_pressed(KEY_RIGHT) or Input.is_physical_key_pressed(KEY_D):
 			direction += 1.0
 		velocity.x = direction * SPEED
+		_dbg_dir = direction
 		if direction != 0.0:
 			_set_facing(direction)
 
+	var _dbg_target_vx := velocity.x
 	move_and_slide()
+	_dbg_last_line2 = "branch=%s dir=%d targetVX=%d actualVX=%d slides=%d onwall=%s" % [
+		_dbg_branch, int(_dbg_dir), int(_dbg_target_vx), int(velocity.x),
+		get_slide_collision_count(), is_on_wall(),
+	]
 
 	if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_SPACE):
 		jump()
@@ -110,9 +120,10 @@ func _physics_process(delta: float) -> void:
 
 	_debug_frame += 1
 	_max_abs_x = maxf(_max_abs_x, absf(position.x - start_position.x))
-	debug_info.text = "f%d pos(%d,%d) vel(%d,%d) floor=%s presses L%d R%d J%d maxDX=%d" % [
+	debug_info.text = "f%d pos(%d,%d) vel(%d,%d) floor=%s presses L%d R%d J%d maxDX=%d\n%s" % [
 		_debug_frame, int(position.x), int(position.y), int(velocity.x), int(velocity.y),
 		is_on_floor(), _left_presses, _right_presses, _jump_presses, int(_max_abs_x),
+		_dbg_last_line2,
 	]
 
 ## Choisit l'animation selon l'état (sauf pendant un verrou attaque/touché).
