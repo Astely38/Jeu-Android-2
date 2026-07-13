@@ -23,6 +23,7 @@ const LEVEL_SCENES := {
 	"level_2": "res://levels/level_2.tscn",
 	"level_3": "res://levels/level_3.tscn",
 	"level_4": "res://levels/level_4.tscn",
+	"level_5": "res://levels/level_5.tscn",
 }
 
 var data := {}
