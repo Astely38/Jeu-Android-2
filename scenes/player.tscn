@@ -139,12 +139,12 @@ theme_override_font_sizes/font_size = 26
 text = "x0"
 
 [node name="DebugInfo" type="Label" parent="HUD"]
-offset_left = 200.0
+offset_left = 140.0
 offset_top = 4.0
-offset_right = 760.0
+offset_right = 940.0
 offset_bottom = 24.0
 theme_override_colors/font_color = Color(1, 1, 0.4, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
 text = "debug"
 
 [node name="LeftButton" type="TouchScreenButton" parent="HUD"]

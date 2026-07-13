@@ -45,6 +45,10 @@ var _cur := ""
 @onready var camera: Camera2D = $Camera2D
 @onready var debug_info: Label = $HUD/DebugInfo
 var _debug_frame := 0
+var _left_presses := 0
+var _right_presses := 0
+var _jump_presses := 0
+var _max_abs_x := 0.0
 
 func _ready() -> void:
 	add_to_group("player")
@@ -105,9 +109,10 @@ func _physics_process(delta: float) -> void:
 	_animate(delta)
 
 	_debug_frame += 1
-	debug_info.text = "f%d pos(%d,%d) vel(%d,%d) floor=%s L=%s R=%s a=%.1f anim=%s" % [
+	_max_abs_x = maxf(_max_abs_x, absf(position.x - start_position.x))
+	debug_info.text = "f%d pos(%d,%d) vel(%d,%d) floor=%s presses L%d R%d J%d maxDX=%d" % [
 		_debug_frame, int(position.x), int(position.y), int(velocity.x), int(velocity.y),
-		is_on_floor(), moving_left, moving_right, anim.modulate.a, _cur,
+		is_on_floor(), _left_presses, _right_presses, _jump_presses, int(_max_abs_x),
 	]
 
 ## Choisit l'animation selon l'état (sauf pendant un verrou attaque/touché).
@@ -228,17 +233,20 @@ func _on_attack_area_body_entered(body: Node2D) -> void:
 
 func _on_left_pressed() -> void:
 	moving_left = true
+	_left_presses += 1
 
 func _on_left_released() -> void:
 	moving_left = false
 
 func _on_right_pressed() -> void:
 	moving_right = true
+	_right_presses += 1
 
 func _on_right_released() -> void:
 	moving_right = false
 
 func _on_jump_pressed() -> void:
+	_jump_presses += 1
 	jump()
 
 func _on_attack_pressed() -> void:
