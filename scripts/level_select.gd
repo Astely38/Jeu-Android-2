@@ -62,6 +62,9 @@ func _build_row(level_id: String) -> Control:
 		var grade := SaveManager.best_grade(level_id)
 		if grade != "":
 			sub.text += " — %s" % Challenge.grade_name(grade)
+		var bt := SaveManager.best_time(level_id)
+		if bt > 0.0:
+			sub.text += " — %d:%02d" % [int(bt) / 60, int(bt) % 60]
 	else:
 		sub.text = "Disponible"
 	sub.add_theme_font_size_override("font_size", 16)

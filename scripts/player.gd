@@ -56,6 +56,8 @@ var _shake := 0.0
 var _dash_timer := 0.0
 var _dash_cd := 0.0
 var _ghost_timer := 0.0
+var _pan_tween: Tween
+var _pause_layer: CanvasLayer
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
@@ -329,16 +331,21 @@ func _hit_stop() -> void:
 ## Panoramique d'introduction : la caméra part d'un point fort du niveau
 ## (torii, sommet, arène du boss...) et glisse jusqu'à Eneko. Le niveau
 ## l'appelle en fin de _ready ; Eneko est figé pendant le survol.
+## Ne joue qu'une fois par niveau et par session (une mort qui recharge
+## le niveau redonne la main immédiatement) ; passable d'un tap.
 func intro_pan(from: Vector2, duration := 1.8) -> void:
+	if not Challenge.should_play_intro():
+		return
 	set_physics_process(false)
 	var smoothing := camera.position_smoothing_enabled
 	camera.position_smoothing_enabled = false
 	camera.top_level = true
 	camera.global_position = from
-	var t := create_tween()
-	t.tween_property(camera, "global_position", global_position + Vector2(0, -40), duration) \
+	_pan_tween = create_tween()
+	_pan_tween.tween_property(camera, "global_position", global_position + Vector2(0, -40), duration) \
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	await t.finished
+	await _pan_tween.finished
+	_pan_tween = null
 	camera.top_level = false
 	camera.position = Vector2.ZERO
 	camera.position_smoothing_enabled = smoothing
@@ -346,6 +353,16 @@ func intro_pan(from: Vector2, duration := 1.8) -> void:
 	set_physics_process(true)
 	# Le chrono du défi ne démarre qu'à la prise en main.
 	Challenge.restart_timer()
+
+## Un tap (ou une touche) pendant le survol d'introduction le termine
+## immédiatement en sautant le tween à sa fin.
+func _input(event: InputEvent) -> void:
+	if _pan_tween == null or not _pan_tween.is_valid() or not _pan_tween.is_running():
+		return
+	var tapped := event is InputEventScreenTouch and event.pressed
+	var keyed := event is InputEventKey and event.pressed
+	if tapped or keyed:
+		_pan_tween.custom_step(999.0)
 
 func attack() -> void:
 	if attacking or lock_timer > 0.0:
@@ -504,5 +521,79 @@ func _on_dash_pressed() -> void:
 func _on_attack_pressed() -> void:
 	attack()
 
+## Le bouton menu ouvre une pause au lieu de quitter brutalement : on ne
+## perd plus sa partie sur un tap accidentel.
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	if _pause_layer == null:
+		_open_pause()
+
+func _open_pause() -> void:
+	get_tree().paused = true
+	_pause_layer = CanvasLayer.new()
+	_pause_layer.layer = 5
+	_pause_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_pause_layer)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.04, 0.03, 0.08, 0.72)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_pause_layer.add_child(dim)
+
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.offset_left = -130.0
+	box.offset_right = 130.0
+	box.offset_top = -130.0
+	box.offset_bottom = 130.0
+	box.add_theme_constant_override("separation", 14)
+	_pause_layer.add_child(box)
+
+	var title := Label.new()
+	title.text = "Pause"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 38)
+	box.add_child(title)
+
+	var resume := _pause_button("Reprendre", Color(0.45, 0.75, 0.4))
+	resume.pressed.connect(_close_pause)
+	box.add_child(resume)
+
+	var retry := _pause_button("Recommencer", Color(0.92, 0.65, 0.3))
+	retry.pressed.connect(func():
+		get_tree().paused = false
+		get_tree().reload_current_scene()
+	)
+	box.add_child(retry)
+
+	var menu := _pause_button("Retour au menu", Color(0.6, 0.5, 0.45))
+	menu.pressed.connect(func():
+		get_tree().paused = false
+		get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	)
+	box.add_child(menu)
+
+func _pause_button(label: String, accent: Color) -> Button:
+	var b := Button.new()
+	b.text = label
+	b.custom_minimum_size = Vector2(0, 54)
+	b.add_theme_font_size_override("font_size", 24)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.1, 0.09, 0.17, 0.92)
+	sb.border_color = accent
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(10)
+	sb.set_content_margin_all(8.0)
+	var hov: StyleBoxFlat = sb.duplicate()
+	hov.bg_color = Color(0.2, 0.15, 0.22, 0.95)
+	var prs: StyleBoxFlat = sb.duplicate()
+	prs.bg_color = Color(0.34, 0.2, 0.18, 0.95)
+	b.add_theme_stylebox_override("normal", sb)
+	b.add_theme_stylebox_override("hover", hov)
+	b.add_theme_stylebox_override("pressed", prs)
+	return b
+
+func _close_pause() -> void:
+	get_tree().paused = false
+	if _pause_layer != null:
+		_pause_layer.queue_free()
+		_pause_layer = null

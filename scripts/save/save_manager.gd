@@ -37,6 +37,7 @@ func load_data() -> void:
 		"completed_levels": [],
 		"best_orbs": {},
 		"best_grades": {},
+		"best_times": {},
 		"last_level": "level_1",
 	}
 	if not FileAccess.file_exists(SAVE_PATH):
@@ -77,6 +78,14 @@ func best_grade(level_id: String) -> String:
 
 func set_best_grade(level_id: String, grade: String) -> void:
 	data["best_grades"][level_id] = grade
+	save_data()
+
+## Meilleur temps (en secondes) d'un niveau ; 0.0 si jamais terminé.
+func best_time(level_id: String) -> float:
+	return float(data["best_times"].get(level_id, 0.0))
+
+func set_best_time(level_id: String, seconds: float) -> void:
+	data["best_times"][level_id] = seconds
 	save_data()
 
 ## Appelé quand Eneko atteint le torii : marque le niveau terminé, débloque

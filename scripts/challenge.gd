@@ -26,6 +26,9 @@ var start_time: float = 0.0
 var orbs_collected: int = 0
 var total_orbs: int = 0
 var damage_taken: int = 0  # nombre de fois le joueur a été frappé/tombé
+## Survols d'introduction déjà joués cette session : après une mort, le
+## niveau redémarre directement sans rejouer la cinématique.
+var _intros_seen: Array = []
 
 func _ready() -> void:
 	add_to_group("challenge")
@@ -42,6 +45,14 @@ func start_level(id: String, total_orbs_count: int) -> void:
 ## compte pas la cinématique.
 func restart_timer() -> void:
 	start_time = float(Time.get_ticks_msec()) / 1000.0
+
+## Vrai la première fois qu'un niveau demande son survol d'introduction
+## dans la session ; faux ensuite (mort, rejouer via la sélection).
+func should_play_intro() -> bool:
+	if level_id in _intros_seen:
+		return false
+	_intros_seen.append(level_id)
+	return true
 
 func register_damage() -> void:
 	if damage_taken >= 0:
@@ -94,6 +105,10 @@ func finish_level() -> Dictionary:
 	var prev := SaveManager.best_grade(level_id)
 	if prev == "" or GRADE_ORDER.find(grade) > GRADE_ORDER.find(prev):
 		SaveManager.set_best_grade(level_id, grade)
+	var elapsed := float(results["time"])
+	var prev_time := SaveManager.best_time(level_id)
+	if prev_time <= 0.0 or elapsed < prev_time:
+		SaveManager.set_best_time(level_id, elapsed)
 	reset()
 	return results
 

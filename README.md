@@ -19,9 +19,12 @@ cerisier** portés par le vent. Effets sonores et vent ambiant inclus.
 Contrôles tactiles à l'écran : Gauche / Droite à gauche ; **Ruée** (dash éclair avec images
 rémanentes, invincible pendant l'élan, temps de recharge court), Saut et Attaque à droite.
 Maintenir le saut permet de sauter plus haut. Chaque niveau s'ouvre sur un **survol de caméra**
-depuis l'objectif jusqu'à Eneko, et chaque coup de sabre qui porte marque un bref **arrêt du
-temps**. Un **chronomètre** et le compteur d'orbes (récoltés / total) s'affichent en haut de
-l'écran ; le chrono ne démarre qu'à la prise en main, après le survol d'introduction.
+depuis l'objectif jusqu'à Eneko — joué une seule fois par session et **passable d'un tap** — et
+chaque coup de sabre qui porte marque un bref **arrêt du temps**. Un **chronomètre** et le
+compteur d'orbes (récoltés / total) s'affichent en haut de l'écran ; le chrono ne démarre qu'à
+la prise en main. Le bouton du haut ouvre une **pause** (Reprendre / Recommencer / Retour au
+menu) au lieu de quitter directement. La sélection de niveaux affiche le **meilleur grade** et
+le **meilleur temps** de chaque niveau terminé.
 
 **Sauvegarde locale** (JSON, `user://save.json`) : niveaux terminés/débloqués et meilleur score
 d'orbes par niveau. Le menu principal propose **Continuer** (reprend le dernier niveau joué, visible
