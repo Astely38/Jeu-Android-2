@@ -29,22 +29,27 @@ var _start_y := 0.0
 
 func _ready() -> void:
 	_start_y = position.y
-	anim.sprite_frames = SpriteSheet.build([
-		{"name": "idle", "path": KITSUNE + "Idle.png", "frames": 8, "fps": 8.0, "loop": true},
-	])
-	anim.play("idle")
+
+	if anim and is_instance_valid(anim):
+		anim.sprite_frames = SpriteSheet.build([
+			{"name": "idle", "path": KITSUNE + "Idle.png", "frames": 8, "fps": 8.0, "loop": true},
+		])
+		anim.play("idle")
+
 	body_entered.connect(_on_body_entered)
 
 func _process(delta: float) -> void:
 	_t += delta
 
 	# Pulsation de l'aura
-	var pulse := 1.0 + sin(_t * 2.0) * 0.15
-	aura.scale = Vector2(pulse, pulse)
+	if aura and is_instance_valid(aura):
+		var pulse := 1.0 + sin(_t * 2.0) * 0.15
+		aura.scale = Vector2(pulse, pulse)
 
 	# Animation du glow
-	var glow_alpha := 0.3 + sin(_t * 3.0) * 0.15
-	glow.modulate.a = glow_alpha
+	if glow and is_instance_valid(glow):
+		var glow_alpha := 0.3 + sin(_t * 3.0) * 0.15
+		glow.modulate.a = glow_alpha
 
 	# Flottement léger vertical
 	position.y = _start_y + sin(_t * 1.5) * 12.0
