@@ -29,6 +29,12 @@ jusqu'à la **lune** qui veille sur le sanctuaire. Torches aux **flammes animée
 or, dalles fissurées et moussues. 3 points de contrôle, pièges à pieux, esprits et ombres
 corrompues, apparition de Léonie à mi-parcours. Débloqué en terminant le niveau 1.
 
+**Niveau 3 — Le Village des Ombres** : traversée d'un village abandonné sous une **lune de sang**.
+Maisons aux fenêtres encore luisantes, portes béantes, **cordées de lanternes** entre les poteaux,
+braseros aux flammes dansantes, arbres morts, clôtures brisées, brume violette et volutes sombres.
+Les points de contrôle sont des **lanternes de pierre (tōrō)** qui s'allument en vert. Les Ombres
+corrompues y sont plus nombreuses que partout ailleurs. Débloqué en terminant le niveau 2.
+
 Le **menu principal** est un tableau de crépuscule : soleil couchant derrière un torii sur la
 colline, montagnes, rivière aux reflets dorés et pétales portés par le vent.
 
@@ -36,8 +42,10 @@ colline, montagnes, rivière aux reflets dorés et pétales portés par le vent.
 
 ```
 /scenes   main_menu, level_select, player, enemy, shadow, undead, leonie, orb
-/levels   level_1 ("La Clairière des Bambous"), level_2 ("Le Temple Oublié")
-/scripts  logique GDScript (player, enemy, shadow, undead, leonie, level, level_2, main_menu, level_select)
+/levels   level_1 ("La Clairière des Bambous"), level_2 ("Le Temple Oublié"),
+          level_3 ("Le Village des Ombres")
+/scripts  logique GDScript (player, enemy, shadow, undead, leonie, level, level_2, level_3,
+          main_menu, level_select)
 /scripts/save  SaveManager (autoload, sauvegarde JSON)
 /ui       boîte de dialogue
 /assets   sprites (SVG + pixel art), sons (assets/sfx)

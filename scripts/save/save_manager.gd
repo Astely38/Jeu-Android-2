@@ -21,6 +21,7 @@ const LEVEL_NAMES := {
 const LEVEL_SCENES := {
 	"level_1": "res://levels/level_1.tscn",
 	"level_2": "res://levels/level_2.tscn",
+	"level_3": "res://levels/level_3.tscn",
 }
 
 var data := {}

@@ -65,6 +65,7 @@ var _t := 0.0
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
 @onready var menu_button: Button = $WinLabel/MenuButton
+@onready var next_button: Button = $WinLabel/NextButton
 @onready var dialogue: CanvasLayer = $Dialogue
 
 func _ready() -> void:
@@ -81,6 +82,10 @@ func _ready() -> void:
 	SaveManager.set_last_level(LEVEL_ID)
 	menu_button.pressed.connect(_on_menu_pressed)
 	dialogue.finished.connect(_on_dialogue_finished)
+	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_3", "")
+	next_button.visible = next_scene != ""
+	if next_scene != "":
+		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
 
 func _process(delta: float) -> void:
 	_t += delta
@@ -156,7 +161,8 @@ func _build_decor() -> void:
 		Vector2(570, 290), Vector2(610, 330), Vector2(630, 2050),
 	]), Color(0.12, 0.1, 0.13, 0.9))
 
-	# Fenêtres en arche, faiblement éclairées de l'intérieur.
+	# Fenêtres en arche coiffées d'un petit toit de tuiles, éclairées
+	# de l'intérieur.
 	i = 0
 	while i < 5:
 		var wx := 150.0 if i % 2 == 0 else 450.0
@@ -165,33 +171,56 @@ func _build_decor() -> void:
 			Vector2(wx - 14, wy), Vector2(wx + 14, wy), Vector2(wx + 14, wy - 34),
 			Vector2(wx, wy - 48), Vector2(wx - 14, wy - 34),
 		]), Color(0.95, 0.62, 0.25, 0.13))
+		_poly(self, PackedVector2Array([
+			Vector2(wx - 30, wy - 52), Vector2(wx + 30, wy - 52),
+			Vector2(wx + 18, wy - 64), Vector2(wx - 18, wy - 64),
+		]), Color(0.17, 0.15, 0.19, 0.9))
+		_poly(self, PackedVector2Array([
+			Vector2(wx - 38, wy - 58), Vector2(wx - 30, wy - 52), Vector2(wx - 22, wy - 54),
+		]), Color(0.17, 0.15, 0.19, 0.9))
+		_poly(self, PackedVector2Array([
+			Vector2(wx + 38, wy - 58), Vector2(wx + 30, wy - 52), Vector2(wx + 22, wy - 54),
+		]), Color(0.17, 0.15, 0.19, 0.9))
+		_poly(self, PackedVector2Array([
+			Vector2(wx - 30, wy - 50), Vector2(wx + 30, wy - 50),
+			Vector2(wx + 28, wy - 54), Vector2(wx - 28, wy - 54),
+		]), Color(0.45, 0.13, 0.1, 0.8))
 		i += 1
 
-	# Colonnes fantômes à l'intérieur de la tour.
+	# Colonnes fantômes laquées à l'intérieur de la tour.
 	for cx in [150.0, 300.0, 450.0]:
 		var yy := 1990.0
 		while yy > 420.0:
-			_poly(self, _rect_points(16.0, -360.0, 0.0), Color(0.22, 0.2, 0.22, 0.35), Vector2(cx, yy))
-			_poly(self, _rect_points(22.0, -378.0, -360.0), Color(0.26, 0.24, 0.25, 0.35), Vector2(cx, yy))
+			_poly(self, _rect_points(16.0, -360.0, 0.0), Color(0.3, 0.14, 0.12, 0.3), Vector2(cx, yy))
+			_poly(self, _rect_points(22.0, -378.0, -360.0), Color(0.5, 0.38, 0.2, 0.3), Vector2(cx, yy))
 			yy -= 390.0
 
-	# Piliers latéraux segmentés (ils portent les torches).
+	# Piliers latéraux : colonnes de bois laqué rouge cerclées d'or,
+	# elles portent les torches.
 	for cx in [50.0, 550.0]:
 		var inner := 1.0 if cx < 300.0 else -1.0
-		var yy := 2020.0
-		while yy > 300.0:
-			_poly(self, _rect_points(22.0, -300.0, 0.0), Color(0.21, 0.2, 0.18), Vector2(cx, yy))
-			# Arête éclairée côté intérieur.
-			_poly(self, PackedVector2Array([
-				Vector2(14.0 * inner, -300), Vector2(22.0 * inner, -300),
-				Vector2(22.0 * inner, 0), Vector2(14.0 * inner, 0),
-			]), Color(0.28, 0.26, 0.23), Vector2(cx, yy))
-			# Chapiteau du segment.
-			_poly(self, _rect_points(28.0, -316.0, -300.0), Color(0.27, 0.25, 0.22), Vector2(cx, yy))
-			yy -= 316.0
+		# Fût continu.
+		_poly(self, _rect_points(20.0, -1720.0, 0.0), Color(0.36, 0.14, 0.1), Vector2(cx, 2020.0))
+		# Ombre côté extérieur, reflet côté intérieur.
+		_poly(self, PackedVector2Array([
+			Vector2(-20.0 * inner, -1720), Vector2(-10.0 * inner, -1720),
+			Vector2(-10.0 * inner, 0), Vector2(-20.0 * inner, 0),
+		]), Color(0.26, 0.1, 0.08), Vector2(cx, 2020.0))
+		_poly(self, PackedVector2Array([
+			Vector2(12.0 * inner, -1720), Vector2(20.0 * inner, -1720),
+			Vector2(20.0 * inner, 0), Vector2(12.0 * inner, 0),
+		]), Color(0.46, 0.2, 0.14), Vector2(cx, 2020.0))
+		# Anneaux dorés.
+		var yy := 1980.0
+		while yy > 320.0:
+			_poly(self, _rect_points(24.0, -10.0, 0.0), Color(0.8, 0.62, 0.28), Vector2(cx, yy))
+			yy -= 235.0
+		# Base de pierre et chapiteau.
+		_poly(self, _rect_points(30.0, -22.0, 0.0), STONE_DARK, Vector2(cx, 2020.0))
+		_poly(self, _rect_points(30.0, 0.0, 20.0), STONE_DARK, Vector2(cx, 300.0))
 
-## Plateformes : dalles de pierre épaisses, fissurées et moussues,
-## avec bannières suspendues sous certaines d'entre elles.
+## Plateformes : balcons de bois laqué (petites) et terrasses de pierre
+## sculptée (grands paliers). La collision reste identique (24px centrés).
 func _build_platforms() -> void:
 	for i in PLATFORMS.size():
 		var p: Vector2 = PLATFORMS[i]
@@ -203,47 +232,115 @@ func _build_platforms() -> void:
 		rect.size = Vector2(hw * 2.0, 24.0)
 		shape.shape = rect
 		body.add_child(shape)
-		# Dalle visible épaisse (60px)
-		_poly(body, _rect_points(hw, -12.0, 48.0), STONE)
-		_poly(body, _rect_points(hw, -12.0, 0.0), STONE_TOP)
-		_poly(body, _rect_points(hw, 30.0, 48.0), STONE_DARK)
-		# Ligne gravée sous la face supérieure.
-		_poly(body, _rect_points(hw - 8.0, 4.0, 6.0), Color(0.38, 0.35, 0.31))
-		# Fissure dans la pierre.
-		var cx := -hw + 30.0 + float((i * 73) % maxi(1, int(hw)))
-		_poly(body, PackedVector2Array([
-			Vector2(cx, -12), Vector2(cx + 3, -12), Vector2(cx - 4, 14),
-			Vector2(cx + 6, 34), Vector2(cx + 2, 34), Vector2(cx - 8, 14),
-		]), Color(0.22, 0.2, 0.18, 0.85))
-		# Mousse sur les bords des dalles.
-		_poly(body, PackedVector2Array([
-			Vector2(-hw, -12), Vector2(-hw + 24, -12),
-			Vector2(-hw + 18, -17), Vector2(-hw + 6, -14),
-		]), MOSS)
-		_poly(body, PackedVector2Array([
-			Vector2(hw - 24, -12), Vector2(hw, -12),
-			Vector2(hw - 6, -17), Vector2(hw - 18, -14),
-		]), MOSS)
-		# Bannière suspendue sous la dalle.
-		if i in BANNER_IDX:
-			var side := -1.0 if i % 2 == 0 else 1.0
-			var bx := side * (hw - 34.0)
-			_poly(body, PackedVector2Array([
-				Vector2(bx - 12, 48), Vector2(bx + 12, 48),
-				Vector2(bx + 12, 150), Vector2(bx, 136), Vector2(bx - 12, 150),
-			]), CLOTH)
-			_poly(body, PackedVector2Array([
-				Vector2(bx - 12, 56), Vector2(bx + 12, 56),
-				Vector2(bx + 12, 62), Vector2(bx - 12, 62),
-			]), CLOTH_TRIM)
-			var em := PackedVector2Array()
-			var k := 0
-			while k < 8:
-				var a := k * TAU / 8.0
-				em.append(Vector2(bx + cos(a) * 6.0, 96.0 + sin(a) * 6.0))
-				k += 1
-			_poly(body, em, CLOTH_TRIM)
+		if hw >= 180.0:
+			_deco_terrace(body, hw)
+		else:
+			_deco_balcony(body, hw, i)
 		add_child(body)
+
+## Terrasse de pierre : corniche débordante, frise gravée, mousse.
+func _deco_terrace(body: Node, hw: float) -> void:
+	_poly(body, _rect_points(hw + 10.0, -12.0, -4.0), Color(0.6, 0.56, 0.48))
+	_poly(body, _rect_points(hw, -4.0, 48.0), STONE)
+	_poly(body, _rect_points(hw - 6.0, 8.0, 28.0), Color(0.38, 0.35, 0.3))
+	var mx := -hw + 18.0
+	while mx < hw - 18.0:
+		_poly(body, PackedVector2Array([
+			Vector2(mx, 13), Vector2(mx + 12, 13), Vector2(mx + 12, 23), Vector2(mx, 23),
+		]), Color(0.5, 0.46, 0.4))
+		mx += 30.0
+	_poly(body, _rect_points(hw, 40.0, 48.0), STONE_DARK)
+	_poly(body, PackedVector2Array([
+		Vector2(-hw - 10, -12), Vector2(-hw + 20, -12),
+		Vector2(-hw + 14, -18), Vector2(-hw - 2, -14),
+	]), MOSS)
+	_poly(body, PackedVector2Array([
+		Vector2(hw - 20, -12), Vector2(hw + 10, -12),
+		Vector2(hw + 2, -14), Vector2(hw - 14, -18),
+	]), MOSS)
+
+## Balcon de bois : plancher, poutre laquée rouge aux embouts dorés,
+## étais croisés, lanterne de papier ou bannière suspendue.
+func _deco_balcony(body: Node, hw: float, i: int) -> void:
+	# Plancher de bois avec rainures.
+	_poly(body, _rect_points(hw, -12.0, 2.0), Color(0.5, 0.34, 0.2))
+	var px := -hw + 34.0
+	while px < hw - 10.0:
+		_poly(body, PackedVector2Array([
+			Vector2(px, -12), Vector2(px + 2, -12), Vector2(px + 2, 2), Vector2(px, 2),
+		]), Color(0.38, 0.25, 0.14))
+		px += 42.0
+	# Poutre laquée rouge.
+	_poly(body, _rect_points(hw, 2.0, 18.0), Color(0.58, 0.16, 0.12))
+	_poly(body, _rect_points(hw, 14.0, 18.0), Color(0.42, 0.11, 0.08))
+	# Embouts dorés.
+	for side in [-1.0, 1.0]:
+		_poly(body, PackedVector2Array([
+			Vector2(side * (hw - 10.0), 0.0), Vector2(side * hw, 0.0),
+			Vector2(side * hw, 20.0), Vector2(side * (hw - 10.0), 20.0),
+		]), CLOTH_TRIM)
+	# Jambes de force sous le balcon.
+	for side in [-1.0, 1.0]:
+		_poly(body, PackedVector2Array([
+			Vector2(side * (hw - 18.0), 18.0), Vector2(side * (hw - 32.0), 18.0),
+			Vector2(side * 6.0, 82.0), Vector2(side * 20.0, 82.0),
+		]), Color(0.34, 0.21, 0.12))
+	_poly(body, PackedVector2Array([
+		Vector2(-24, 76), Vector2(24, 76), Vector2(18, 92), Vector2(-18, 92),
+	]), Color(0.28, 0.17, 0.1))
+	# Bannière ou lanterne suspendue.
+	var banner_side := -1.0 if i % 2 == 0 else 1.0
+	if i in BANNER_IDX:
+		var bx := banner_side * (hw - 34.0)
+		_poly(body, PackedVector2Array([
+			Vector2(bx - 12, 20), Vector2(bx + 12, 20),
+			Vector2(bx + 12, 122), Vector2(bx, 108), Vector2(bx - 12, 122),
+		]), CLOTH)
+		_poly(body, PackedVector2Array([
+			Vector2(bx - 12, 28), Vector2(bx + 12, 28),
+			Vector2(bx + 12, 34), Vector2(bx - 12, 34),
+		]), CLOTH_TRIM)
+		var em := PackedVector2Array()
+		var k := 0
+		while k < 8:
+			var a := k * TAU / 8.0
+			em.append(Vector2(bx + cos(a) * 6.0, 68.0 + sin(a) * 6.0))
+			k += 1
+		_poly(body, em, CLOTH_TRIM)
+	if i % 2 == 1:
+		var lantern_side := 1.0 if i % 4 == 1 else -1.0
+		if i in BANNER_IDX:
+			lantern_side = -banner_side
+		_build_lantern(body, Vector2(lantern_side * (hw - 26.0), 46.0))
+
+## Lanterne de papier ronde suspendue, au halo pulsant.
+func _build_lantern(parent: Node, pos: Vector2) -> void:
+	_poly(parent, PackedVector2Array([
+		Vector2(pos.x - 1, 18), Vector2(pos.x + 1, 18),
+		Vector2(pos.x + 1, pos.y - 12), Vector2(pos.x - 1, pos.y - 12),
+	]), Color(0.2, 0.15, 0.1))
+	var lg := Sprite2D.new()
+	lg.texture = load("res://assets/mist.svg")
+	lg.modulate = Color(1.0, 0.72, 0.35, 0.22)
+	lg.scale = Vector2(2.2, 2.2)
+	lg.position = pos
+	parent.add_child(lg)
+	_halos.append(lg)
+	var lpts := PackedVector2Array()
+	var k := 0
+	while k < 12:
+		var a := k * TAU / 12.0
+		lpts.append(Vector2(pos.x + cos(a) * 9.0, pos.y + sin(a) * 11.0))
+		k += 1
+	_poly(parent, lpts, Color(1.0, 0.62, 0.28, 0.95))
+	_poly(parent, PackedVector2Array([
+		Vector2(pos.x - 8, pos.y - 5), Vector2(pos.x + 8, pos.y - 5),
+		Vector2(pos.x + 8, pos.y - 3), Vector2(pos.x - 8, pos.y - 3),
+	]), Color(0.75, 0.4, 0.18))
+	_poly(parent, PackedVector2Array([
+		Vector2(pos.x - 8, pos.y + 3), Vector2(pos.x + 8, pos.y + 3),
+		Vector2(pos.x + 8, pos.y + 5), Vector2(pos.x - 8, pos.y + 5),
+	]), Color(0.75, 0.4, 0.18))
 
 ## Torches accrochées aux piliers : flammes animées et halos pulsants.
 func _build_torches() -> void:

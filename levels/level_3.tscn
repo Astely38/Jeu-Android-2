@@ -1,17 +1,17 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://scripts/level_2.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/level_3.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://ui/dialogue_box.tscn" id="3"]
 
 [sub_resource type="Gradient" id="grad_sky"]
-offsets = PackedFloat32Array(0, 0.4, 1)
-colors = PackedColorArray(0.11, 0.13, 0.28, 1, 0.16, 0.12, 0.21, 1, 0.1, 0.07, 0.09, 1)
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.1, 0.06, 0.15, 1, 0.32, 0.12, 0.19, 1, 0.5, 0.22, 0.16, 1)
 
 [sub_resource type="GradientTexture2D" id="tex_sky"]
 gradient = SubResource("grad_sky")
-width = 900
-height = 2800
+width = 960
+height = 540
 fill_from = Vector2(0, 0)
 fill_to = Vector2(0, 1)
 
@@ -22,15 +22,14 @@ script = ExtResource("1")
 layer = -5
 
 [node name="SkyLayer" type="ParallaxLayer" parent="ParallaxBackground"]
-motion_scale = Vector2(0, 0.05)
+motion_scale = Vector2(0, 0)
 
 [node name="Sky" type="Sprite2D" parent="ParallaxBackground/SkyLayer"]
-position = Vector2(300, -200)
-scale = Vector2(2, 2)
+position = Vector2(480, 270)
 texture = SubResource("tex_sky")
 
 [node name="Player" parent="." instance=ExtResource("2")]
-position = Vector2(300, 1824)
+position = Vector2(100, 477)
 
 [node name="Dialogue" parent="." instance=ExtResource("3")]
 
@@ -42,7 +41,7 @@ visible = false
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_bottom = -140.0
-text = "Le sanctuaire est purifié !"
+text = "Le village respire à nouveau !"
 horizontal_alignment = 1
 vertical_alignment = 1
 theme_override_font_sizes/font_size = 34
