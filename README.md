@@ -35,6 +35,16 @@ braseros aux flammes dansantes, arbres morts, clôtures brisées, brume violette
 Les points de contrôle sont des **lanternes de pierre (tōrō)** qui s'allument en vert. Les Ombres
 corrompues y sont plus nombreuses que partout ailleurs. Débloqué en terminant le niveau 2.
 
+**Niveau 4 — La Montagne des Brumes** : ascension rocheuse en haute montagne, sous un **ciel pâle
+et froid**. Pics enneigés, crêtes rocheuses, **drapeaux de prière** déchirés tendus entre des mâts,
+**cairns de pierre**, ponts de corde suspendus, brume dense et neige qui tombe doucement. Pièges à
+**stalactites de glace**. Léonie apparaît une dernière fois à mi-parcours avant de laisser Eneko
+continuer seul vers le sommet. Débloqué en terminant le niveau 3.
+
+Le **système de défi** note chaque niveau terminé (Bronze/Argent/Or/Platine) selon les orbes
+récoltés et les dégâts subis, affiché sur l'écran de victoire. **Toute défaite (chute ou 0 cœur)
+redémarre intégralement le niveau** — plus de retour au dernier checkpoint.
+
 Le **menu principal** est un tableau de crépuscule : soleil couchant derrière un torii sur la
 colline, montagnes, rivière aux reflets dorés et pétales portés par le vent.
 
@@ -43,9 +53,9 @@ colline, montagnes, rivière aux reflets dorés et pétales portés par le vent.
 ```
 /scenes   main_menu, level_select, player, enemy, shadow, undead, leonie, orb
 /levels   level_1 ("La Clairière des Bambous"), level_2 ("Le Temple Oublié"),
-          level_3 ("Le Village des Ombres")
+          level_3 ("Le Village des Ombres"), level_4 ("La Montagne des Brumes")
 /scripts  logique GDScript (player, enemy, shadow, undead, leonie, level, level_2, level_3,
-          main_menu, level_select)
+          level_4, main_menu, level_select, challenge)
 /scripts/save  SaveManager (autoload, sauvegarde JSON)
 /ui       boîte de dialogue
 /assets   sprites (SVG + pixel art), sons (assets/sfx)
