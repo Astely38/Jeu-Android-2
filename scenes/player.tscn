@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/heart.svg" id="2"]
@@ -22,6 +22,18 @@ size = Vector2(110, 110)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_menu"]
 size = Vector2(74, 54)
+
+[sub_resource type="Gradient" id="grad_vignette"]
+offsets = PackedFloat32Array(0, 0.62, 1)
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.3)
+
+[sub_resource type="GradientTexture2D" id="tex_vignette"]
+gradient = SubResource("grad_vignette")
+width = 480
+height = 270
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
 
 [node name="Player" type="CharacterBody2D"]
 z_index = 5
@@ -102,6 +114,11 @@ scale_amount_max = 4.0
 color = Color(0.9, 0.95, 1, 0.14)
 
 [node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Vignette" type="Sprite2D" parent="HUD"]
+position = Vector2(480, 270)
+scale = Vector2(2.4, 2.4)
+texture = SubResource("tex_vignette")
 
 [node name="Heart1" type="Sprite2D" parent="HUD"]
 position = Vector2(34, 34)
@@ -234,5 +251,6 @@ polygon = PackedVector2Array(-12, 12, -4, 15, 15, -12, 7, -15)
 [connection signal="pressed" from="HUD/RightButton" to="." method="_on_right_pressed"]
 [connection signal="released" from="HUD/RightButton" to="." method="_on_right_released"]
 [connection signal="pressed" from="HUD/JumpButton" to="." method="_on_jump_pressed"]
+[connection signal="released" from="HUD/JumpButton" to="." method="_on_jump_released"]
 [connection signal="pressed" from="HUD/AttackButton" to="." method="_on_attack_pressed"]
 [connection signal="pressed" from="HUD/MenuButton" to="." method="_on_menu_pressed"]

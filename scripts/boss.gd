@@ -37,6 +37,9 @@ var _dash_timer := 0.0
 var _dash_cd := 2.0
 var _cur := ""
 var _t := 0.0
+## Teinte sombre du sprite (définie dans le .tscn) : les flashs de dégâts
+## et de charge doivent revenir vers elle, pas vers le blanc.
+var _base_tint := Color(1, 1, 1)
 
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var hitbox: Area2D = $Hitbox
@@ -53,6 +56,7 @@ func _ready() -> void:
 		{"name": "dead", "path": SHINOBI + "Dead.png", "frames": 4, "fps": 7.0, "loop": false},
 	])
 	_play("idle")
+	_base_tint = anim.modulate
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 
 ## Limite les déplacements du boss à l'arène (évite qu'une charge ne le
@@ -126,6 +130,10 @@ func _physics_process(delta: float) -> void:
 	elif phase >= 2 and _dash_cd <= 0.0 and dist > 150.0 and dist < 450.0:
 		_dash_cd = PHASE_DASH_CD[phase - 1]
 		_dash_timer = DASH_DURATION
+		# Télégraphe : le Gardien s'embrase brièvement au départ de la charge.
+		anim.modulate = Color(1.6, 0.5, 0.5)
+		var t := create_tween()
+		t.tween_property(anim, "modulate", _base_tint, 0.35)
 		_play("run")
 	else:
 		var speed: float = PHASE_SPEED[phase - 1]
@@ -174,9 +182,9 @@ func die() -> void:
 		phase_changed.emit(phase)
 	_hurt_timer = 0.3
 	sfx_hurt.play()
-	anim.modulate = Color(1.5, 0.6, 0.6)
+	anim.modulate = Color(1.8, 1.8, 1.8)
 	var tween := create_tween()
-	tween.tween_property(anim, "modulate", Color(1, 1, 1), 0.25)
+	tween.tween_property(anim, "modulate", _base_tint, 0.25)
 
 func _die_for_real() -> void:
 	_dying = true

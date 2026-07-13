@@ -98,6 +98,11 @@ func die() -> void:
 	body_shape.set_deferred("disabled", true)
 	_play("dead")
 	sfx_die.play()
+	# Flash blanc à l'impact, puis fondu spirituel (la teinte violette de
+	# l'Ombre revient pendant le fondu).
+	var tint := anim.modulate
+	anim.modulate = Color(1.8, 1.8, 1.8, 1.0)
 	var tween := create_tween()
-	tween.tween_property(anim, "modulate:a", 0.0, 0.6)
+	tween.tween_property(anim, "modulate", tint, 0.1)
+	tween.tween_property(anim, "modulate:a", 0.0, 0.5)
 	tween.finished.connect(queue_free)

@@ -77,6 +77,7 @@ func _ready() -> void:
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
 	Challenge.start_level(LEVEL_ID, ORBS.size())
+	_attach_player_glow()
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_4", "")
@@ -99,6 +100,17 @@ func _physics_process(_delta: float) -> void:
 		wisps.position = Vector2(player.position.x, player.position.y - 200.0)
 
 # --- Construction du niveau ---------------------------------------------
+
+## Halo chaud autour d'Eneko : sous la lune de sang, il porte sa propre
+## lumière (rendu derrière son sprite).
+func _attach_player_glow() -> void:
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(1.0, 0.75, 0.45, 0.15)
+	glow.scale = Vector2(3.2, 3.2)
+	glow.position = Vector2(0, -10)
+	glow.z_index = -1
+	player.add_child(glow)
 
 func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
 	var p := Polygon2D.new()

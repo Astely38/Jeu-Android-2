@@ -66,6 +66,9 @@ func die() -> void:
 	body_shape.set_deferred("disabled", true)
 	_play("dead")
 	sfx_die.play()
+	# Flash blanc à l'impact, puis fondu spirituel.
+	anim.modulate = Color(1.8, 1.8, 1.8, 1.0)
 	var tween := create_tween()
-	tween.tween_property(anim, "modulate:a", 0.0, 0.65)
+	tween.tween_property(anim, "modulate", Color(1, 1, 1, 1), 0.1)
+	tween.tween_property(anim, "modulate:a", 0.0, 0.55)
 	tween.finished.connect(queue_free)

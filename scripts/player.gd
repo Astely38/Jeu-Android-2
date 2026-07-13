@@ -18,6 +18,13 @@ const ENERGY_REGEN := 26.0
 const ATTACK_COST := 22.0
 const HEART_BASE_SCALE := Vector2(1.1, 1.1)
 const SAMURAI := "res://assets/character/samurai/"
+## Confort de saut : tolérance après avoir quitté un rebord (coyote),
+## mémorisation d'un saut demandé juste avant l'atterrissage (buffer),
+## et saut coupé si le bouton est relâché tôt (hauteur variable).
+const COYOTE_TIME := 0.12
+const JUMP_BUFFER := 0.15
+const JUMP_CUT_VELOCITY := -160.0
+const ANIM_BASE_SCALE := Vector2(0.8, 0.8)
 
 var moving_left := false
 var moving_right := false
@@ -37,6 +44,14 @@ var _dead := false
 var wind_force := 0.0
 ## Poussière soulevée par la course (construite en code dans _ready).
 var _dust: CPUParticles2D
+var _land_dust: CPUParticles2D
+var _orb_burst: CPUParticles2D
+var _coyote := 0.0
+var _jump_buffer := 0.0
+var _touch_jump_held := false
+var _was_on_floor := false
+var _fall_speed := 0.0
+var _shake := 0.0
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
@@ -83,6 +98,43 @@ func _ready() -> void:
 	_dust.emitting = false
 	add_child(_dust)
 
+	# Bouffée de poussière à l'atterrissage (une seule salve à la fois).
+	_land_dust = CPUParticles2D.new()
+	_land_dust.position = Vector2(0, 22)
+	_land_dust.amount = 14
+	_land_dust.lifetime = 0.4
+	_land_dust.one_shot = true
+	_land_dust.explosiveness = 1.0
+	_land_dust.local_coords = false
+	_land_dust.emitting = false
+	_land_dust.direction = Vector2(0, -1)
+	_land_dust.spread = 75.0
+	_land_dust.gravity = Vector2(0, 180)
+	_land_dust.initial_velocity_min = 30.0
+	_land_dust.initial_velocity_max = 75.0
+	_land_dust.scale_amount_min = 1.5
+	_land_dust.scale_amount_max = 3.0
+	_land_dust.color = Color(0.8, 0.74, 0.62, 0.55)
+	add_child(_land_dust)
+
+	# Éclat d'étincelles bleutées quand un orbe est ramassé.
+	_orb_burst = CPUParticles2D.new()
+	_orb_burst.position = Vector2(0, -10)
+	_orb_burst.amount = 12
+	_orb_burst.lifetime = 0.5
+	_orb_burst.one_shot = true
+	_orb_burst.explosiveness = 1.0
+	_orb_burst.local_coords = false
+	_orb_burst.emitting = false
+	_orb_burst.spread = 180.0
+	_orb_burst.gravity = Vector2.ZERO
+	_orb_burst.initial_velocity_min = 40.0
+	_orb_burst.initial_velocity_max = 90.0
+	_orb_burst.scale_amount_min = 1.2
+	_orb_burst.scale_amount_max = 2.2
+	_orb_burst.color = Color(0.6, 0.95, 1.0, 0.9)
+	add_child(_orb_burst)
+
 func _physics_process(delta: float) -> void:
 	# Invincibilité : clignotement.
 	if invuln > 0.0:
@@ -100,6 +152,10 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
+		_fall_speed = velocity.y
+		# Saut à hauteur variable : relâcher le bouton coupe l'ascension.
+		if velocity.y < JUMP_CUT_VELOCITY and not _jump_held():
+			velocity.y = JUMP_CUT_VELOCITY
 
 	if knockback > 0.0:
 		knockback -= delta
@@ -118,6 +174,26 @@ func _physics_process(delta: float) -> void:
 
 	if _dust != null:
 		_dust.emitting = is_on_floor() and absf(velocity.x) > 40.0
+
+	# Coyote time, buffer de saut et impact d'atterrissage.
+	_jump_buffer = maxf(0.0, _jump_buffer - delta)
+	if is_on_floor():
+		_coyote = COYOTE_TIME
+		if not _was_on_floor:
+			_on_landed()
+		if _jump_buffer > 0.0:
+			_jump_buffer = 0.0
+			_do_jump()
+	else:
+		_coyote = maxf(0.0, _coyote - delta)
+	_was_on_floor = is_on_floor()
+
+	# Secousse de caméra (dégâts, coups de sabre) qui s'amortit vite.
+	if _shake > 0.0:
+		_shake = maxf(0.0, _shake - delta * 30.0)
+		camera.offset = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
+	elif camera.offset != Vector2.ZERO:
+		camera.offset = Vector2.ZERO
 
 	if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_SPACE):
 		jump()
@@ -157,9 +233,34 @@ func _set_facing(dir: float) -> void:
 	attack_area.position.x = 26.0 * dir
 
 func jump() -> void:
-	if is_on_floor():
-		velocity.y = JUMP_VELOCITY
-		sfx_jump.play()
+	if is_on_floor() or _coyote > 0.0:
+		_do_jump()
+	else:
+		# Trop tôt : on retient la demande, le saut partira à l'atterrissage.
+		_jump_buffer = JUMP_BUFFER
+
+func _do_jump() -> void:
+	velocity.y = JUMP_VELOCITY
+	_coyote = 0.0
+	sfx_jump.play()
+	# Étirement vertical au décollage (squash & stretch).
+	anim.scale = Vector2(0.66, 0.94)
+	var t := create_tween()
+	t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.18)
+
+## Atterrissage : écrasement du sprite + bouffée de poussière si la chute
+## était rapide.
+func _on_landed() -> void:
+	if _fall_speed > 300.0:
+		anim.scale = Vector2(0.95, 0.62)
+		var t := create_tween()
+		t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.15)
+		_land_dust.restart()
+
+func _jump_held() -> bool:
+	return _touch_jump_held \
+		or Input.is_physical_key_pressed(KEY_UP) \
+		or Input.is_physical_key_pressed(KEY_SPACE)
 
 func attack() -> void:
 	if attacking or lock_timer > 0.0:
@@ -170,6 +271,31 @@ func attack() -> void:
 	attack_area.monitoring = true
 	sfx_slash.play()
 	_play("attack")
+	_spawn_slash_trail()
+
+## Croissant blanc éphémère qui matérialise l'arc du coup de sabre.
+func _spawn_slash_trail() -> void:
+	var pts := PackedVector2Array()
+	var n := 8
+	var i := 0
+	while i <= n:
+		var a := -1.1 + 2.2 * float(i) / float(n)
+		pts.append(Vector2(cos(a) * 34.0, sin(a) * 34.0))
+		i += 1
+	var j := n
+	while j >= 0:
+		var a2 := -1.1 + 2.2 * float(j) / float(n)
+		pts.append(Vector2(cos(a2) * 22.0, sin(a2) * 22.0))
+		j -= 1
+	var trail := Polygon2D.new()
+	trail.polygon = pts
+	trail.color = Color(1, 1, 1, 0.6)
+	trail.position = Vector2(16.0 * facing, -8.0)
+	trail.scale = Vector2(facing, 1.0)
+	add_child(trail)
+	var t := create_tween()
+	t.tween_property(trail, "modulate:a", 0.0, 0.22)
+	t.finished.connect(trail.queue_free)
 
 func take_damage(amount: int, from_position: Vector2) -> void:
 	if invuln > 0.0:
@@ -178,6 +304,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	health -= amount
 	_update_hearts()
 	sfx_hurt.play()
+	_shake = 7.0
 	if health <= 0:
 		respawn()
 		return
@@ -250,6 +377,7 @@ func collect_orb() -> void:
 	orb_label.text = "x%d" % orbs
 	energy = minf(MAX_ENERGY, energy + 15.0)
 	sfx_orb.play()
+	_orb_burst.restart()
 	if orbs % 5 == 0 and health < MAX_HEALTH:
 		health += 1
 		_update_hearts()
@@ -261,6 +389,7 @@ func _update_hearts() -> void:
 func _on_attack_area_body_entered(body: Node2D) -> void:
 	if body.has_method("die"):
 		body.die()
+		_shake = 3.5  # impact ressenti à chaque coup qui porte
 
 func _on_left_pressed() -> void:
 	moving_left = true
@@ -275,7 +404,11 @@ func _on_right_released() -> void:
 	moving_right = false
 
 func _on_jump_pressed() -> void:
+	_touch_jump_held = true
 	jump()
+
+func _on_jump_released() -> void:
+	_touch_jump_held = false
 
 func _on_attack_pressed() -> void:
 	attack()

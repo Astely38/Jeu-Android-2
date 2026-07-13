@@ -84,6 +84,7 @@ func _ready() -> void:
 	SaveManager.set_last_level(LEVEL_ID)
 	var orb_count := _count_orbs()
 	Challenge.start_level(LEVEL_ID, orb_count)
+	_attach_player_glow()
 	menu_button.pressed.connect(_on_menu_pressed)
 	dialogue.finished.connect(_on_dialogue_finished)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_3", "")
@@ -605,6 +606,17 @@ func _on_goal(body: Node2D) -> void:
 		SaveManager.complete_level(LEVEL_ID, player.orbs)
 		_display_challenge_results()
 		win_label.visible = true
+
+## Halo chaud autour d'Eneko : dans ce temple sombre, il porte sa propre
+## lumière (rendu derrière son sprite).
+func _attach_player_glow() -> void:
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(1.0, 0.8, 0.5, 0.16)
+	glow.scale = Vector2(3.2, 3.2)
+	glow.position = Vector2(0, -10)
+	glow.z_index = -1
+	player.add_child(glow)
 
 func _count_orbs() -> int:
 	var count := 0
