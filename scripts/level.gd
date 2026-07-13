@@ -27,8 +27,8 @@ const PLATFORMS := [
 	Vector2(5910, 260), Vector2(6600, 300),
 ]
 const CHECKPOINT_XS := [1650.0, 3400.0, 5100.0]
-const PATROL_XS := [1000.0, 1550.0, 2200.0, 2750.0, 3450.0, 4050.0, 4700.0, 5900.0, 6500.0]
-const SHADOW_XS := [1600.0, 2560.0, 2850.0, 3820.0, 4100.0, 5300.0, 5680.0, 6480.0]
+const PATROL_XS := [1000.0, 1550.0, 2200.0, 2750.0, 3450.0, 4700.0, 5900.0, 6500.0]
+const SHADOW_XS := [1600.0, 2560.0, 4100.0, 5300.0, 6480.0]
 ## Pièges à pics : proches d'un bord de plateforme, contournables en marchant
 ## ou en sautant par-dessus (jamais un passage obligé).
 const TRAP_XS := [980.0, 2680.0, 3900.0, 5220.0, 6520.0]
@@ -204,22 +204,28 @@ func _build_checkpoints() -> void:
 		add_child(cp)
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
 
-## Pics : petite zone de dégâts posée sur le sol, à contourner ou sauter.
+## Pièges en bois : pieux taillés plantés dans le sol.
 func _build_traps() -> void:
 	for i in TRAP_XS.size():
 		var x: float = TRAP_XS[i]
 		var trap := Area2D.new()
-		trap.position = Vector2(x, GROUND_Y - 66.0)
+		trap.position = Vector2(x, GROUND_Y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
 		rect.size = Vector2(44, 24)
 		shape.shape = rect
 		trap.add_child(shape)
+		_poly(trap, PackedVector2Array([
+			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+		]), Color(0.38, 0.24, 0.13))
 		for k in 3:
 			var ox := -16.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 7, 12), Vector2(ox + 7, 12), Vector2(ox, -12),
-			]), Color(0.62, 0.6, 0.58))
+				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+			]), Color(0.52, 0.34, 0.18))
+			_poly(trap, PackedVector2Array([
+				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -12),
+			]), Color(0.6, 0.42, 0.22))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)
 

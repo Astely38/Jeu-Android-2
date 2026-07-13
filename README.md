@@ -7,7 +7,7 @@ boucles d'oreilles dorées, armé du sabre de son grand-père — traverse une f
 par-dessus les trous et les **pics**, tranche des esprits malveillants au sabre, et rejoint le
 torii pour terminer le niveau.
 
-Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit, marcher sur un **piège à pics**,
+Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit, marcher sur un **piège à pieux de bois**,
 **ou tomber dans un trou** coûte un cœur et renvoie au dernier **point de contrôle** (bannière).
 En chemin, **Léonie**, la gardienne kitsune de la forêt, l'accueille par un court dialogue. Deux
 types d'ennemis, désormais plus nombreux : l'esprit **Onre** qui patrouille sa plateforme, et
@@ -23,7 +23,7 @@ dès qu'une sauvegarde existe) et **Niveaux** (écran de sélection listant les 
 les niveaux 3 à 5 apparaissent encore en "à venir").
 
 **Niveau 2 — Le Temple Oublié** : ascension verticale en zigzag dans des ruines de pierre, avec
-des pièges à pics, les mêmes esprits repositionnés, 4 points de contrôle et une apparition de
+des pièges à pieux, les mêmes esprits repositionnés, 4 points de contrôle et une apparition de
 Léonie à mi-parcours. Débloqué en terminant le niveau 1 (bouton "Niveau suivant" sur l'écran de
 victoire).
 

@@ -126,8 +126,8 @@ func _build_platforms() -> void:
 		rect.size = Vector2(hw * 2.0, COLLISION_H * 2.0)
 		shape.shape = rect
 		body.add_child(shape)
-		_poly(body, _rect_points(hw, -50.0, 450.0), STONE)
-		_poly(body, _rect_points(hw, 200.0, 450.0), STONE_DARK)
+		_poly(body, _rect_points(hw, -50.0, 60.0), STONE)
+		_poly(body, _rect_points(hw, 20.0, 60.0), STONE_DARK)
 		_poly(body, _rect_points(hw, -50.0, -32.0), STONE_TOP)
 		add_child(body)
 
@@ -150,24 +150,30 @@ func _build_checkpoints() -> void:
 		add_child(cp)
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
 
-## Pièges de pierre : une rangée de pics près du bord d'une plateforme.
+## Pièges en bois : pieux taillés près du bord d'une plateforme.
 func _build_traps() -> void:
 	for idx in TRAP_IDX:
 		var p: Vector2 = PLATFORMS[idx]
 		var hw: float = HALF_WIDTHS[idx]
 		var side := 1.0 if idx % 2 == 0 else -1.0
 		var trap := Area2D.new()
-		trap.position = Vector2(p.x + side * (hw - 28.0), p.y - 66.0)
+		trap.position = Vector2(p.x + side * (hw - 28.0), p.y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
 		rect.size = Vector2(44, 24)
 		shape.shape = rect
 		trap.add_child(shape)
+		_poly(trap, PackedVector2Array([
+			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+		]), Color(0.38, 0.24, 0.13))
 		for k in 3:
 			var ox := -16.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 7, 12), Vector2(ox + 7, 12), Vector2(ox, -12),
-			]), Color(0.6, 0.6, 0.62))
+				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+			]), Color(0.52, 0.34, 0.18))
+			_poly(trap, PackedVector2Array([
+				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -12),
+			]), Color(0.6, 0.42, 0.22))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)
 
