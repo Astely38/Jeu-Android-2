@@ -42,6 +42,7 @@ var _cur := ""
 @onready var sfx_slash: AudioStreamPlayer = $SfxSlash
 @onready var sfx_hurt: AudioStreamPlayer = $SfxHurt
 @onready var sfx_orb: AudioStreamPlayer = $SfxOrb
+@onready var camera: Camera2D = $Camera2D
 
 func _ready() -> void:
 	add_to_group("player")
@@ -188,6 +189,10 @@ func _return_to_checkpoint() -> void:
 	attacking = false
 	attack_area.monitoring = false
 	anim.modulate.a = 1.0
+	# La téléportation peut être très grande (chute verticale) : sans ça,
+	# la caméra met plusieurs secondes à rattraper son lissage et Eneko
+	# reste hors-écran pendant ce temps.
+	camera.reset_smoothing()
 
 ## Déplace le point de réapparition (checkpoint atteint).
 func set_checkpoint(pos: Vector2) -> void:
