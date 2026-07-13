@@ -12,14 +12,16 @@ Eneko a **3 cœurs de vie** (en haut à gauche) : toucher un esprit, marcher sur
 En chemin, **Léonie**, la gardienne kitsune de la forêt, l'accueille par un court dialogue. Deux
 types d'ennemis, désormais plus nombreux : l'esprit **Onre** qui patrouille sa plateforme, et
 l'**Ombre corrompue** (guerrier spectral sombre) qui poursuit Eneko. Les **orbes spirituels**
-rechargent l'énergie du sabre et, tous les 5 ramassés, **rendent un cœur**. Décor peint : montagnes
+comptent pour le grade de fin de niveau et, tous les 5 ramassés, **rendent un cœur**. Décor peint : montagnes
 enneigées, collines, nuages, nappes de brume, bambous noueux, fleurs sauvages et **pétales de
 cerisier** portés par le vent. Effets sonores et vent ambiant inclus.
 
 Contrôles tactiles à l'écran : Gauche / Droite à gauche ; **Ruée** (dash éclair avec images
-rémanentes, invincible pendant l'élan, coûte de l'énergie), Saut et Attaque à droite. Maintenir
-le saut permet de sauter plus haut. Chaque niveau s'ouvre sur un **survol de caméra** depuis
-l'objectif jusqu'à Eneko, et chaque coup de sabre qui porte marque un bref **arrêt du temps**.
+rémanentes, invincible pendant l'élan, temps de recharge court), Saut et Attaque à droite.
+Maintenir le saut permet de sauter plus haut. Chaque niveau s'ouvre sur un **survol de caméra**
+depuis l'objectif jusqu'à Eneko, et chaque coup de sabre qui porte marque un bref **arrêt du
+temps**. Un **chronomètre** et le compteur d'orbes (récoltés / total) s'affichent en haut de
+l'écran ; le chrono ne démarre qu'à la prise en main, après le survol d'introduction.
 
 **Sauvegarde locale** (JSON, `user://save.json`) : niveaux terminés/débloqués et meilleur score
 d'orbes par niveau. Le menu principal propose **Continuer** (reprend le dernier niveau joué, visible

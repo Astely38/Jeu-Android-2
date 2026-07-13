@@ -37,6 +37,12 @@ func start_level(id: String, total_orbs_count: int) -> void:
 	total_orbs = maxf(1.0, float(total_orbs_count))
 	damage_taken = 0
 
+## Relance le chronomètre : appelé quand le joueur prend réellement la
+## main (après le survol d'introduction), pour que le temps affiché ne
+## compte pas la cinématique.
+func restart_timer() -> void:
+	start_time = float(Time.get_ticks_msec()) / 1000.0
+
 func register_damage() -> void:
 	if damage_taken >= 0:
 		damage_taken += 1

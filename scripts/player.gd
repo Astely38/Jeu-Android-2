@@ -13,9 +13,6 @@ const MAX_HEALTH := 3
 const INVULN_TIME := 1.0
 const KNOCKBACK_SPEED := 240.0
 const KNOCKBACK_TIME := 0.18
-const MAX_ENERGY := 100.0
-const ENERGY_REGEN := 26.0
-const ATTACK_COST := 22.0
 const HEART_BASE_SCALE := Vector2(1.1, 1.1)
 const SAMURAI := "res://assets/character/samurai/"
 ## Confort de saut : tolérance après avoir quitté un rebord (coyote),
@@ -26,11 +23,10 @@ const JUMP_BUFFER := 0.15
 const JUMP_CUT_VELOCITY := -160.0
 const ANIM_BASE_SCALE := Vector2(0.8, 0.8)
 ## Ruée du sabreur : élan horizontal éclair avec images rémanentes et
-## invincibilité, contre un peu d'énergie.
+## invincibilité, limité par un temps de recharge.
 const DASH_SPEED := 520.0
 const DASH_TIME := 0.18
 const DASH_COOLDOWN := 0.9
-const DASH_COST := 20.0
 
 var moving_left := false
 var moving_right := false
@@ -41,7 +37,6 @@ var invuln := 0.0
 var knockback := 0.0
 var lock_timer := 0.0
 var anim_time := 0.0
-var energy := MAX_ENERGY
 var orbs := 0
 var start_position := Vector2.ZERO
 var _cur := ""
@@ -64,8 +59,8 @@ var _ghost_timer := 0.0
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
-@onready var energy_fill: Polygon2D = $HUD/EnergyFill
 @onready var orb_label: Label = $HUD/OrbCount
+@onready var time_label: Label = $HUD/TimeLabel
 @onready var game_over_label: Label = $HUD/GameOverLabel
 @onready var hearts: Array = [$HUD/Heart1, $HUD/Heart2, $HUD/Heart3]
 @onready var sfx_jump: AudioStreamPlayer = $SfxJump
@@ -249,11 +244,13 @@ func _play(n: String) -> void:
 
 func _animate(delta: float) -> void:
 	anim_time += delta
-	energy = minf(MAX_ENERGY, energy + ENERGY_REGEN * delta)
-	energy_fill.scale.x = energy / MAX_ENERGY
 	var pulse := 1.0 + sin(anim_time * 3.0) * 0.04
 	for h in hearts:
 		h.scale = HEART_BASE_SCALE * pulse
+	# Chronomètre du défi, visible en haut de l'écran.
+	if time_label != null:
+		var tsec := int(Challenge.get_time_elapsed())
+		time_label.text = "%d:%02d" % [tsec / 60, tsec % 60]
 
 func _set_facing(dir: float) -> void:
 	facing = dir
@@ -295,9 +292,6 @@ func _jump_held() -> bool:
 func dash() -> void:
 	if _dash_timer > 0.0 or _dash_cd > 0.0 or _dead:
 		return
-	if energy < DASH_COST:
-		return
-	energy -= DASH_COST
 	_dash_timer = DASH_TIME
 	_dash_cd = DASH_COOLDOWN
 	_ghost_timer = 0.0
@@ -350,13 +344,14 @@ func intro_pan(from: Vector2, duration := 1.8) -> void:
 	camera.position_smoothing_enabled = smoothing
 	camera.reset_smoothing()
 	set_physics_process(true)
+	# Le chrono du défi ne démarre qu'à la prise en main.
+	Challenge.restart_timer()
 
 func attack() -> void:
 	if attacking or lock_timer > 0.0:
 		return
 	attacking = true
 	lock_timer = ATTACK_DURATION
-	energy = maxf(0.0, energy - ATTACK_COST)
 	attack_area.monitoring = true
 	sfx_slash.play()
 	_play("attack")
@@ -463,8 +458,11 @@ func set_checkpoint(pos: Vector2) -> void:
 func collect_orb() -> void:
 	Challenge.register_orb()
 	orbs += 1
-	orb_label.text = "x%d" % orbs
-	energy = minf(MAX_ENERGY, energy + 15.0)
+	# Progression visible : "7/21" plutôt qu'un simple compteur.
+	if Challenge.total_orbs > 0:
+		orb_label.text = "%d/%d" % [orbs, Challenge.total_orbs]
+	else:
+		orb_label.text = "x%d" % orbs
 	sfx_orb.play()
 	_orb_burst.restart()
 	if orbs % 5 == 0 and health < MAX_HEALTH:

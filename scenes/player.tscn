@@ -135,15 +135,17 @@ position = Vector2(122, 34)
 scale = Vector2(1.1, 1.1)
 texture = ExtResource("2")
 
-[node name="EnergyBG" type="Polygon2D" parent="HUD"]
-position = Vector2(34, 66)
-color = Color(0.1, 0.12, 0.18, 0.8)
-polygon = PackedVector2Array(0, -6, 182, -6, 182, 6, 0, 6)
-
-[node name="EnergyFill" type="Polygon2D" parent="HUD"]
-position = Vector2(34, 66)
-color = Color(0.45, 0.8, 0.95, 0.95)
-polygon = PackedVector2Array(1, -5, 181, -5, 181, 5, 1, 5)
+[node name="TimeLabel" type="Label" parent="HUD"]
+offset_left = 330.0
+offset_top = 22.0
+offset_right = 440.0
+offset_bottom = 54.0
+theme_override_colors/font_color = Color(0.95, 0.95, 0.9, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.6)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 24
+text = "0:00"
 
 [node name="OrbIcon" type="Sprite2D" parent="HUD"]
 position = Vector2(888, 40)

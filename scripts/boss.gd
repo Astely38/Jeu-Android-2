@@ -106,7 +106,7 @@ func _physics_process(delta: float) -> void:
 	_dash_cd -= delta
 
 	if player == null or not is_instance_valid(player):
-		velocity.x = move_toward(velocity.x, 0.0, SPEED_PHASE1)
+		velocity.x = move_toward(velocity.x, 0.0, PHASE_SPEED[0])
 		move_and_slide()
 		return
 
