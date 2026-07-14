@@ -33,6 +33,14 @@ func _ready() -> void:
 	anim.play("float")
 	_base_tint = anim.modulate
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
+	_ignore_player_body()
+
+## Le corps d'Eneko n'est jamais un obstacle physique pour ce Yūrei
+## (voir enemy.gd : indispensable pour que la ruée traverse).
+func _ignore_player_body() -> void:
+	var pl := get_tree().get_first_node_in_group("player")
+	if pl is PhysicsBody2D:
+		add_collision_exception_with(pl)
 
 func _physics_process(delta: float) -> void:
 	if _dying:
