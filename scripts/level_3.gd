@@ -44,7 +44,9 @@ const CHECKPOINT_XS := [1620.0, 3450.0, 5150.0]
 const PATROL_XS := [950.0, 1550.0, 2200.0, 2800.0, 4050.0, 4700.0, 5900.0]
 const SHADOW_XS := [1400.0, 2650.0, 3350.0, 4600.0, 5350.0, 6100.0, 6600.0]
 ## Yūrei tireurs : esprits flottants qui crachent des orbes corrompus.
-const SPIRIT_XS := [1900.0, 4400.0]
+## Toujours au-dessus d'une plateforme (jamais d'un trou) : leur descente
+## vers Eneko ne doit pas l'attirer dans le vide.
+const SPIRIT_XS := [2250.0, 4550.0]
 const TRAP_XS := [800.0, 2050.0, 3550.0, 4850.0, 6450.0]
 const BRAZIER_XS := [400.0, 1700.0, 2700.0, 3900.0, 5450.0, 6380.0]
 const ORBS := [

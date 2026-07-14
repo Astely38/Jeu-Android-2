@@ -21,7 +21,7 @@ const SAMURAI := "res://assets/character/samurai/"
 const COYOTE_TIME := 0.12
 const JUMP_BUFFER := 0.15
 const JUMP_CUT_VELOCITY := -160.0
-const ANIM_BASE_SCALE := Vector2(0.8, 0.8)
+const ANIM_BASE_SCALE := Vector2(0.9, 0.9)
 ## Ruée du sabreur : élan horizontal éclair avec images rémanentes et
 ## invincibilité, limité par un temps de recharge.
 const DASH_SPEED := 520.0
@@ -274,7 +274,7 @@ func _do_jump() -> void:
 	_coyote = 0.0
 	sfx_jump.play()
 	# Étirement vertical au décollage (squash & stretch).
-	anim.scale = Vector2(0.66, 0.94)
+	anim.scale = Vector2(0.74, 1.06)
 	var t := create_tween()
 	t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.18)
 
@@ -282,7 +282,7 @@ func _do_jump() -> void:
 ## était rapide.
 func _on_landed() -> void:
 	if _fall_speed > 300.0:
-		anim.scale = Vector2(0.95, 0.62)
+		anim.scale = Vector2(1.07, 0.7)
 		var t := create_tween()
 		t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.15)
 		_land_dust.restart()

@@ -121,7 +121,29 @@ static func paint(parent: Node2D, half_w: float, theme: Dictionary) -> void:
 			Vector2(-half_w + 5, BOTTOM), Vector2(-half_w, BOTTOM),
 		]), Color(1, 1, 1, 0.14))
 
-	# 7) Mouchetis : petits éclats de texture dispersés dans le corps.
+	# 7) Style naturel : la couche de surface déborde et retombe sur les
+	# flancs, et quelques racines pendent sous les bords.
+	if not cut:
+		_poly(parent, PackedVector2Array([
+			Vector2(-half_w - 4, TOP), Vector2(-half_w + 16, TOP),
+			Vector2(-half_w + 10, TOP + 14), Vector2(-half_w - 2, TOP + 20),
+		]), top_c)
+		_poly(parent, PackedVector2Array([
+			Vector2(half_w + 4, TOP), Vector2(half_w - 16, TOP),
+			Vector2(half_w - 10, TOP + 14), Vector2(half_w + 2, TOP + 20),
+		]), top_c)
+		var root_c := Color(dark.r * 0.8, dark.g * 0.8, dark.b * 0.8)
+		var rr := 0
+		while rr < 2:
+			var side := -1.0 if rr == 0 else 1.0
+			var rx := side * (half_w - 26.0 - _h(seed_i, rr + 13, 20))
+			_poly(parent, PackedVector2Array([
+				Vector2(rx - 2, SURF_BOTTOM + 4), Vector2(rx + 2, SURF_BOTTOM + 4),
+				Vector2(rx + 1 + side * 5.0, SURF_BOTTOM + 26.0 + _h(seed_i, rr + 21, 14)),
+			]), root_c)
+			rr += 1
+
+	# 8) Mouchetis : petits éclats de texture dispersés dans le corps.
 	var count := maxi(3, int(half_w / 24.0))
 	var s := 0
 	while s < count:

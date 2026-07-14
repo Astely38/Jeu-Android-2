@@ -41,9 +41,9 @@ const PLATFORMS := [
 const CHECKPOINT_XS := [1470.0, 3520.0]
 const PATROL_XS := [850.0, 1470.0, 2090.0, 2900.0, 3520.0]
 const SHADOW_XS := [1300.0, 2150.0, 2950.0, 3600.0]
-## Yūrei tireurs : l'un garde l'approche, l'autre surplombe le grand vide
-## aux dalles effondrables.
-const SPIRIT_XS := [1150.0, 2515.0]
+## Yūrei tireurs : toujours au-dessus d'une plateforme — le passage aux
+## dalles effondrables reste un défi de plateforme pur, sans tirs.
+const SPIRIT_XS := [950.0, 2200.0]
 const TRAP_XS := [700.0, 1950.0, 2800.0, 3450.0]
 const PILLAR_XS := [3900.0, 4250.0, 5150.0, 5500.0]
 ## Dalles effondrables : x = centre, y = demi-largeur. Les deux premières

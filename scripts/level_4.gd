@@ -51,8 +51,9 @@ const CAIRN_XS := [800.0, 2680.0, 3920.0, 5160.0, 6420.0, 7150.0]
 const BRIDGES := [Vector2(1790, 100), Vector2(4235, 115), Vector2(6080, 110)]
 ## Dalles effondrables en appui au milieu de deux trous exigeants.
 const CRUMBLES := [Vector2(3620, 70), Vector2(4825, 70)]
-## Yūrei tireurs en sentinelles au-dessus des ponts de corde.
-const SPIRIT_XS := [1790.0, 4235.0, 6080.0]
+## Yūrei tireurs : toujours au-dessus d'une plateforme (jamais d'un pont
+## ni d'un trou), pour ne pas transformer chaque traversée en piège.
+const SPIRIT_XS := [2080.0, 4540.0, 6420.0]
 const ORBS := [
 	Vector2(320, 420), Vector2(540, 385), Vector2(850, 420),
 	Vector2(1150, 385), Vector2(1470, 420), Vector2(1780, 385),
