@@ -1,0 +1,32 @@
+config_version=5
+
+[application]
+
+config/name="Eneko, la Voie du Sabre"
+config/version="dev"
+run/main_scene="res://scenes/main_menu.tscn"
+config/features=PackedStringArray("4.3", "Mobile")
+config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=960
+window/size/viewport_height=540
+window/stretch/mode="canvas_items"
+window/handheld/orientation="landscape"
+
+[rendering]
+
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
+textures/canvas_textures/default_texture_filter=0
+
+[physics]
+
+2d/default_gravity=980.0
+
+[autoload]
+
+SaveManager="*res://scripts/save/save_manager.gd"
+Challenge="*res://scripts/challenge.gd"
+Music="*res://scripts/music_manager.gd"

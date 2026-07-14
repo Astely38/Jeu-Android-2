@@ -1,0 +1,77 @@
+name: Build Android APK
+
+on:
+  push:
+  workflow_dispatch: {}
+
+env:
+  GODOT_VERSION: 4.6.3
+  EXPORT_NAME: eneko
+
+permissions:
+  contents: write
+
+jobs:
+  export-android:
+    name: Export Android APK
+    runs-on: ubuntu-24.04
+    container:
+      image: barichello/godot-ci:4.6.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup export templates and Android/Java editor config
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -v -p ~/.config/
+          mv /root/.config/godot ~/.config/godot
+
+      - name: Import project resources
+        run: godot --headless --verbose --editor --quit
+
+      # Exécute réellement chaque scène quelques secondes en headless et
+      # remonte les erreurs runtime (les erreurs de compilation seules ne
+      # suffisent pas : un niveau peut compiler et planter au chargement).
+      - name: Smoke test des scènes (headless)
+        run: |
+          set +e
+          for scene in scenes/main_menu levels/level_1 levels/level_2 levels/level_3 levels/level_4 levels/level_5; do
+            echo "=== SMOKE TEST: $scene ==="
+            timeout 12 godot --headless --path . "res://$scene.tscn" > "/tmp/smoke.log" 2>&1
+            grep -E "SCRIPT ERROR|Parse Error|Invalid|Nonexistent|Cannot call|null instance|Out of bounds" /tmp/smoke.log \
+              && echo "!!! ERREURS RUNTIME dans $scene !!!" \
+              || echo "$scene : OK (aucune erreur runtime)"
+          done
+          exit 0
+
+      - name: Bump APK version from build number
+        run: |
+          sed -i "s|^version/code=.*|version/code=${GITHUB_RUN_NUMBER}|" export_presets.cfg
+          sed -i "s|^version/name=.*|version/name=\"0.${GITHUB_RUN_NUMBER}\"|" export_presets.cfg
+          sed -i "s|^config/version=.*|config/version=\"0.${GITHUB_RUN_NUMBER}\"|" project.godot
+          grep '^version/' export_presets.cfg
+          grep '^config/version' project.godot
+
+      - name: Build debug APK
+        run: |
+          mkdir -v -p build/android
+          godot --headless --verbose --export-debug "Android" "$(readlink -f build)/android/${EXPORT_NAME}-v0.${GITHUB_RUN_NUMBER}.apk"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eneko-apk
+          path: build/android/${{ env.EXPORT_NAME }}-v0.${{ github.run_number }}.apk
+
+      - name: Publish APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "Build #${{ github.run_number }} (v0.${{ github.run_number }})"
+          body: "Version 0.${{ github.run_number }} (versionCode ${{ github.run_number }}) — build automatique depuis le commit ${{ github.sha }}."
+          prerelease: true
+          files: build/android/${{ env.EXPORT_NAME }}-v0.${{ github.run_number }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,114 @@
+extends Control
+## Écran de sélection des niveaux. La liste est construite depuis
+## SaveManager.LEVEL_ORDER : ajouter un niveau à SaveManager.LEVEL_SCENES
+## suffit à le faire apparaître ici comme jouable.
+
+const GOLD := Color(0.92, 0.65, 0.3)
+const GREEN := Color(0.45, 0.75, 0.4)
+const CREAM := Color(0.97, 0.93, 0.85)
+
+func _ready() -> void:
+	_style_button($BackButton, Color(0.6, 0.5, 0.45))
+	$BackButton.pressed.connect(_on_back_pressed)
+	_build_list()
+
+func _build_list() -> void:
+	var list: VBoxContainer = $Scroll/List
+	for level_id in SaveManager.LEVEL_ORDER:
+		list.add_child(_build_row(level_id))
+
+func _build_row(level_id: String) -> Control:
+	var has_scene: bool = SaveManager.LEVEL_SCENES.has(level_id)
+	var unlocked: bool = SaveManager.is_unlocked(level_id)
+	var completed: bool = SaveManager.is_completed(level_id)
+	var playable := has_scene and unlocked
+
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.14, 0.11, 0.2, 0.85) if playable else Color(1, 1, 1, 0.03)
+	style.content_margin_left = 18.0
+	style.content_margin_right = 18.0
+	style.content_margin_top = 12.0
+	style.content_margin_bottom = 12.0
+	style.set_corner_radius_all(10)
+	if playable:
+		style.border_width_left = 5
+		style.border_color = GREEN if completed else GOLD
+	panel.add_theme_stylebox_override("panel", style)
+	panel.custom_minimum_size = Vector2(0, 76)
+
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 18)
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_child(hbox)
+
+	var vbox := VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(vbox)
+
+	var title := Label.new()
+	title.text = SaveManager.LEVEL_NAMES.get(level_id, level_id)
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", CREAM if playable else Color(0.55, 0.53, 0.5))
+	vbox.add_child(title)
+
+	var sub := Label.new()
+	if not has_scene:
+		sub.text = "À venir"
+	elif not unlocked:
+		sub.text = "Verrouillé"
+	elif completed:
+		sub.text = "Terminé — %d orbes récoltés" % SaveManager.best_orbs(level_id)
+		var grade := SaveManager.best_grade(level_id)
+		if grade != "":
+			sub.text += " — %s" % Challenge.grade_name(grade)
+		var bt := SaveManager.best_time(level_id)
+		if bt > 0.0:
+			sub.text += " — %d:%02d" % [int(bt) / 60, int(bt) % 60]
+	else:
+		sub.text = "Disponible"
+	sub.add_theme_font_size_override("font_size", 16)
+	sub.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8, 0.85))
+	vbox.add_child(sub)
+
+	var action := Button.new()
+	action.custom_minimum_size = Vector2(130, 46)
+	action.add_theme_font_size_override("font_size", 20)
+	if playable:
+		action.text = "Rejouer" if completed else "Jouer"
+		_style_button(action, GREEN if completed else GOLD)
+		action.pressed.connect(_on_play_pressed.bind(level_id))
+	elif not has_scene:
+		action.text = "..."
+		action.disabled = true
+	else:
+		action.text = "Verrouillé"
+		action.disabled = true
+	hbox.add_child(action)
+
+	return panel
+
+func _style_button(b: Button, accent: Color) -> void:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.1, 0.09, 0.17, 0.88)
+	sb.border_color = accent
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(10)
+	sb.set_content_margin_all(6.0)
+	var hov: StyleBoxFlat = sb.duplicate()
+	hov.bg_color = Color(0.2, 0.15, 0.22, 0.92)
+	var prs: StyleBoxFlat = sb.duplicate()
+	prs.bg_color = Color(0.34, 0.2, 0.18, 0.95)
+	b.add_theme_stylebox_override("normal", sb)
+	b.add_theme_stylebox_override("hover", hov)
+	b.add_theme_stylebox_override("pressed", prs)
+	b.add_theme_color_override("font_color", CREAM)
+	b.add_theme_color_override("font_hover_color", Color(1, 0.98, 0.92))
+	b.add_theme_color_override("font_pressed_color", Color(1, 0.98, 0.92))
+
+func _on_play_pressed(level_id: String) -> void:
+	SaveManager.set_last_level(level_id)
+	get_tree().change_scene_to_file(SaveManager.LEVEL_SCENES[level_id])
+
+func _on_back_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

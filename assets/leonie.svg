@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="96" viewBox="0 0 64 96">
+  <!-- Hair (long, behind) -->
+  <path d="M14 22 Q12 8 32 6 Q52 8 50 22 L50 62 Q46 50 44 40 L44 30 Q40 14 32 14 Q24 14 20 30 L20 40 Q18 50 14 62 Z" fill="#5a3b32"/>
+
+  <!-- Robe (long teal) -->
+  <polygon points="18,40 46,40 52,92 12,92" fill="#2f8f83"/>
+  <polygon points="32,40 46,40 52,92 32,92" fill="#277a70"/>
+  <!-- Collar -->
+  <rect x="18" y="40" width="28" height="8" fill="#eef2ec"/>
+  <!-- Sash -->
+  <rect x="14" y="58" width="36" height="8" fill="#d98f3c"/>
+
+  <!-- Arms -->
+  <rect x="14" y="44" width="7" height="20" rx="3" fill="#2f8f83"/>
+  <rect x="43" y="44" width="7" height="20" rx="3" fill="#2f8f83"/>
+  <circle cx="17" cy="62" r="3.5" fill="#f0c19a"/>
+
+  <!-- Lantern -->
+  <line x1="17" y1="62" x2="10" y2="70" stroke="#3b2f2f" stroke-width="1.5"/>
+  <rect x="5" y="70" width="10" height="12" rx="2" fill="#e8a13c" stroke="#8a5a1f" stroke-width="1.5"/>
+  <circle cx="10" cy="76" r="3" fill="#fff2b0"/>
+
+  <!-- Head -->
+  <circle cx="32" cy="24" r="13" fill="#f0c19a"/>
+  <!-- Fringe -->
+  <path d="M19 24 Q19 11 32 11 Q45 11 45 24 L45 19 Q40 15 32 15 Q24 15 19 19 Z" fill="#5a3b32"/>
+  <!-- Eyes -->
+  <circle cx="28" cy="25" r="1.8" fill="#3a2a20"/>
+  <circle cx="36" cy="25" r="1.8" fill="#3a2a20"/>
+  <!-- Smile -->
+  <path d="M29 30 Q32 32 35 30" stroke="#b07a5a" stroke-width="1.2" fill="none"/>
+</svg>

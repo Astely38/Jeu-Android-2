@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="56" viewBox="0 0 48 56">
+  <!-- Outer aura -->
+  <path d="M24 2 C10 2 6 14 6 26 L6 46 L12 39 L18 47 L24 39 L30 47 L36 39 L42 46 L42 26 C42 14 38 2 24 2 Z" fill="#5a2f8f" opacity="0.9"/>
+  <!-- Inner body -->
+  <path d="M24 8 C14 8 12 18 12 28 L12 41 L17 35 L21 42 L24 36 L27 42 L31 35 L36 41 L36 28 C36 18 34 8 24 8 Z" fill="#8b5cc7"/>
+  <!-- Eyes -->
+  <ellipse cx="18" cy="24" rx="3" ry="5" fill="#1b1030"/>
+  <ellipse cx="30" cy="24" rx="3" ry="5" fill="#1b1030"/>
+  <circle cx="18" cy="21.5" r="1" fill="#e0d4ff"/>
+  <circle cx="30" cy="21.5" r="1" fill="#e0d4ff"/>
+  <!-- Mouth -->
+  <path d="M20 31 Q24 35 28 31" stroke="#1b1030" stroke-width="1.5" fill="none"/>
+</svg>
