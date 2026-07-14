@@ -23,9 +23,13 @@ const JUMP_BUFFER := 0.15
 const JUMP_CUT_VELOCITY := -160.0
 const ANIM_BASE_SCALE := Vector2(1.0, 1.0)
 ## Ruée du sabreur : élan horizontal éclair avec images rémanentes et
-## invincibilité, limité par un temps de recharge.
-const DASH_SPEED := 520.0
-const DASH_TIME := 0.18
+## invincibilité, limité par un temps de recharge. La traversée des
+## ennemis persiste un court instant APRÈS l'élan : sans ça, Eneko
+## redevenait solide à l'intérieur du boss et la physique le recrachait
+## du côté d'où il venait.
+const DASH_SPEED := 560.0
+const DASH_TIME := 0.2
+const DASH_GHOST_EXTRA := 0.18
 const DASH_COOLDOWN := 0.9
 
 var moving_left := false
@@ -56,6 +60,8 @@ var _shake := 0.0
 var _dash_timer := 0.0
 var _dash_cd := 0.0
 var _ghost_timer := 0.0
+## Fenêtre de traversée des ennemis (couvre l'élan + une marge de sortie).
+var _ghost_through := 0.0
 var _pan_tween: Tween
 var _pause_layer: CanvasLayer
 ## Bénédiction de Léonie : le prochain coup encaissé est annulé.
@@ -169,11 +175,14 @@ func _physics_process(delta: float) -> void:
 	# Ruée du sabreur : trajectoire horizontale figée, gravité suspendue,
 	# images rémanentes semées derrière Eneko.
 	_dash_cd = maxf(0.0, _dash_cd - delta)
+	# La solidité face aux ennemis ne revient qu'une fois la fenêtre de
+	# traversée épuisée (élan + marge), pour être sûr d'être RESSORTI.
+	if _ghost_through > 0.0:
+		_ghost_through -= delta
+		if _ghost_through <= 0.0:
+			set_collision_mask_value(2, true)
 	if _dash_timer > 0.0:
 		_dash_timer -= delta
-		if _dash_timer <= 0.0:
-			# Fin de la ruée : Eneko redevient solide face aux ennemis.
-			set_collision_mask_value(2, true)
 		velocity = Vector2(facing * DASH_SPEED, 0)
 		move_and_slide()
 		_ghost_timer -= delta
@@ -311,10 +320,11 @@ func dash() -> void:
 	_dash_timer = DASH_TIME
 	_dash_cd = DASH_COOLDOWN
 	_ghost_timer = 0.0
-	invuln = maxf(invuln, DASH_TIME + 0.08)
+	_ghost_through = DASH_TIME + DASH_GHOST_EXTRA
+	invuln = maxf(invuln, DASH_TIME + DASH_GHOST_EXTRA + 0.05)
 	velocity.y = 0.0
-	# Pendant la ruée, Eneko TRAVERSE les ennemis (couche 2) : l'esquive
-	# passe au travers des Ombres et des charges du Gardien.
+	# Pendant la ruée (et la marge de sortie), Eneko TRAVERSE les ennemis
+	# (couche 2) : l'esquive passe au travers des charges du Gardien.
 	set_collision_mask_value(2, false)
 	sfx_slash.play()
 
@@ -513,6 +523,8 @@ func _return_to_checkpoint() -> void:
 	invuln = 0.8
 	knockback = 0.0
 	lock_timer = 0.0
+	_ghost_through = 0.0
+	set_collision_mask_value(2, true)
 	attacking = false
 	attack_area.monitoring = false
 	anim.modulate.a = 1.0
