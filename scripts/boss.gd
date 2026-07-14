@@ -202,7 +202,7 @@ func _on_slam_impact() -> void:
 	_attack_lock = 0.55 if phase < 3 else 0.4
 	_play("idle")
 	_sfx_slam.play()
-	Input.vibrate_handheld(60)
+	SaveManager.vibrate(60)
 	var pl := get_tree().get_first_node_in_group("player")
 	if pl != null:
 		pl.set("_shake", 9.0)

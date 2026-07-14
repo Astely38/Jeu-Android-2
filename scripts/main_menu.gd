@@ -8,13 +8,16 @@ const CREAM := Color(0.97, 0.93, 0.85)
 
 var _sun_glow: Sprite2D
 var _t := 0.0
+var _options: Control
 
 func _ready() -> void:
 	# Garde-fou : si on arrive ici pendant un ralenti (hit-stop, mort du
 	# boss), le temps reprend son cours normal.
 	Engine.time_scale = 1.0
+	Music.play_world()
 	_build_scenery()
 	_show_version()
+	_build_options_button()
 	$ContinueButton.visible = SaveManager.has_save()
 	_style_button($ContinueButton, Color(0.92, 0.65, 0.3))
 	_style_button($LevelsButton, Color(0.92, 0.65, 0.3))
@@ -204,3 +207,82 @@ func _show_version() -> void:
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()
+
+## ------------------------------------------------------------------ Réglages
+
+## Petit bouton en bas à droite du menu, en miroir du numéro de version.
+func _build_options_button() -> void:
+	var b := Button.new()
+	b.text = "⚙ Réglages"
+	b.add_theme_font_size_override("font_size", 16)
+	b.position = Vector2(824, 496)
+	b.size = Vector2(124, 34)
+	_style_button(b, Color(0.6, 0.5, 0.45))
+	b.pressed.connect(_open_options)
+	add_child(b)
+
+func _open_options() -> void:
+	if _options != null:
+		_options.visible = true
+		return
+	_options = Control.new()
+	_options.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_options)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.03, 0.02, 0.08, 0.7)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_options.add_child(dim)
+
+	var panel := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.1, 0.09, 0.17, 0.96)
+	sb.border_color = Color(0.92, 0.65, 0.3)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(14)
+	sb.set_content_margin_all(24.0)
+	panel.add_theme_stylebox_override("panel", sb)
+	panel.position = Vector2(330, 130)
+	panel.custom_minimum_size = Vector2(300, 0)
+	_options.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.text = "Réglages"
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", CREAM)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+
+	box.add_child(_setting_row("Musique", "music"))
+	box.add_child(_setting_row("Effets sonores", "sfx"))
+	box.add_child(_setting_row("Vibrations", "vibrations"))
+
+	var close := Button.new()
+	close.text = "Fermer"
+	close.add_theme_font_size_override("font_size", 20)
+	_style_button(close, Color(0.92, 0.65, 0.3))
+	close.pressed.connect(func() -> void: _options.visible = false)
+	box.add_child(close)
+
+func _setting_row(label_text: String, key: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	var lbl := Label.new()
+	lbl.text = label_text
+	lbl.add_theme_font_size_override("font_size", 20)
+	lbl.add_theme_color_override("font_color", CREAM)
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(lbl)
+	var check := CheckButton.new()
+	check.button_pressed = SaveManager.setting_on(key)
+	check.toggled.connect(func(on: bool) -> void:
+		SaveManager.set_setting(key, on)
+		Music.apply_settings()
+		if key == "vibrations" and on:
+			Input.vibrate_handheld(30)
+	)
+	row.add_child(check)
+	return row

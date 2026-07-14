@@ -437,14 +437,14 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 		invuln = INVULN_TIME
 		_shake = 4.0
 		sfx_hurt.play()
-		Input.vibrate_handheld(25)
+		SaveManager.vibrate(25)
 		return
 	Challenge.register_damage()
 	health -= amount
 	_update_hearts()
 	sfx_hurt.play()
 	_shake = 7.0
-	Input.vibrate_handheld(45)
+	SaveManager.vibrate(45)
 	if health <= 0:
 		respawn()
 		return
@@ -468,7 +468,7 @@ func fall_damage() -> void:
 	_update_hearts()
 	sfx_hurt.play()
 	_shake = 7.0
-	Input.vibrate_handheld(45)
+	SaveManager.vibrate(45)
 	if health <= 0:
 		_die_and_restart()
 		return
@@ -576,7 +576,7 @@ func _on_attack_area_body_entered(body: Node2D) -> void:
 		body.die()
 		Challenge.register_kill()
 		_shake = 3.5  # impact ressenti à chaque coup qui porte
-		Input.vibrate_handheld(18)
+		SaveManager.vibrate(18)
 		_hit_stop()
 
 ## Le sabre dissipe aussi les projectiles (orbes corrompus des Yūrei).

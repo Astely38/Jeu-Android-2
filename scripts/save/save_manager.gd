@@ -39,6 +39,7 @@ func load_data() -> void:
 		"best_grades": {},
 		"best_times": {},
 		"last_level": "level_1",
+		"settings": {},
 	}
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
@@ -101,6 +102,21 @@ func complete_level(level_id: String, orbs: int) -> void:
 		if not data["unlocked_levels"].has(next_id):
 			data["unlocked_levels"].append(next_id)
 	save_data()
+
+## Réglages du joueur ("music", "sfx", "vibrations") — activés par défaut.
+func setting_on(key: String) -> bool:
+	return bool(data.get("settings", {}).get(key, true))
+
+func set_setting(key: String, value: bool) -> void:
+	if not data.has("settings"):
+		data["settings"] = {}
+	data["settings"][key] = value
+	save_data()
+
+## Vibre uniquement si le joueur n'a pas coupé les vibrations.
+func vibrate(ms: int) -> void:
+	if setting_on("vibrations"):
+		Input.vibrate_handheld(ms)
 
 ## Retient le dernier niveau entré (pour le bouton "Continuer").
 func set_last_level(level_id: String) -> void:
