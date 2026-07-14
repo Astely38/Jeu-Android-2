@@ -11,6 +11,7 @@ func _ready() -> void:
 	_style_button($BackButton, Color(0.6, 0.5, 0.45))
 	$BackButton.pressed.connect(_on_back_pressed)
 	_build_list()
+	UiScroll.make_touch_friendly($Scroll)
 
 func _build_list() -> void:
 	var list: VBoxContainer = $Scroll/List

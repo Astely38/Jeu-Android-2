@@ -220,8 +220,8 @@ func _build_options_button() -> void:
 	var b := Button.new()
 	b.text = "⚙ Réglages"
 	b.add_theme_font_size_override("font_size", 16)
-	b.position = Vector2(824, 496)
-	b.size = Vector2(124, 34)
+	b.position = Vector2(802, 498)
+	b.size = Vector2(146, 36)
 	_style_button(b, Color(0.6, 0.5, 0.45))
 	b.pressed.connect(_open_options)
 	add_child(b)
@@ -277,10 +277,10 @@ func _open_options() -> void:
 
 func _build_achievements_button() -> void:
 	var b := Button.new()
-	b.text = "Succès"
+	b.text = "🏆 Succès"
 	b.add_theme_font_size_override("font_size", 16)
-	b.position = Vector2(682, 496)
-	b.size = Vector2(130, 34)
+	b.position = Vector2(642, 498)
+	b.size = Vector2(146, 36)
 	_style_button(b, Color(0.92, 0.65, 0.3))
 	b.pressed.connect(_open_achievements)
 	add_child(b)
@@ -331,6 +331,7 @@ func _open_achievements() -> void:
 	scroll.add_child(list)
 	for d in Achievements.DEFS:
 		list.add_child(_achievement_row(d))
+	UiScroll.make_touch_friendly(scroll)
 
 	var close := Button.new()
 	close.text = "Fermer"
