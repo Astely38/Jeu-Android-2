@@ -9,6 +9,7 @@ const CREAM := Color(0.97, 0.93, 0.85)
 var _sun_glow: Sprite2D
 var _t := 0.0
 var _options: Control
+var _achievements_panel: Control
 
 func _ready() -> void:
 	# Garde-fou : si on arrive ici pendant un ralenti (hit-stop, mort du
@@ -18,6 +19,7 @@ func _ready() -> void:
 	_build_scenery()
 	_show_version()
 	_build_options_button()
+	_build_achievements_button()
 	$ContinueButton.visible = SaveManager.has_save()
 	_style_button($ContinueButton, Color(0.92, 0.65, 0.3))
 	_style_button($LevelsButton, Color(0.92, 0.65, 0.3))
@@ -267,6 +269,102 @@ func _open_options() -> void:
 	_style_button(close, Color(0.92, 0.65, 0.3))
 	close.pressed.connect(func() -> void: _options.visible = false)
 	box.add_child(close)
+
+## ------------------------------------------------------------------- Succès
+
+func _build_achievements_button() -> void:
+	var b := Button.new()
+	b.text = "Succès"
+	b.add_theme_font_size_override("font_size", 16)
+	b.position = Vector2(682, 496)
+	b.size = Vector2(130, 34)
+	_style_button(b, Color(0.92, 0.65, 0.3))
+	b.pressed.connect(_open_achievements)
+	add_child(b)
+
+func _open_achievements() -> void:
+	if _achievements_panel != null:
+		_achievements_panel.visible = true
+		return
+	_achievements_panel = Control.new()
+	_achievements_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_achievements_panel)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.03, 0.02, 0.08, 0.75)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_achievements_panel.add_child(dim)
+
+	var panel := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.1, 0.09, 0.17, 0.96)
+	sb.border_color = Color(0.92, 0.65, 0.3)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(14)
+	sb.set_content_margin_all(18.0)
+	panel.add_theme_stylebox_override("panel", sb)
+	panel.position = Vector2(150, 30)
+	panel.custom_minimum_size = Vector2(660, 0)
+	_achievements_panel.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.text = "Succès — %d/%d" % [Achievements.unlocked_count(), Achievements.DEFS.size()]
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", CREAM)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(620, 330)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 8)
+	scroll.add_child(list)
+	for d in Achievements.DEFS:
+		list.add_child(_achievement_row(d))
+
+	var close := Button.new()
+	close.text = "Fermer"
+	close.add_theme_font_size_override("font_size", 18)
+	_style_button(close, Color(0.92, 0.65, 0.3))
+	close.pressed.connect(func() -> void: _achievements_panel.visible = false)
+	box.add_child(close)
+
+func _achievement_row(d: Dictionary) -> Control:
+	var unlocked := Achievements.is_unlocked(String(d["id"]))
+	var secret := bool(d.get("secret", false))
+	var row := PanelContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.16, 0.13, 0.22, 0.9) if unlocked else Color(1, 1, 1, 0.04)
+	sb.set_corner_radius_all(8)
+	sb.set_content_margin_all(8.0)
+	if unlocked:
+		sb.border_width_left = 4
+		sb.border_color = Color(1.0, 0.82, 0.35)
+	row.add_theme_stylebox_override("panel", sb)
+	var v := VBoxContainer.new()
+	row.add_child(v)
+	var name_l := Label.new()
+	name_l.text = "? ? ?" if (secret and not unlocked) else String(d["name"])
+	name_l.add_theme_font_size_override("font_size", 18)
+	name_l.add_theme_color_override("font_color",
+		Color(1.0, 0.88, 0.5) if unlocked else Color(0.65, 0.62, 0.6))
+	v.add_child(name_l)
+	var desc_l := Label.new()
+	desc_l.text = "Un secret attend les plus curieux…" if (secret and not unlocked) else String(d["desc"])
+	desc_l.add_theme_font_size_override("font_size", 14)
+	desc_l.add_theme_color_override("font_color",
+		Color(0.85, 0.83, 0.8, 0.85) if unlocked else Color(0.6, 0.58, 0.56, 0.85))
+	desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(desc_l)
+	return row
 
 func _setting_row(label_text: String, key: String) -> HBoxContainer:
 	var row := HBoxContainer.new()

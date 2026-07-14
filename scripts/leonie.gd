@@ -52,6 +52,7 @@ func _heal(body: Node2D) -> void:
 		body.set_checkpoint(Vector2(global_position.x, body.global_position.y))
 	if body.has_method("bless"):
 		body.bless()
+	Achievements.unlock("benediction")
 	# Carillon doux du soin.
 	var chime := AudioStreamPlayer.new()
 	chime.stream = load("res://assets/sfx/heal.wav")

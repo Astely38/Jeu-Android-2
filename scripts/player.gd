@@ -518,6 +518,7 @@ func _die_and_restart() -> void:
 	if _dead:
 		return
 	_dead = true
+	Achievements.add_death()
 	health = 0
 	_update_hearts()
 	sfx_hurt.play()

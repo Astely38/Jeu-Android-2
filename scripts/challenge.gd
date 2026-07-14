@@ -68,11 +68,13 @@ func register_orb() -> void:
 
 func register_kill() -> void:
 	kills += 1
+	Achievements.add_kill()
 
 ## Le joueur vient d'atteindre une série de `combo` esprits d'affilée.
 func register_combo(combo: int) -> void:
 	if combo > best_combo:
 		best_combo = combo
+	Achievements.on_combo(combo)
 
 func get_time_elapsed() -> float:
 	var now := float(Time.get_ticks_msec()) / 1000.0
@@ -123,6 +125,7 @@ func finish_level() -> Dictionary:
 	var prev_time := SaveManager.best_time(level_id)
 	if prev_time <= 0.0 or elapsed < prev_time:
 		SaveManager.set_best_time(level_id, elapsed)
+	Achievements.on_level_finished(results)
 	reset()
 	return results
 

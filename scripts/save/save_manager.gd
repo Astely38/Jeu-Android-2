@@ -42,6 +42,8 @@ func load_data() -> void:
 		"best_times": {},
 		"last_level": "level_1",
 		"settings": {},
+		"achievements": {},
+		"stats": {},
 	}
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
@@ -112,6 +114,7 @@ func discover_secret() -> void:
 	if not data["unlocked_levels"].has("level_secret"):
 		data["unlocked_levels"].append("level_secret")
 		save_data()
+	Achievements.unlock("jardin_celeste")
 
 ## Réglages du joueur ("music", "sfx", "vibrations") — activés par défaut.
 func setting_on(key: String) -> bool:
