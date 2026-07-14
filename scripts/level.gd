@@ -18,6 +18,16 @@ const DIRT := Color(0.36, 0.25, 0.16)
 const DIRT_DARK := Color(0.27, 0.18, 0.11)
 const GRASS := Color(0.4, 0.62, 0.32)
 
+## Thème du peintre de plateformes (terre et herbe de la clairière).
+const PLATFORM_THEME := {
+	"top": GRASS,
+	"top_light": Color(0.56, 0.78, 0.42),
+	"body_a": DIRT,
+	"body_b": Color(0.3, 0.2, 0.13),
+	"dark": DIRT_DARK,
+	"speck": Color(0.46, 0.35, 0.24),
+}
+
 const LEONIE_LINES := [
 	{ "name": "Léonie", "text": "Eneko, c'est bon de te voir." },
 	{ "name": "Léonie", "text": "La Clairière des Bambous est belle, mais ses secrets sont anciens et douloureux." },
@@ -262,9 +272,7 @@ func _build_platforms() -> void:
 		rect.size = Vector2(p.y * 2.0, 100.0)
 		shape.shape = rect
 		body.add_child(shape)
-		_poly(body, _rect_points(p.y, -50.0, 450.0), DIRT)
-		_poly(body, _rect_points(p.y, 250.0, 450.0), DIRT_DARK)
-		_poly(body, _rect_points(p.y, -50.0, -40.0), GRASS)
+		PlatformPainter.paint(body, p.y, PLATFORM_THEME)
 
 		# Touffes d'herbe le long du bord supérieur.
 		var tuft_count: int = maxi(2, int(p.y / 55.0))

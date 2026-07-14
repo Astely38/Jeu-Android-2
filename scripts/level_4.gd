@@ -21,6 +21,16 @@ const ROCK := Color(0.42, 0.42, 0.46)
 const ROCK_DARK := Color(0.3, 0.3, 0.34)
 const SNOW := Color(0.92, 0.94, 0.98)
 
+## Thème du peintre de plateformes (roche enneigée de haute montagne).
+const PLATFORM_THEME := {
+	"top": SNOW,
+	"top_light": Color(1, 1, 1),
+	"body_a": ROCK,
+	"body_b": Color(0.36, 0.36, 0.4),
+	"dark": ROCK_DARK,
+	"speck": Color(0.52, 0.52, 0.58),
+}
+
 ## Plateformes : x = centre, y = demi-largeur. Trous courants de 140 à
 ## 170 px (portée de saut max ≈ 190 px) ; les trois brèches larges sont
 ## franchies par de vrais ponts de corde, et deux passages proposent des
@@ -312,9 +322,7 @@ func _build_platforms() -> void:
 		rect.size = Vector2(p.y * 2.0, 100.0)
 		shape.shape = rect
 		body.add_child(shape)
-		_poly(body, _rect_points(p.y, -50.0, 450.0), ROCK)
-		_poly(body, _rect_points(p.y, 220.0, 450.0), ROCK_DARK)
-		_poly(body, _rect_points(p.y, -50.0, -34.0), SNOW)
+		PlatformPainter.paint(body, p.y, PLATFORM_THEME)
 
 		# Congères irrégulières sur le bord supérieur.
 		var drift_count: int = maxi(2, int(p.y / 90.0))

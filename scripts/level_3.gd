@@ -22,6 +22,16 @@ const PATH := Color(0.44, 0.41, 0.42)
 const WOOD := Color(0.32, 0.22, 0.15)
 const WOOD_DARK := Color(0.24, 0.16, 0.11)
 
+## Thème du peintre de plateformes (terre sombre et chaussée du village).
+const PLATFORM_THEME := {
+	"top": PATH,
+	"top_light": Color(0.56, 0.53, 0.55),
+	"body_a": DIRT,
+	"body_b": Color(0.24, 0.2, 0.2),
+	"dark": Color(0.16, 0.13, 0.13),
+	"speck": Color(0.37, 0.33, 0.33),
+}
+
 ## Plateformes : x = centre, y = demi-largeur. Trous de 140 à 160 px
 ## (portée de saut max ≈ 190 px) — un cran plus exigeant que le niveau 1.
 const PLATFORMS := [
@@ -351,9 +361,7 @@ func _build_platforms() -> void:
 		rect.size = Vector2(p.y * 2.0, 100.0)
 		shape.shape = rect
 		body.add_child(shape)
-		_poly(body, _rect_points(p.y, -50.0, 450.0), DIRT)
-		_poly(body, _rect_points(p.y, 250.0, 450.0), DIRT_DARK)
-		_poly(body, _rect_points(p.y, -50.0, -38.0), PATH)
+		PlatformPainter.paint(body, p.y, PLATFORM_THEME)
 		# Pavés irréguliers sur la chaussée.
 		var cx := -p.y + 16.0
 		var ci := 0

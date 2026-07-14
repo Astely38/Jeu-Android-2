@@ -20,6 +20,17 @@ const MARBLE := Color(0.82, 0.8, 0.74)
 const MARBLE_DARK := Color(0.62, 0.6, 0.54)
 const GOLD_TRIM := Color(0.82, 0.66, 0.28)
 
+## Thème du peintre de plateformes (marbre taillé, filet d'or au sommet).
+const PLATFORM_THEME := {
+	"top": GOLD_TRIM,
+	"top_light": Color(0.95, 0.85, 0.5),
+	"body_a": MARBLE,
+	"body_b": Color(0.75, 0.73, 0.67),
+	"dark": MARBLE_DARK,
+	"speck": Color(0.72, 0.7, 0.64),
+	"cut": true,
+}
+
 ## Approche en 6 plateformes — dont un grand vide de 400 px franchissable
 ## uniquement par deux dalles effondrables — puis la grande arène du boss.
 const PLATFORMS := [
@@ -217,10 +228,7 @@ func _build_platforms() -> void:
 		rect.size = Vector2(p.y * 2.0, 100.0)
 		shape.shape = rect
 		body.add_child(shape)
-		_poly(body, _rect_points(p.y, -50.0, 450.0), MARBLE)
-		_poly(body, _rect_points(p.y, 250.0, 450.0), MARBLE_DARK)
-		_poly(body, _rect_points(p.y, -50.0, -40.0), GOLD_TRIM)
-		_poly(body, _rect_points(p.y, -40.0, -34.0), MARBLE)
+		PlatformPainter.paint(body, p.y, PLATFORM_THEME)
 		add_child(body)
 
 ## Dalles effondrables (voir CRUMBLES) : posées au niveau du sol.
