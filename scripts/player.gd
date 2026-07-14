@@ -100,6 +100,10 @@ func _ready() -> void:
 	attack_area.body_entered.connect(_on_attack_area_body_entered)
 	attack_area.area_entered.connect(_on_attack_area_area_entered)
 	_build_combo_label()
+	if Challenge.kensei:
+		health = _max_health()
+		_update_hearts()
+		_build_kensei_badge()
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SAMURAI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
 		{"name": "run", "path": SAMURAI + "Run.png", "frames": 8, "fps": 13.0, "loop": true},
@@ -490,8 +494,12 @@ func fall_damage() -> void:
 
 ## Soin complet (accordé par Léonie au passage).
 func heal_full() -> void:
-	health = MAX_HEALTH
+	health = _max_health()
 	_update_hearts()
+
+## Plafond de cœurs : 2 en mode Kensei, 3 sinon.
+func _max_health() -> int:
+	return 2 if Challenge.kensei else MAX_HEALTH
 
 ## Bénédiction de Léonie : une aura dorée entoure Eneko et le prochain
 ## coup encaissé est annulé.
@@ -572,7 +580,7 @@ func collect_orb() -> void:
 		orb_label.text = "x%d" % orbs
 	sfx_orb.play()
 	_orb_burst.restart()
-	if orbs % 5 == 0 and health < MAX_HEALTH:
+	if orbs % 5 == 0 and health < _max_health():
 		health += 1
 		_update_hearts()
 	_update_heart_hint()
@@ -594,6 +602,18 @@ func _on_attack_area_body_entered(body: Node2D) -> void:
 		_shake = 3.5  # impact ressenti à chaque coup qui porte
 		SaveManager.vibrate(18)
 		_hit_stop()
+
+## Petit badge rouge sous le chrono pour rappeler que le mode Kensei est actif.
+func _build_kensei_badge() -> void:
+	var badge := Label.new()
+	badge.text = "KENSEI"
+	badge.position = Vector2(330, 54)
+	badge.add_theme_font_size_override("font_size", 13)
+	badge.add_theme_color_override("font_color", Color(1.0, 0.42, 0.35))
+	badge.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
+	badge.add_theme_constant_override("shadow_offset_x", 1)
+	badge.add_theme_constant_override("shadow_offset_y", 1)
+	$HUD.add_child(badge)
 
 ## Label « Combo ×N » en haut à droite, sous le compteur d'orbes (caché au
 ## repos) — le haut-centre est réservé au chrono et aux titres de victoire.

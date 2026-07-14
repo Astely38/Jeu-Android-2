@@ -20,6 +20,9 @@ const PHASE3_HEALTH := 5
 const PHASE_SPEED := [85.0, 130.0, 160.0]
 const PHASE_DASH_CD := [0.0, 2.6, 1.6]
 const PHASE_SLAM_CD := [4.5, 3.8, 3.0]
+
+## Multiplicateur Kensei : accélère le Gardien et raccourcit ses répits.
+var _kmult := 1.0
 const DASH_SPEED := 380.0
 const DASH_DURATION := 0.45
 const ATTACK_RANGE := 60.0
@@ -60,6 +63,8 @@ var _base_tint := Color(1, 1, 1)
 var _sfx_slam: AudioStreamPlayer
 
 func _ready() -> void:
+	if Challenge.kensei:
+		_kmult = 1.2
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SHINOBI + "Idle.png", "frames": 6, "fps": 7.0, "loop": true},
 		{"name": "run", "path": SHINOBI + "Run.png", "frames": 8, "fps": 11.0, "loop": true},
@@ -168,7 +173,7 @@ func _physics_process(delta: float) -> void:
 		velocity.x = 0.0
 		_attack()
 	elif phase >= 2 and _dash_cd <= 0.0 and dist > 150.0 and dist < 450.0:
-		_dash_cd = PHASE_DASH_CD[phase - 1]
+		_dash_cd = PHASE_DASH_CD[phase - 1] / _kmult
 		_dash_timer = DASH_DURATION
 		# Télégraphe : le Gardien s'embrase brièvement au départ de la charge.
 		anim.modulate = Color(1.6, 0.5, 0.5)
@@ -176,7 +181,7 @@ func _physics_process(delta: float) -> void:
 		t.tween_property(anim, "modulate", _base_tint, 0.35)
 		_play("run")
 	else:
-		var speed: float = PHASE_SPEED[phase - 1]
+		var speed: float = PHASE_SPEED[phase - 1] * _kmult
 		velocity.x = dir * speed
 		_play("run")
 
@@ -189,7 +194,7 @@ func _clamp_to_arena() -> void:
 ## Saut-écrasement : le Gardien bondit en cloche vers Eneko et s'écrase
 ## au sol, libérant deux ondes de choc rasantes qu'il faut sauter.
 func _start_slam(dx: float) -> void:
-	_slam_cd = PHASE_SLAM_CD[phase - 1]
+	_slam_cd = PHASE_SLAM_CD[phase - 1] / _kmult
 	_slam_air = true
 	var reach := clampf(dx, -420.0, 420.0)
 	velocity = Vector2(reach / 1.3, SLAM_JUMP_VY)

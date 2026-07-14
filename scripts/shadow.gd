@@ -21,6 +21,8 @@ var _cur := ""
 @onready var sfx_die: AudioStreamPlayer = $SfxDie
 
 func _ready() -> void:
+	if Challenge.kensei:
+		speed *= 1.3
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SHINOBI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
 		{"name": "run", "path": SHINOBI + "Run.png", "frames": 8, "fps": 12.0, "loop": true},

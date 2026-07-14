@@ -44,6 +44,7 @@ func load_data() -> void:
 		"settings": {},
 		"achievements": {},
 		"stats": {},
+		"kensei_done": [],
 	}
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
@@ -115,6 +116,21 @@ func discover_secret() -> void:
 		data["unlocked_levels"].append("level_secret")
 		save_data()
 	Achievements.unlock("jardin_celeste")
+
+## Niveaux terminés en mode Kensei.
+func is_kensei_done(level_id: String) -> bool:
+	return data.get("kensei_done", []).has(level_id)
+
+func mark_kensei_done(level_id: String) -> void:
+	if not data.has("kensei_done"):
+		data["kensei_done"] = []
+	if not data["kensei_done"].has(level_id):
+		data["kensei_done"].append(level_id)
+		save_data()
+
+## Le mode Kensei se débloque en battant le Gardien une première fois.
+func kensei_unlocked() -> bool:
+	return is_completed("level_5")
 
 ## Réglages du joueur ("music", "sfx", "vibrations") — activés par défaut.
 func setting_on(key: String) -> bool:

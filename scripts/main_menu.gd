@@ -15,6 +15,9 @@ func _ready() -> void:
 	# Garde-fou : si on arrive ici pendant un ralenti (hit-stop, mort du
 	# boss), le temps reprend son cours normal.
 	Engine.time_scale = 1.0
+	# Revenir au menu désarme le mode Kensei ; « Continuer » relance donc
+	# toujours en mode normal, la sélection de niveaux le réarme au besoin.
+	Challenge.kensei = false
 	Music.play_world()
 	_build_scenery()
 	_show_version()

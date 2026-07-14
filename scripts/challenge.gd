@@ -21,6 +21,11 @@ const GRADE_COLORS := {
 	"PLATINUM": Color(0.75, 0.9, 1.0),
 }
 
+## Mode Kensei (débloqué en battant le Gardien) : 2 cœurs, ennemis plus
+## rapides, pas de bénédiction. Armé par la sélection de niveaux, désarmé
+## au retour au menu principal ; survit aux morts et aux « niveau suivant ».
+var kensei := false
+
 var level_id: String = ""
 var start_time: float = 0.0
 var orbs_collected: int = 0
@@ -91,6 +96,7 @@ func get_results() -> Dictionary:
 		"combo": best_combo,
 		"time": elapsed,
 		"grade": _calculate_grade(),
+		"kensei": kensei,
 	}
 
 func _calculate_grade() -> String:

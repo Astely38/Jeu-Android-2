@@ -69,6 +69,8 @@ func _build_row(level_id: String) -> Control:
 		var bt := SaveManager.best_time(level_id)
 		if bt > 0.0:
 			sub.text += " — %d:%02d" % [int(bt) / 60, int(bt) % 60]
+		if SaveManager.is_kensei_done(level_id):
+			sub.text += " — Kensei ✓"
 	else:
 		sub.text = "Disponible"
 	sub.add_theme_font_size_override("font_size", 16)
@@ -89,6 +91,17 @@ func _build_row(level_id: String) -> Control:
 		action.text = "Verrouillé"
 		action.disabled = true
 	hbox.add_child(action)
+
+	# Mode Kensei : débloqué en battant le Gardien. Le Jardin Céleste,
+	# détour paisible, n'a pas de variante Kensei.
+	if playable and level_id != "level_secret" and SaveManager.kensei_unlocked():
+		var kensei_btn := Button.new()
+		kensei_btn.custom_minimum_size = Vector2(110, 46)
+		kensei_btn.add_theme_font_size_override("font_size", 20)
+		kensei_btn.text = "Kensei"
+		_style_button(kensei_btn, Color(0.85, 0.35, 0.3))
+		kensei_btn.pressed.connect(_on_kensei_pressed.bind(level_id))
+		hbox.add_child(kensei_btn)
 
 	return panel
 
@@ -111,6 +124,12 @@ func _style_button(b: Button, accent: Color) -> void:
 	b.add_theme_color_override("font_pressed_color", Color(1, 0.98, 0.92))
 
 func _on_play_pressed(level_id: String) -> void:
+	Challenge.kensei = false
+	SaveManager.set_last_level(level_id)
+	get_tree().change_scene_to_file(SaveManager.LEVEL_SCENES[level_id])
+
+func _on_kensei_pressed(level_id: String) -> void:
+	Challenge.kensei = true
 	SaveManager.set_last_level(level_id)
 	get_tree().change_scene_to_file(SaveManager.LEVEL_SCENES[level_id])
 

@@ -21,6 +21,8 @@ var _cur := ""
 
 func _ready() -> void:
 	start_x = position.x
+	if Challenge.kensei:
+		speed *= 1.35
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "walk", "path": ONRE + "Walk.png", "frames": 7, "fps": 9.0, "loop": true},
 		{"name": "dead", "path": ONRE + "Dead.png", "frames": 6, "fps": 10.0, "loop": false},

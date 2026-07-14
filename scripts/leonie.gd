@@ -50,7 +50,9 @@ func _heal(body: Node2D) -> void:
 		body.heal_full()
 	if body.has_method("set_checkpoint"):
 		body.set_checkpoint(Vector2(global_position.x, body.global_position.y))
-	if body.has_method("bless"):
+	# En mode Kensei, Léonie soigne mais ne peut plus bénir : le Gardien
+	# vaincu a affaibli son pouvoir… et le défi n'en est que plus pur.
+	if body.has_method("bless") and not Challenge.kensei:
 		body.bless()
 	Achievements.unlock("benediction")
 	# Carillon doux du soin.
