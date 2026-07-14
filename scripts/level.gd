@@ -49,7 +49,9 @@ const CHECKPOINT_XS := [1650.0, 3400.0, 5100.0]
 ## La plateforme 2 (630-1150) est le sanctuaire de Léonie : aucun ennemi
 ## ni piège n'y est placé.
 const PATROL_XS := [1550.0, 2200.0, 2750.0, 3450.0, 4700.0, 5900.0, 6500.0]
-const SHADOW_XS := [1600.0, 2560.0, 4100.0, 5300.0, 6480.0]
+const SHADOW_XS := [1600.0, 2560.0, 5300.0, 6480.0]
+## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
+const ELITE_XS := [4100.0]
 ## Pièges à pics : proches d'un bord de plateforme, contournables en marchant
 ## ou en sautant par-dessus (jamais un passage obligé).
 const TRAP_XS := [1930.0, 2680.0, 3900.0, 5220.0, 6520.0]
@@ -94,7 +96,8 @@ func _ready() -> void:
 	_setup_audio()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
-	Challenge.start_level(LEVEL_ID, ORBS.size())
+	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
+	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_XS.size())
 	leonie.set_lines(LEONIE_LINES)
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
@@ -487,6 +490,11 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = Vector2(x, SPAWN_Y)
 		add_child(s)
+	for x in ELITE_XS:
+		var el := SHADOW_SCENE.instantiate()
+		el.position = Vector2(x, SPAWN_Y)
+		add_child(el)
+		el.make_elite()
 	for o in ORBS:
 		var orb := ORB_SCENE.instantiate()
 		orb.position = o

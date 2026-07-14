@@ -42,7 +42,9 @@ const CHECKPOINT_IDX := [5, 10, 15]
 const TOP_IDX := 19
 
 const PATROL_IDX := [2, 4, 7, 9, 12, 14, 17]
-const SHADOW_IDX := [6, 13, 18]
+const SHADOW_IDX := [6, 18]
+## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
+const ELITE_IDX := [13]
 const TRAP_IDX := [3, 8, 11, 16]
 const BANNER_IDX := [2, 7, 12, 17]
 
@@ -86,7 +88,8 @@ func _ready() -> void:
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
 	var orb_count := _count_orbs()
-	Challenge.start_level(LEVEL_ID, orb_count)
+	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
+	Challenge.start_level(LEVEL_ID, orb_count + 3 * ELITE_IDX.size())
 	_attach_player_glow()
 	menu_button.pressed.connect(_on_menu_pressed)
 	dialogue.finished.connect(_on_dialogue_finished)
@@ -565,6 +568,11 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = _stand_y(idx)
 		add_child(s)
+	for idx in ELITE_IDX:
+		var el := SHADOW_SCENE.instantiate()
+		el.position = _stand_y(idx)
+		add_child(el)
+		el.make_elite()
 	# Sanctuaire de Léonie : sur le balcon annexe (dernière entrée de
 	# PLATFORMS), à droite de la terrasse médiane. L'estrade est posée sur
 	# la surface réelle des poutres (p.y - 12, collision de 24 px) — elle

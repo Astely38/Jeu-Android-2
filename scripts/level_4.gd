@@ -46,7 +46,9 @@ const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
 ## La plateforme 2440-2920 est le sanctuaire de Léonie : aucun ennemi ni
 ## piège n'y est placé.
 const PATROL_XS := [900.0, 1500.0, 2150.0, 3200.0, 3850.0, 4600.0, 5300.0, 6300.0]
-const SHADOW_XS := [1420.0, 2200.0, 3300.0, 4450.0, 5200.0, 6350.0, 6900.0]
+const SHADOW_XS := [1420.0, 2200.0, 3300.0, 4450.0, 6350.0, 6900.0]
+## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
+const ELITE_XS := [5200.0]
 const TRAP_XS := [700.0, 2000.0, 3150.0, 4400.0, 5650.0, 6850.0]
 const CAIRN_XS := [800.0, 2500.0, 3920.0, 5160.0, 6420.0, 7150.0]
 ## Ponts de corde praticables : x = centre du trou, y = demi-largeur du
@@ -117,7 +119,8 @@ func _ready() -> void:
 	_setup_audio()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
-	Challenge.start_level(LEVEL_ID, ORBS.size())
+	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
+	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_XS.size())
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_5", "")
@@ -525,6 +528,11 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = Vector2(x, SPAWN_Y)
 		add_child(s)
+	for x in ELITE_XS:
+		var el := SHADOW_SCENE.instantiate()
+		el.position = Vector2(x, SPAWN_Y)
+		add_child(el)
+		el.make_elite()
 	for x in SPIRIT_XS:
 		var sp := SPIRIT_SCENE.instantiate()
 		sp.position = Vector2(x, SPAWN_Y - 90.0)

@@ -25,6 +25,7 @@ const DEFS := [
 	{"id": "platine_partout", "name": "Perfection", "desc": "Obtenir le Platine sur les cinq niveaux."},
 	{"id": "la_chute", "name": "La chute enseigne", "desc": "Recommencer un niveau 10 fois. Ça arrive aux meilleurs."},
 	{"id": "kensei", "name": "Kensei", "desc": "Terminer les cinq niveaux en mode Kensei (2 cœurs, sans bénédiction)."},
+	{"id": "chasseur", "name": "Chasseur d'élites", "desc": "Vaincre une Ombre d'élite et cueillir son orbe dorée."},
 ]
 
 var _queue: Array = []

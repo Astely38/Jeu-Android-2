@@ -45,7 +45,9 @@ const CHECKPOINT_XS := [1620.0, 3450.0, 5150.0]
 ## La plateforme 3140-3660 est le sanctuaire de Léonie : aucun ennemi ni
 ## piège n'y est placé.
 const PATROL_XS := [950.0, 1550.0, 2200.0, 2800.0, 4050.0, 4700.0, 5900.0]
-const SHADOW_XS := [1400.0, 2650.0, 2900.0, 4600.0, 5350.0, 6100.0, 6600.0]
+const SHADOW_XS := [1400.0, 2650.0, 2900.0, 5350.0, 6100.0, 6600.0]
+## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
+const ELITE_XS := [4600.0]
 ## Yūrei tireurs : esprits flottants qui crachent des orbes corrompus.
 ## Toujours au-dessus d'une plateforme (jamais d'un trou) : leur descente
 ## vers Eneko ne doit pas l'attirer dans le vide.
@@ -101,7 +103,8 @@ func _ready() -> void:
 	_setup_audio()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
-	Challenge.start_level(LEVEL_ID, ORBS.size())
+	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
+	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_XS.size())
 	_attach_player_glow()
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
@@ -554,6 +557,11 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = Vector2(x, SPAWN_Y)
 		add_child(s)
+	for x in ELITE_XS:
+		var el := SHADOW_SCENE.instantiate()
+		el.position = Vector2(x, SPAWN_Y)
+		add_child(el)
+		el.make_elite()
 	for x in SPIRIT_XS:
 		var sp := SPIRIT_SCENE.instantiate()
 		sp.position = Vector2(x, SPAWN_Y - 85.0)

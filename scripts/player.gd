@@ -568,11 +568,15 @@ func set_checkpoint(pos: Vector2) -> void:
 		sfx_checkpoint.play()
 	start_position = pos
 
-## Ramasse un orbe spirituel : recharge l'énergie, et tous les 5 orbes
-## Eneko récupère un cœur.
-func collect_orb() -> void:
-	Challenge.register_orb()
-	orbs += 1
+## Ramasse un orbe spirituel (ou une orbe dorée qui en vaut plusieurs) :
+## tous les 5 orbes, Eneko récupère un cœur.
+func collect_orb(count: int = 1) -> void:
+	for k in count:
+		Challenge.register_orb()
+		orbs += 1
+		if orbs % 5 == 0 and health < _max_health():
+			health += 1
+			_update_hearts()
 	# Progression visible : "7/21" plutôt qu'un simple compteur.
 	if Challenge.total_orbs > 0:
 		orb_label.text = "%d/%d" % [orbs, Challenge.total_orbs]
@@ -580,9 +584,6 @@ func collect_orb() -> void:
 		orb_label.text = "x%d" % orbs
 	sfx_orb.play()
 	_orb_burst.restart()
-	if orbs % 5 == 0 and health < _max_health():
-		health += 1
-		_update_hearts()
 	_update_heart_hint()
 
 ## Compte à rebours vers le prochain cœur (un tous les 5 orbes).
@@ -596,7 +597,14 @@ func _update_hearts() -> void:
 
 func _on_attack_area_body_entered(body: Node2D) -> void:
 	if body.has_method("die"):
-		body.die()
+		# call() : les die() des ennemis renvoient true/false (l'armure des
+		# Ombres d'élite encaisse le premier coup) ; les die() void (boss,
+		# anciens ennemis) renvoient null et comptent comme un coup qui tue.
+		var res: Variant = body.call("die")
+		if res is bool and bool(res) == false:
+			_shake = 2.0  # le coup a porté, mais l'esprit tient debout
+			SaveManager.vibrate(12)
+			return
 		Challenge.register_kill()
 		_register_combo_kill()
 		_shake = 3.5  # impact ressenti à chaque coup qui porte
