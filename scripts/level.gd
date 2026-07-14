@@ -71,6 +71,7 @@ const ORBS := [
 
 var sfx_win: AudioStreamPlayer
 var petals: CPUParticles2D
+var _portal_used := false
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -87,6 +88,7 @@ func _ready() -> void:
 	_build_traps()
 	_build_lifts()
 	_build_goal()
+	_build_secret_portal()
 	_build_kill_zone()
 	_spawn_entities()
 	_setup_audio()
@@ -397,6 +399,73 @@ func _build_goal() -> void:
 	_poly(goal, PackedVector2Array([Vector2(-32, -46), Vector2(32, -46), Vector2(32, -38), Vector2(-32, -38)]), Color(0.85, 0.2, 0.15))
 	add_child(goal)
 	goal.body_entered.connect(_on_goal_body_entered)
+
+## Portail secret : un vieux torii de pierre moussu, à contre-sens du
+## chemin (tout à gauche du départ, derrière Eneko). S'y glisser révèle
+## le Jardin Céleste. Quelques lucioles dorées récompensent la curiosité.
+func _build_secret_portal() -> void:
+	var portal := Area2D.new()
+	portal.position = Vector2(36.0, 430.0)
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(46, 130)
+	shape.shape = rect
+	portal.add_child(shape)
+	var stone := Color(0.5, 0.55, 0.5)
+	var stone_dark := Color(0.4, 0.45, 0.42)
+	var moss := Color(0.35, 0.5, 0.3, 0.9)
+	_poly(portal, PackedVector2Array([
+		Vector2(-24, 70), Vector2(-16, 70), Vector2(-18, -40), Vector2(-26, -40),
+	]), stone)
+	_poly(portal, PackedVector2Array([
+		Vector2(16, 70), Vector2(24, 70), Vector2(26, -40), Vector2(18, -40),
+	]), stone)
+	_poly(portal, PackedVector2Array([
+		Vector2(-32, -44), Vector2(32, -44), Vector2(34, -52), Vector2(-34, -52),
+	]), stone_dark)
+	_poly(portal, PackedVector2Array([
+		Vector2(-28, -34), Vector2(28, -34), Vector2(28, -28), Vector2(-28, -28),
+	]), stone)
+	_poly(portal, PackedVector2Array([
+		Vector2(-26, -40), Vector2(-14, -40), Vector2(-20, -30),
+	]), moss)
+	_poly(portal, PackedVector2Array([
+		Vector2(18, 10), Vector2(26, 6), Vector2(26, 26), Vector2(18, 22),
+	]), moss)
+	_poly(portal, PackedVector2Array([
+		Vector2(-26, 40), Vector2(-16, 44), Vector2(-16, 60), Vector2(-26, 58),
+	]), moss)
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(1.0, 0.9, 0.6, 0.14)
+	glow.scale = Vector2(1.6, 2.2)
+	glow.position = Vector2(0, 10)
+	portal.add_child(glow)
+	var fireflies := CPUParticles2D.new()
+	fireflies.amount = 7
+	fireflies.lifetime = 3.2
+	fireflies.preprocess = 3.2
+	fireflies.position = Vector2(0, 10)
+	fireflies.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	fireflies.emission_rect_extents = Vector2(20, 46)
+	fireflies.direction = Vector2(0, -1)
+	fireflies.spread = 60.0
+	fireflies.gravity = Vector2.ZERO
+	fireflies.initial_velocity_min = 4.0
+	fireflies.initial_velocity_max = 12.0
+	fireflies.scale_amount_min = 1.2
+	fireflies.scale_amount_max = 2.0
+	fireflies.color = Color(1.0, 0.9, 0.5, 0.8)
+	portal.add_child(fireflies)
+	add_child(portal)
+	portal.body_entered.connect(_on_secret_portal_body_entered)
+
+func _on_secret_portal_body_entered(body: Node2D) -> void:
+	if _portal_used or body != player:
+		return
+	_portal_used = true
+	SaveManager.discover_secret()
+	get_tree().change_scene_to_file.call_deferred("res://levels/level_secret.tscn")
 
 func _build_kill_zone() -> void:
 	var kz := Area2D.new()

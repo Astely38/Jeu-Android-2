@@ -14,6 +14,7 @@ const LEVEL_NAMES := {
 	"level_3": "Le Village des Ombres",
 	"level_4": "La Montagne des Brumes",
 	"level_5": "Le Sanctuaire Final",
+	"level_secret": "✦ Le Jardin Céleste",
 }
 
 ## Seuls les niveaux listés ici existent réellement pour l'instant ; les
@@ -24,6 +25,7 @@ const LEVEL_SCENES := {
 	"level_3": "res://levels/level_3.tscn",
 	"level_4": "res://levels/level_4.tscn",
 	"level_5": "res://levels/level_5.tscn",
+	"level_secret": "res://levels/level_secret.tscn",
 }
 
 var data := {}
@@ -102,6 +104,14 @@ func complete_level(level_id: String, orbs: int) -> void:
 		if not data["unlocked_levels"].has(next_id):
 			data["unlocked_levels"].append(next_id)
 	save_data()
+
+## Le Jardin Céleste vient d'être découvert (vieux torii moussu du
+## niveau 1) : il apparaît désormais dans la sélection de niveaux.
+## Absent de LEVEL_ORDER, il ne compte pas dans la progression normale.
+func discover_secret() -> void:
+	if not data["unlocked_levels"].has("level_secret"):
+		data["unlocked_levels"].append("level_secret")
+		save_data()
 
 ## Réglages du joueur ("music", "sfx", "vibrations") — activés par défaut.
 func setting_on(key: String) -> bool:

@@ -16,6 +16,10 @@ func _build_list() -> void:
 	var list: VBoxContainer = $Scroll/List
 	for level_id in SaveManager.LEVEL_ORDER:
 		list.add_child(_build_row(level_id))
+	# Le Jardin Céleste n'apparaît qu'une fois découvert en jeu — pas
+	# de ligne « Verrouillé » qui vendrait la mèche.
+	if SaveManager.is_unlocked("level_secret"):
+		list.add_child(_build_row("level_secret"))
 
 func _build_row(level_id: String) -> Control:
 	var has_scene: bool = SaveManager.LEVEL_SCENES.has(level_id)
