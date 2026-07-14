@@ -500,7 +500,7 @@ func _spawn_entities() -> void:
 		add_child(s)
 	for x in SPIRIT_XS:
 		var sp := SPIRIT_SCENE.instantiate()
-		sp.position = Vector2(x, SPAWN_Y - 145.0)
+		sp.position = Vector2(x, SPAWN_Y - 90.0)
 		add_child(sp)
 	var leonie := LEONIE_SCENE.instantiate()
 	leonie.position = Vector2(3550.0, SPAWN_Y)

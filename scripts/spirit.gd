@@ -16,6 +16,7 @@ var _t := 0.0
 var _cooldown := 1.4
 var _dying := false
 var _start_y := 0.0
+var _hover_y := 0.0  # descente progressive vers Eneko quand il approche
 var _base_tint := Color(1, 1, 1)
 
 @onready var anim: AnimatedSprite2D = $Anim
@@ -37,16 +38,23 @@ func _physics_process(delta: float) -> void:
 	if _dying:
 		return
 	_t += delta
-	# Flottement vertical perpétuel.
-	position.y = _start_y + sin(_t * 2.0) * 10.0
 
 	if player == null:
 		player = get_tree().get_first_node_in_group("player")
 	if player == null or not is_instance_valid(player):
+		position.y = _start_y + sin(_t * 2.0) * 10.0
 		return
 
 	var to_player: Vector2 = player.global_position - global_position
 	anim.flip_h = to_player.x < 0.0
+
+	# Quand Eneko approche, le Yūrei fond lentement vers lui : il devient
+	# plus menaçant... mais passe à portée de sabre.
+	var target := 0.0
+	if absf(to_player.x) < 260.0:
+		target = clampf(player.global_position.y - 30.0 - _start_y, -20.0, 130.0)
+	_hover_y = move_toward(_hover_y, target, 46.0 * delta)
+	position.y = _start_y + _hover_y + sin(_t * 2.0) * 10.0
 
 	_cooldown -= delta
 	if _cooldown <= 0.0 and to_player.length() < FIRE_RANGE and absf(to_player.y) < 260.0:

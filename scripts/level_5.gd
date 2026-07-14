@@ -326,7 +326,7 @@ func _spawn_entities() -> void:
 		add_child(s)
 	for x in SPIRIT_XS:
 		var sp := SPIRIT_SCENE.instantiate()
-		sp.position = Vector2(x, SPAWN_Y - 130.0)
+		sp.position = Vector2(x, SPAWN_Y - 85.0)
 		add_child(sp)
 	for o in ORBS:
 		var orb := ORB_SCENE.instantiate()
