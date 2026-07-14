@@ -138,6 +138,13 @@ func _build_decor() -> void:
 	sun.scale = Vector2(9.0, 9.0)
 	sun.position = Vector2(700.0, -60.0)
 	sky_layer.add_child(sun)
+	# Rayons dorés du couchant qui plongent dans la clairière.
+	var rays := GodRays.new()
+	rays.color = Color(1.0, 0.88, 0.55, 0.06)
+	rays.length = 1500.0
+	rays.half_spread = 0.7
+	rays.position = Vector2(700.0, -60.0)
+	sky_layer.add_child(rays)
 
 	# Montagnes lointaines bleutées, avec sommets enneigés.
 	var mountains := ParallaxLayer.new()

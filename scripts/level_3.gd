@@ -179,6 +179,13 @@ func _build_decor() -> void:
 		moon_pts.append(Vector2(cos(a) * 46.0, sin(a) * 46.0))
 		k += 1
 	_poly(sky_layer, moon_pts, Color(0.95, 0.5, 0.32, 0.9), Vector2(700, 90))
+	# Rayons rougeoyants de la lune de sang sur le village.
+	var rays := GodRays.new()
+	rays.color = Color(1.0, 0.5, 0.34, 0.06)
+	rays.length = 1300.0
+	rays.half_spread = 0.85
+	rays.position = Vector2(700.0, 90.0)
+	sky_layer.add_child(rays)
 	# Quelques étoiles pâles.
 	var si := 0
 	while si < 18:

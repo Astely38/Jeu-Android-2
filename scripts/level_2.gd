@@ -191,6 +191,13 @@ func _build_decor() -> void:
 		moon.append(Vector2(cos(a2) * 26.0 + 11.0, sin(a2) * 26.0))
 		k -= 1
 	_poly(sky, moon, Color(0.92, 0.94, 1.0, 0.92), Vector2(760, 110))
+	# Rayons lunaires froids qui descendent sur l'escalier.
+	var rays := GodRays.new()
+	rays.color = Color(0.78, 0.84, 1.0, 0.06)
+	rays.length = 1300.0
+	rays.half_spread = 0.8
+	rays.position = Vector2(760.0, 110.0)
+	sky.add_child(rays)
 	var si := 0
 	while si < 60:
 		var stx := -200.0 + float((si * 137) % 1360)

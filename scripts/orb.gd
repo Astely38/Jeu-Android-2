@@ -49,9 +49,31 @@ func _on_body_entered(body: Node2D) -> void:
 	if body.has_method("collect_orb"):
 		_taken = true
 		body.collect_orb(value)
+		_spawn_pickup_burst()
 		set_deferred("monitoring", false)
 		var tween := create_tween()
 		tween.set_parallel(true)
 		tween.tween_property(sprite, "scale", sprite.scale * 1.9, 0.25)
 		tween.tween_property(sprite, "modulate:a", 0.0, 0.25)
 		tween.finished.connect(queue_free)
+
+## Petit éclat d'étincelles à la collecte (posé sur le parent : il survit
+## à la disparition de l'orbe).
+func _spawn_pickup_burst() -> void:
+	var burst := CPUParticles2D.new()
+	burst.global_position = global_position
+	burst.emitting = true
+	burst.one_shot = true
+	burst.explosiveness = 0.9
+	burst.amount = 12
+	burst.lifetime = 0.5
+	burst.direction = Vector2(0, -1)
+	burst.spread = 180.0
+	burst.initial_velocity_min = 45.0
+	burst.initial_velocity_max = 120.0
+	burst.gravity = Vector2(0, 140)
+	burst.scale_amount_min = 1.2
+	burst.scale_amount_max = 2.6
+	burst.color = Color(1.0, 0.85, 0.4) if value > 1 else Color(0.6, 0.95, 1.0)
+	get_parent().add_child(burst)
+	burst.finished.connect(burst.queue_free)

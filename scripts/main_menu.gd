@@ -61,6 +61,15 @@ func _build_scenery() -> void:
 		var a := k * TAU / 24.0
 		sun_pts.append(Vector2(cos(a) * 58.0, sin(a) * 58.0))
 	_poly(sc, sun_pts, Color(1.0, 0.84, 0.52, 0.95), Vector2(250, 352))
+	# Auréole de rayons dorés autour du soleil couchant (derrière le décor).
+	var rays := GodRays.new()
+	rays.ray_count = 11
+	rays.half_spread = 2.7
+	rays.length = 560.0
+	rays.base_width = 54.0
+	rays.color = Color(1.0, 0.82, 0.45, 0.07)
+	rays.position = Vector2(250, 352)
+	sc.add_child(rays)
 
 	# Oiseaux du soir
 	for b in [Vector2(600, 140), Vector2(662, 116), Vector2(568, 100)]:

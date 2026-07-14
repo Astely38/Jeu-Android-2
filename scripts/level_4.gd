@@ -196,6 +196,13 @@ func _build_decor() -> void:
 		sun_pts.append(Vector2(cos(sa) * 30.0, sin(sa) * 30.0))
 		sk += 1
 	_poly(sky, sun_pts, Color(1.0, 1.0, 0.94, 0.65), Vector2(680, 80))
+	# Rayons pâles filtrés par la brume d'altitude.
+	var rays := GodRays.new()
+	rays.color = Color(1.0, 1.0, 0.96, 0.055)
+	rays.length = 1300.0
+	rays.half_spread = 0.9
+	rays.position = Vector2(680.0, 80.0)
+	sky.add_child(rays)
 	var bx := 350.0
 	var bi := 0
 	while bx < LEVEL_END:
