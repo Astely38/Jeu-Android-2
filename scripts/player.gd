@@ -594,13 +594,14 @@ func _on_attack_area_body_entered(body: Node2D) -> void:
 		SaveManager.vibrate(18)
 		_hit_stop()
 
-## Label « Combo ×N » en haut au centre de l'écran (caché au repos).
+## Label « Combo ×N » en haut à droite, sous le compteur d'orbes (caché au
+## repos) — le haut-centre est réservé au chrono et aux titres de victoire.
 func _build_combo_label() -> void:
 	_combo_label = Label.new()
-	_combo_label.size = Vector2(220, 34)
-	_combo_label.position = Vector2(370, 54)
-	_combo_label.pivot_offset = Vector2(110, 17)
-	_combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_combo_label.size = Vector2(280, 30)
+	_combo_label.position = Vector2(660, 62)
+	_combo_label.pivot_offset = Vector2(250, 15)
+	_combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_combo_label.add_theme_font_size_override("font_size", 24)
 	_combo_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.35))
 	_combo_label.add_theme_color_override("font_outline_color", Color(0.25, 0.1, 0.05, 0.9))

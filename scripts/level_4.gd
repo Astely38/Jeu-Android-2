@@ -594,9 +594,21 @@ func _display_challenge_results() -> void:
 	if damage_label:
 		damage_label.text = "Dégâts : %d   •   Esprits vaincus : %d" % [results["damage"], results["kills"]]
 		if int(results["combo"]) >= 2:
-			damage_label.text += "   •   Meilleur combo : ×%d" % int(results["combo"])
+			damage_label.text += "   •   Combo ×%d" % int(results["combo"])
 	if time_label:
 		time_label.text = "Temps : %s" % _format_time(results["time"])
+	# Élargit le panneau pour que la ligne la plus longue (celle du combo)
+	# reste à l'intérieur : le VBox est recentré et le fond suit.
+	var stats_half := 150.0
+	for child in challenge_stats.get_children():
+		if child is Label:
+			stats_half = maxf(stats_half, (child as Label).get_minimum_size().x * 0.5 + 10.0)
+	challenge_stats.offset_left = -stats_half
+	challenge_stats.offset_right = stats_half
+	var stats_bg = win_label.find_child("StatsBG", true, false)
+	if stats_bg != null:
+		stats_bg.offset_left = -stats_half - 30.0
+		stats_bg.offset_right = stats_half + 30.0
 
 func _format_time(seconds: float) -> String:
 	var mins: int = int(seconds) / 60

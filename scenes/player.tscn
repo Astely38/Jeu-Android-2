@@ -172,17 +172,18 @@ theme_override_font_sizes/font_size = 24
 text = "0:00"
 
 [node name="OrbIcon" type="Sprite2D" parent="HUD"]
-position = Vector2(888, 40)
+position = Vector2(830, 40)
 scale = Vector2(1.2, 1.2)
 texture = ExtResource("5")
 
 [node name="OrbCount" type="Label" parent="HUD"]
-offset_left = 906.0
+offset_left = 846.0
 offset_top = 24.0
-offset_right = 956.0
+offset_right = 946.0
 offset_bottom = 56.0
 theme_override_colors/font_color = Color(0.85, 0.97, 1, 1)
 theme_override_font_sizes/font_size = 26
+horizontal_alignment = 2
 text = "x0"
 
 [node name="GameOverLabel" type="Label" parent="HUD"]
