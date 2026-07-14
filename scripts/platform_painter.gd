@@ -19,6 +19,83 @@ const BOTTOM := 450.0
 static func _h(seed_i: int, k: int, m: int) -> float:
 	return float(absi(seed_i * 73856093 + k * 19349663) % maxi(1, m))
 
+## Construit le sanctuaire de Léonie : une estrade de pierre pâle cerclée
+## d'or posée sur la plateforme d'accueil, encadrée de deux petites
+## lanternes de pierre, baignée d'un halo chaud et de pétales dorés.
+## `ground_y` est le niveau du sol (dessus de la plateforme d'accueil) ;
+## l'estrade fait 26 px de haut, un petit saut suffit pour y monter.
+static func build_sanctuary(level: Node2D, x: float, ground_y: float) -> void:
+	var stone := Color(0.85, 0.82, 0.74)
+	var stone_dark := Color(0.68, 0.65, 0.58)
+	var gold := Color(0.88, 0.72, 0.32)
+
+	var dais := StaticBody2D.new()
+	dais.position = Vector2(x, ground_y)
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(170, 26)
+	shape.shape = rect
+	shape.position = Vector2(0, -13)
+	dais.add_child(shape)
+
+	# Estrade : corps en pierre pâle, filet d'or, marches biseautées.
+	_poly(dais, PackedVector2Array([
+		Vector2(-85, 0), Vector2(85, 0), Vector2(76, -26), Vector2(-76, -26),
+	]), stone)
+	_poly(dais, PackedVector2Array([
+		Vector2(-76, -26), Vector2(76, -26), Vector2(74, -21), Vector2(-74, -21),
+	]), gold)
+	_poly(dais, PackedVector2Array([
+		Vector2(-85, 0), Vector2(-60, 0), Vector2(-64, -8), Vector2(-82, -8),
+	]), stone_dark)
+	_poly(dais, PackedVector2Array([
+		Vector2(85, 0), Vector2(60, 0), Vector2(64, -8), Vector2(82, -8),
+	]), stone_dark)
+
+	# Deux petites lanternes de pierre aux extrémités de l'estrade.
+	for side in [-1.0, 1.0]:
+		var lx := side * 62.0
+		_poly(dais, PackedVector2Array([
+			Vector2(lx - 3, -26), Vector2(lx + 3, -26), Vector2(lx + 3, -46), Vector2(lx - 3, -46),
+		]), stone_dark)
+		_poly(dais, PackedVector2Array([
+			Vector2(lx - 7, -46), Vector2(lx + 7, -46), Vector2(lx + 7, -58), Vector2(lx - 7, -58),
+		]), stone)
+		_poly(dais, PackedVector2Array([
+			Vector2(lx - 4, -48), Vector2(lx + 4, -48), Vector2(lx + 4, -56), Vector2(lx - 4, -56),
+		]), Color(1.0, 0.85, 0.45, 0.9))
+		_poly(dais, PackedVector2Array([
+			Vector2(lx - 9, -58), Vector2(lx + 9, -58), Vector2(lx + 5, -64), Vector2(lx - 5, -64),
+		]), stone_dark)
+
+	# Halo de lumière chaude au-dessus de l'estrade.
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(1.0, 0.88, 0.55, 0.16)
+	glow.scale = Vector2(3.4, 3.0)
+	glow.position = Vector2(0, -70)
+	dais.add_child(glow)
+
+	# Pétales dorés qui montent doucement du sanctuaire.
+	var petals := CPUParticles2D.new()
+	petals.position = Vector2(0, -40)
+	petals.amount = 8
+	petals.lifetime = 4.0
+	petals.preprocess = 4.0
+	petals.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	petals.emission_rect_extents = Vector2(80, 40)
+	petals.direction = Vector2(0, -1)
+	petals.spread = 30.0
+	petals.gravity = Vector2(0, -14)
+	petals.initial_velocity_min = 6.0
+	petals.initial_velocity_max = 16.0
+	petals.scale_amount_min = 1.2
+	petals.scale_amount_max = 2.0
+	petals.color = Color(1.0, 0.86, 0.5, 0.6)
+	dais.add_child(petals)
+
+	level.add_child(dais)
+
 static func _poly(parent: Node, pts: PackedVector2Array, color: Color) -> void:
 	var p := Polygon2D.new()
 	p.polygon = pts

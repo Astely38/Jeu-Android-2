@@ -45,11 +45,13 @@ const PLATFORMS := [
 	Vector2(5910, 260), Vector2(6600, 300),
 ]
 const CHECKPOINT_XS := [1650.0, 3400.0, 5100.0]
-const PATROL_XS := [1000.0, 1550.0, 2200.0, 2750.0, 3450.0, 4700.0, 5900.0, 6500.0]
+## La plateforme 2 (630-1150) est le sanctuaire de Léonie : aucun ennemi
+## ni piège n'y est placé.
+const PATROL_XS := [1550.0, 2200.0, 2750.0, 3450.0, 4700.0, 5900.0, 6500.0]
 const SHADOW_XS := [1600.0, 2560.0, 4100.0, 5300.0, 6480.0]
 ## Pièges à pics : proches d'un bord de plateforme, contournables en marchant
 ## ou en sautant par-dessus (jamais un passage obligé).
-const TRAP_XS := [980.0, 2680.0, 3900.0, 5220.0, 6520.0]
+const TRAP_XS := [1930.0, 2680.0, 3900.0, 5220.0, 6520.0]
 const ORBS := [
 	Vector2(350, 440), Vector2(565, 405), Vector2(890, 440),
 	Vector2(1210, 405), Vector2(1520, 440), Vector2(1835, 405),
@@ -73,6 +75,7 @@ var petals: CPUParticles2D
 func _ready() -> void:
 	_build_decor()
 	_build_platforms()
+	PlatformPainter.build_sanctuary(self, 890.0, GROUND_Y - 50.0)
 	_build_checkpoints()
 	_build_traps()
 	_build_goal()

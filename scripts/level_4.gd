@@ -42,10 +42,12 @@ const PLATFORMS := [
 	Vector2(5780, 200), Vector2(6420, 240), Vector2(7040, 280),
 ]
 const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
-const PATROL_XS := [900.0, 1500.0, 2150.0, 2750.0, 3850.0, 4600.0, 5300.0, 6300.0]
+## La plateforme 2440-2920 est le sanctuaire de Léonie : aucun ennemi ni
+## piège n'y est placé.
+const PATROL_XS := [900.0, 1500.0, 2150.0, 3200.0, 3850.0, 4600.0, 5300.0, 6300.0]
 const SHADOW_XS := [1420.0, 2200.0, 3300.0, 4450.0, 5200.0, 6350.0, 6900.0]
 const TRAP_XS := [700.0, 2000.0, 3150.0, 4400.0, 5650.0, 6850.0]
-const CAIRN_XS := [800.0, 2680.0, 3920.0, 5160.0, 6420.0, 7150.0]
+const CAIRN_XS := [800.0, 2500.0, 3920.0, 5160.0, 6420.0, 7150.0]
 ## Ponts de corde praticables : x = centre du trou, y = demi-largeur du
 ## tablier (déborde de ~10 px sur chaque plateforme voisine).
 const BRIDGES := [Vector2(1790, 100), Vector2(4235, 115), Vector2(6080, 110)]
@@ -511,8 +513,11 @@ func _spawn_entities() -> void:
 		var sp := SPIRIT_SCENE.instantiate()
 		sp.position = Vector2(x, SPAWN_Y - 90.0)
 		add_child(sp)
+	# NB : l'ancienne position (3550) était au-dessus d'un trou ! Léonie
+	# vit maintenant sur la plateforme-refuge avant le passage des ponts.
+	PlatformPainter.build_sanctuary(self, 2680.0, GROUND_Y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()
-	leonie.position = Vector2(3550.0, SPAWN_Y)
+	leonie.position = Vector2(2680.0, SPAWN_Y - 26.0)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
 	for o in ORBS:

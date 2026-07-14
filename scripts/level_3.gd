@@ -41,13 +41,15 @@ const PLATFORMS := [
 	Vector2(5930, 250), Vector2(6620, 290),
 ]
 const CHECKPOINT_XS := [1620.0, 3450.0, 5150.0]
+## La plateforme 3140-3660 est le sanctuaire de Léonie : aucun ennemi ni
+## piège n'y est placé.
 const PATROL_XS := [950.0, 1550.0, 2200.0, 2800.0, 4050.0, 4700.0, 5900.0]
-const SHADOW_XS := [1400.0, 2650.0, 3350.0, 4600.0, 5350.0, 6100.0, 6600.0]
+const SHADOW_XS := [1400.0, 2650.0, 2900.0, 4600.0, 5350.0, 6100.0, 6600.0]
 ## Yūrei tireurs : esprits flottants qui crachent des orbes corrompus.
 ## Toujours au-dessus d'une plateforme (jamais d'un trou) : leur descente
 ## vers Eneko ne doit pas l'attirer dans le vide.
 const SPIRIT_XS := [2250.0, 4550.0]
-const TRAP_XS := [800.0, 2050.0, 3550.0, 4850.0, 6450.0]
+const TRAP_XS := [800.0, 2050.0, 3850.0, 4850.0, 6450.0]
 const BRAZIER_XS := [400.0, 1700.0, 2700.0, 3900.0, 5450.0, 6380.0]
 const ORBS := [
 	Vector2(330, 440), Vector2(560, 405), Vector2(870, 440),
@@ -540,8 +542,9 @@ func _spawn_entities() -> void:
 		var sp := SPIRIT_SCENE.instantiate()
 		sp.position = Vector2(x, SPAWN_Y - 85.0)
 		add_child(sp)
+	PlatformPainter.build_sanctuary(self, 3550.0, GROUND_Y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()
-	leonie.position = Vector2(3550.0, SPAWN_Y)
+	leonie.position = Vector2(3550.0, SPAWN_Y - 26.0)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
 	for o in ORBS:

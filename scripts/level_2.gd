@@ -562,8 +562,12 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = _stand_y(idx)
 		add_child(s)
+	# Sanctuaire de Léonie : estrade dédiée sur la terrasse médiane
+	# (aucun ennemi ni piège n'est placé sur cette plateforme).
+	PlatformPainter.build_sanctuary(self, PLATFORMS[LEONIE_IDX].x + 60.0,
+		PLATFORMS[LEONIE_IDX].y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()
-	leonie.position = _stand_y(LEONIE_IDX) + Vector2(60, 0)
+	leonie.position = _stand_y(LEONIE_IDX) + Vector2(60, -26)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
 	var i := 1

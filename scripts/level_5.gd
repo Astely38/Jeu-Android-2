@@ -75,6 +75,7 @@ var motes: CPUParticles2D
 var boss: CharacterBody2D = null
 var _arena_triggered := false
 var _boss_intro_done := false
+var _barriers: Array = []
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -380,8 +381,43 @@ func _on_dialogue_finished() -> void:
 	if _arena_triggered and not _boss_intro_done:
 		_boss_intro_done = true
 		boss_ui.visible = true
+		_raise_barriers()
 		if is_instance_valid(boss):
 			boss.activate()
+
+## Barrières spirituelles qui scellent l'arène pendant le combat.
+func _raise_barriers() -> void:
+	for bx in [ARENA_MIN_X - 10.0, ARENA_MAX_X + 10.0]:
+		var b := StaticBody2D.new()
+		b.position = Vector2(float(bx), GROUND_Y - 50.0)
+		var sh := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(18, 380)
+		sh.shape = rect
+		sh.position = Vector2(0, -190)
+		b.add_child(sh)
+		var col := Polygon2D.new()
+		col.polygon = PackedVector2Array([
+			Vector2(-9, 0), Vector2(9, 0), Vector2(9, -380), Vector2(-9, -380),
+		])
+		col.color = Color(1.0, 0.85, 0.45, 0.3)
+		b.add_child(col)
+		var glow := Sprite2D.new()
+		glow.texture = load("res://assets/mist.svg")
+		glow.modulate = Color(1.0, 0.85, 0.5, 0.22)
+		glow.scale = Vector2(1.6, 5.2)
+		glow.position = Vector2(0, -190)
+		b.add_child(glow)
+		add_child(b)
+		_barriers.append(b)
+
+func _drop_barriers() -> void:
+	for b in _barriers:
+		if is_instance_valid(b):
+			var t := create_tween()
+			t.tween_property(b, "modulate:a", 0.0, 0.8)
+			t.finished.connect(b.queue_free)
+	_barriers.clear()
 
 func _on_boss_health_changed(current: int, max_health: int) -> void:
 	boss_bar_fill.scale.x = float(current) / float(max_health)
@@ -396,6 +432,7 @@ func _on_boss_phase_changed(_new_phase: int) -> void:
 func _on_boss_defeated() -> void:
 	player.set_physics_process(false)
 	boss_ui.visible = false
+	_drop_barriers()
 	_play_victory_cinematic()
 
 ## Ralenti dramatique + fondu blanc, puis l'écran de victoire.
