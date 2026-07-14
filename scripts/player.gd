@@ -58,6 +58,9 @@ var _dash_cd := 0.0
 var _ghost_timer := 0.0
 var _pan_tween: Tween
 var _pause_layer: CanvasLayer
+## Bénédiction de Léonie : le prochain coup encaissé est annulé.
+var blessed := false
+var _bless_aura: Sprite2D
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
@@ -71,6 +74,7 @@ var _pause_layer: CanvasLayer
 @onready var sfx_hurt: AudioStreamPlayer = $SfxHurt
 @onready var sfx_orb: AudioStreamPlayer = $SfxOrb
 @onready var camera: Camera2D = $Camera2D
+@onready var _dash_icons: Array = [$HUD/DashButton/Icon, $HUD/DashButton/Icon2]
 
 func _ready() -> void:
 	# Garde-fou : un rechargement de scène pendant un hit-stop ou un
@@ -167,6 +171,9 @@ func _physics_process(delta: float) -> void:
 	_dash_cd = maxf(0.0, _dash_cd - delta)
 	if _dash_timer > 0.0:
 		_dash_timer -= delta
+		if _dash_timer <= 0.0:
+			# Fin de la ruée : Eneko redevient solide face aux ennemis.
+			set_collision_mask_value(2, true)
 		velocity = Vector2(facing * DASH_SPEED, 0)
 		move_and_slide()
 		_ghost_timer -= delta
@@ -256,6 +263,10 @@ func _animate(delta: float) -> void:
 	if time_label != null:
 		var tsec := int(Challenge.get_time_elapsed())
 		time_label.text = "%d:%02d" % [tsec / 60, tsec % 60]
+	# L'icône de la ruée s'éteint pendant la recharge.
+	var dash_ready := _dash_cd <= 0.0
+	for ic in _dash_icons:
+		ic.modulate.a = 0.9 if dash_ready else 0.25
 
 func _set_facing(dir: float) -> void:
 	facing = dir
@@ -302,6 +313,9 @@ func dash() -> void:
 	_ghost_timer = 0.0
 	invuln = maxf(invuln, DASH_TIME + 0.08)
 	velocity.y = 0.0
+	# Pendant la ruée, Eneko TRAVERSE les ennemis (couche 2) : l'esquive
+	# passe au travers des Ombres et des charges du Gardien.
+	set_collision_mask_value(2, false)
 	sfx_slash.play()
 
 ## Image rémanente bleutée semée pendant la ruée, qui s'estompe vite.
@@ -402,6 +416,16 @@ func _spawn_slash_trail() -> void:
 func take_damage(amount: int, from_position: Vector2) -> void:
 	if invuln > 0.0:
 		return
+	# La bénédiction de Léonie annule entièrement le prochain coup
+	# (sans compter comme un dégât pour le grade).
+	if blessed:
+		blessed = false
+		if _bless_aura != null:
+			_bless_aura.visible = false
+		invuln = INVULN_TIME
+		_shake = 4.0
+		sfx_hurt.play()
+		return
 	Challenge.register_damage()
 	health -= amount
 	_update_hearts()
@@ -439,6 +463,20 @@ func fall_damage() -> void:
 func heal_full() -> void:
 	health = MAX_HEALTH
 	_update_hearts()
+
+## Bénédiction de Léonie : une aura dorée entoure Eneko et le prochain
+## coup encaissé est annulé.
+func bless() -> void:
+	blessed = true
+	if _bless_aura == null:
+		_bless_aura = Sprite2D.new()
+		_bless_aura.texture = load("res://assets/mist.svg")
+		_bless_aura.modulate = Color(1.0, 0.85, 0.4, 0.26)
+		_bless_aura.scale = Vector2(2.2, 2.2)
+		_bless_aura.position = Vector2(0, -10)
+		_bless_aura.z_index = -1
+		add_child(_bless_aura)
+	_bless_aura.visible = true
 
 ## Mort (0 cœur suite aux dégâts) : redémarrage complet du niveau.
 func respawn() -> void:

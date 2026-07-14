@@ -43,10 +43,15 @@ func _on_body_entered(body: Node2D) -> void:
 		_heal(body)
 		_speak()
 
-## Restaure tous les cœurs d'Eneko, avec un éclat doré ascendant.
+## Le refuge de Léonie : soin complet, point de contrôle ET bénédiction
+## (le prochain coup encaissé est annulé), avec un éclat doré ascendant.
 func _heal(body: Node2D) -> void:
 	if body.has_method("heal_full"):
 		body.heal_full()
+	if body.has_method("set_checkpoint"):
+		body.set_checkpoint(Vector2(global_position.x, body.global_position.y))
+	if body.has_method("bless"):
+		body.bless()
 	var sparkle := CPUParticles2D.new()
 	sparkle.position = Vector2(0, -30)
 	sparkle.amount = 16
