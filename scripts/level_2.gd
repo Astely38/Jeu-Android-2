@@ -22,6 +22,9 @@ const PLATFORMS := [
 	Vector2(300, 640),
 	Vector2(420, 550), Vector2(180, 470), Vector2(420, 390),
 	Vector2(300, 290),
+	# Balcon annexe du sanctuaire de Léonie : prolonge la terrasse médiane
+	# vers la droite (bord à bord), hors du chemin d'ascension en zigzag.
+	Vector2(610, 1060),
 ]
 const HALF_WIDTHS := [
 	240,
@@ -33,9 +36,9 @@ const HALF_WIDTHS := [
 	200,
 	120, 120, 120,
 	180,
+	110,
 ]
 const CHECKPOINT_IDX := [5, 10, 15]
-const LEONIE_IDX := 10
 const TOP_IDX := 19
 
 const PATROL_IDX := [2, 4, 7, 9, 12, 14, 17]
@@ -562,12 +565,15 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = _stand_y(idx)
 		add_child(s)
-	# Sanctuaire de Léonie : estrade dédiée sur la terrasse médiane
-	# (aucun ennemi ni piège n'est placé sur cette plateforme).
-	PlatformPainter.build_sanctuary(self, PLATFORMS[LEONIE_IDX].x + 60.0,
-		PLATFORMS[LEONIE_IDX].y - 50.0)
+	# Sanctuaire de Léonie : sur le balcon annexe (dernière entrée de
+	# PLATFORMS), à droite de la terrasse médiane. L'estrade est posée sur
+	# la surface réelle des poutres (p.y - 12, collision de 24 px) — elle
+	# flottait auparavant 38 px au-dessus et barrait la terrasse.
+	var annex: Vector2 = PLATFORMS[PLATFORMS.size() - 1]
+	PlatformPainter.build_sanctuary(self, annex.x, annex.y - 12.0)
 	var leonie := LEONIE_SCENE.instantiate()
-	leonie.position = _stand_y(LEONIE_IDX) + Vector2(60, -26)
+	# Debout sur l'estrade : dessus = surface - 26, ancre du sprite à -23.
+	leonie.position = Vector2(annex.x, annex.y - 61.0)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
 	var i := 1
