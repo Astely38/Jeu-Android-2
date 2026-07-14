@@ -1,67 +1,86 @@
 extends Node2D
 ## Niveau 2 : « Le Temple Oublié ».
-## Ruine sacrée dressée dans la nuit : ciel étoilé, lune au sommet,
-## piliers de pierre, statues gardiennes, bannières, torches animées
-## et braises flottantes. Ascension en zigzag jusqu'au sanctuaire.
+## Ruine sacrée à flanc de colline, dans la nuit. On gravit un grand
+## escalier de terrasses de pierre qui monte régulièrement vers la droite
+## jusqu'au sanctuaire du sommet — une ascension franche, sans zigzag.
+## Ciel étoilé, lune croissante, pagodes en ruine au loin, torches et
+## braises, statues gardiennes et bannières.
 
 const ORB_SCENE := preload("res://scenes/orb.tscn")
 const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
+const SPIRIT_SCENE := preload("res://scenes/spirit.tscn")
 
+const LEVEL_END := 5600.0
 const LEVEL_ID := "level_2"
 
-## Plateformes : zigzag gauche-droite, montée douce.
+const STONE := Color(0.45, 0.42, 0.38)
+const STONE_DARK := Color(0.3, 0.28, 0.25)
+const CLOTH := Color(0.52, 0.13, 0.11)
+const CLOTH_TRIM := Color(0.85, 0.68, 0.3)
+
+## Thème du peintre de plateformes : pierre de temple, joints de maçonnerie.
+const PLATFORM_THEME := {
+	"top": Color(0.5, 0.47, 0.43),
+	"top_light": Color(0.63, 0.59, 0.53),
+	"body_a": Color(0.4, 0.37, 0.34),
+	"body_b": Color(0.33, 0.3, 0.28),
+	"dark": Color(0.24, 0.22, 0.2),
+	"speck": Color(0.52, 0.49, 0.45),
+	"cut": true,
+}
+
+## Terrasses de l'escalier : (x = centre, y = centre vertical du bloc).
+## Chaque marche monte d'environ 46 px et s'écarte de la précédente d'un
+## saut confortable (< 170 px) — montée régulière vers la droite.
 const PLATFORMS := [
-	Vector2(300, 1900),
-	Vector2(160, 1810), Vector2(420, 1730), Vector2(160, 1650), Vector2(420, 1570),
-	Vector2(300, 1480),
-	Vector2(420, 1390), Vector2(180, 1310), Vector2(420, 1230), Vector2(180, 1150),
-	Vector2(300, 1060),
-	Vector2(160, 970), Vector2(420, 890), Vector2(160, 810), Vector2(420, 730),
-	Vector2(300, 640),
-	Vector2(420, 550), Vector2(180, 470), Vector2(420, 390),
-	Vector2(300, 290),
-	# Balcon annexe du sanctuaire de Léonie : prolonge la terrasse médiane
-	# vers la droite (bord à bord), hors du chemin d'ascension en zigzag.
-	Vector2(610, 1060),
+	Vector2(280, 580), Vector2(660, 532), Vector2(1010, 486), Vector2(1360, 440),
+	Vector2(1740, 396), Vector2(2120, 350), Vector2(2470, 304), Vector2(2850, 258),
+	Vector2(3230, 212), Vector2(3600, 166), Vector2(3980, 120), Vector2(4330, 74),
+	Vector2(4710, 28), Vector2(5110, -12),
 ]
 const HALF_WIDTHS := [
-	240,
-	120, 120, 120, 120,
-	200,
-	120, 120, 120, 120,
-	200,
-	120, 120, 120, 120,
-	200,
-	120, 120, 120,
-	180,
-	110,
+	200, 120, 120, 130, 190, 120, 130, 190, 120, 190, 120, 130, 120, 200,
 ]
-const CHECKPOINT_IDX := [5, 10, 15]
-const TOP_IDX := 19
 
-const PATROL_IDX := [2, 4, 7, 9, 12, 14, 17]
-const SHADOW_IDX := [6, 18]
+const CHECKPOINT_IDX := [4, 9]
+const LEONIE_IDX := 7
+const GOAL_IDX := 13
+
+const PATROL_IDX := [1, 3, 6, 10]
+const SHADOW_IDX := [2, 8]
 ## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
-const ELITE_IDX := [13]
-const TRAP_IDX := [3, 8, 11, 16]
-const BANNER_IDX := [2, 7, 12, 17]
+const ELITE_IDX := [5]
+## Yūrei tireur : au-dessus d'une terrasse (jamais d'un trou).
+const SPIRIT_IDX := [11]
+const TRAP_IDX := [3, 8, 11]
+const BRAZIER_IDX := [1, 5, 9, 12]
+
+## Orbes : une traînée le long des marches, trois sur les larges terrasses.
+const ORBS := [
+	Vector2(280, 465), Vector2(210, 465), Vector2(350, 465),
+	Vector2(660, 417),
+	Vector2(1010, 371),
+	Vector2(1360, 325),
+	Vector2(1740, 281), Vector2(1670, 281), Vector2(1810, 281),
+	Vector2(2120, 235),
+	Vector2(2470, 189),
+	Vector2(2850, 143), Vector2(2780, 143), Vector2(2920, 143),
+	Vector2(3230, 97),
+	Vector2(3600, 51), Vector2(3530, 51), Vector2(3670, 51),
+	Vector2(3980, 5),
+	Vector2(4330, -41),
+	Vector2(4710, -87),
+]
 
 const LEONIE_LINES := [
 	{ "name": "Léonie", "text": "Tu progresses bien, Eneko. Ce temple ancien respire d'une malveillance ancienne." },
 	{ "name": "Léonie", "text": "Les Ombres y ont établi leur repaire depuis longtemps. Mais tu n'es pas seul." },
 	{ "name": "Léonie", "text": "Je veille sur toi. Ma lumière te protégera un moment. Utilise ce temps pour avancer." },
-	{ "name": "Léonie", "text": "Le sanctuaire au sommet attend ta purification. Les torches te guideront." },
+	{ "name": "Léonie", "text": "Le sanctuaire au sommet attend ta purification. Gravis les marches sans crainte." },
 	{ "name": "Eneko", "text": "Merci, Léonie. Je vais les chasser de ce lieu." },
 ]
-
-const STONE := Color(0.45, 0.42, 0.38)
-const STONE_TOP := Color(0.55, 0.52, 0.46)
-const STONE_DARK := Color(0.32, 0.3, 0.26)
-const MOSS := Color(0.32, 0.44, 0.28, 0.7)
-const CLOTH := Color(0.52, 0.13, 0.11)
-const CLOTH_TRIM := Color(0.85, 0.68, 0.3)
 
 var sfx_win: AudioStreamPlayer
 var embers: CPUParticles2D
@@ -78,7 +97,7 @@ var _t := 0.0
 func _ready() -> void:
 	_build_decor()
 	_build_platforms()
-	_build_torches()
+	_build_braziers()
 	_build_checkpoints()
 	_build_traps()
 	_build_goal()
@@ -87,9 +106,8 @@ func _ready() -> void:
 	_setup_audio()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
-	var orb_count := _count_orbs()
 	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
-	Challenge.start_level(LEVEL_ID, orb_count + 3 * ELITE_IDX.size())
+	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_IDX.size())
 	_attach_player_glow()
 	menu_button.pressed.connect(_on_menu_pressed)
 	dialogue.finished.connect(_on_dialogue_finished)
@@ -98,7 +116,8 @@ func _ready() -> void:
 	if next_scene != "":
 		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
 	# Survol d'introduction : du sanctuaire au sommet jusqu'à Eneko en bas.
-	player.intro_pan(Vector2(300.0, 200.0), 2.2)
+	var summit: Vector2 = PLATFORMS[GOAL_IDX]
+	player.intro_pan(Vector2(summit.x, summit.y - 120.0), 2.2)
 
 func _process(delta: float) -> void:
 	_t += delta
@@ -112,7 +131,18 @@ func _process(delta: float) -> void:
 
 func _physics_process(_delta: float) -> void:
 	if embers != null and is_instance_valid(player):
-		embers.position = player.position + Vector2(0, -80.0)
+		embers.position = player.position + Vector2(0, -60.0)
+
+# --- Aides géométriques ---------------------------------------------------
+
+## Hauteur d'apparition d'un personnage debout sur la terrasse `idx`.
+func _stand_y(idx: int) -> Vector2:
+	var p: Vector2 = PLATFORMS[idx]
+	return Vector2(p.x, p.y - 73.0)
+
+## Y de la surface (dessus) de la terrasse `idx`.
+func _surface_y(idx: int) -> float:
+	return PLATFORMS[idx].y - 50.0
 
 func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
 	var p := Polygon2D.new()
@@ -122,118 +152,146 @@ func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector
 	parent.add_child(p)
 	return p
 
-func _rect_points(hw: float, top: float, bot: float) -> PackedVector2Array:
-	return PackedVector2Array([
-		Vector2(-hw, top), Vector2(hw, top),
-		Vector2(hw, bot), Vector2(-hw, bot),
-	])
+func _attach_player_glow() -> void:
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(1.0, 0.78, 0.4, 0.14)
+	glow.scale = Vector2(3.2, 3.2)
+	glow.position = Vector2(0, -10)
+	glow.z_index = -1
+	player.add_child(glow)
 
-func _stand_y(idx: int) -> Vector2:
-	var p: Vector2 = PLATFORMS[idx]
-	return Vector2(p.x, p.y - 73.0)
+# --- Décor ----------------------------------------------------------------
 
-## Décor de fond : étoiles, lune, silhouette de la tour en ruine,
-## colonnes fantômes et piliers latéraux qui portent les torches.
+## Ciel de nuit : lune croissante, étoiles, pagodes en ruine au loin,
+## colonnes brisées, brume et braises qui montent avec Eneko.
 func _build_decor() -> void:
-	# Étoiles scintillantes sur toute la hauteur du ciel.
-	var i := 0
-	while i < 70:
-		var sx := -380.0 + float((i * 137) % 1360)
-		var sy := 60.0 + float((i * 211) % 1840)
-		var r := 1.4 + float(i % 3) * 0.7
-		_poly(self, PackedVector2Array([
-			Vector2(-r, 0), Vector2(0, -r), Vector2(r, 0), Vector2(0, r),
-		]), Color(0.92, 0.93, 1.0, 0.4 + float(i % 4) * 0.12), Vector2(sx, sy))
-		i += 1
+	var bg: ParallaxBackground = $ParallaxBackground
+	var mist_tex: Texture2D = load("res://assets/mist.svg")
 
-	# Lune croissante près du sanctuaire (récompense visuelle du sommet).
+	# Lune et étoiles, presque fixes.
+	var sky := ParallaxLayer.new()
+	sky.motion_scale = Vector2(0.05, 0.05)
+	bg.add_child(sky)
 	var moon_glow := Sprite2D.new()
-	moon_glow.texture = load("res://assets/mist.svg")
-	moon_glow.modulate = Color(0.8, 0.85, 1.0, 0.3)
-	moon_glow.scale = Vector2(5.0, 5.0)
-	moon_glow.position = Vector2(730.0, 240.0)
-	add_child(moon_glow)
+	moon_glow.texture = mist_tex
+	moon_glow.modulate = Color(0.8, 0.85, 1.0, 0.35)
+	moon_glow.scale = Vector2(7.0, 7.0)
+	moon_glow.position = Vector2(760.0, 110.0)
+	sky.add_child(moon_glow)
 	var moon := PackedVector2Array()
 	var k := 0
-	while k <= 20:
-		var a := -1.9 + k * 3.8 / 20.0
-		moon.append(Vector2(cos(a) * 26.0, sin(a) * 26.0))
+	while k <= 22:
+		var a := -1.9 + k * 3.8 / 22.0
+		moon.append(Vector2(cos(a) * 34.0, sin(a) * 34.0))
 		k += 1
-	k = 20
+	k = 22
 	while k >= 0:
-		var a2 := -1.6 + k * 3.2 / 20.0
-		moon.append(Vector2(cos(a2) * 20.0 + 9.0, sin(a2) * 20.0))
+		var a2 := -1.6 + k * 3.2 / 22.0
+		moon.append(Vector2(cos(a2) * 26.0 + 11.0, sin(a2) * 26.0))
 		k -= 1
-	_poly(self, moon, Color(0.92, 0.94, 1.0, 0.9), Vector2(730, 240))
+	_poly(sky, moon, Color(0.92, 0.94, 1.0, 0.92), Vector2(760, 110))
+	var si := 0
+	while si < 60:
+		var stx := -200.0 + float((si * 137) % 1360)
+		var sty := 20.0 + float((si * 211) % 520)
+		var r := 1.3 + float(si % 3) * 0.6
+		_poly(sky, PackedVector2Array([
+			Vector2(-r, 0), Vector2(0, -r), Vector2(r, 0), Vector2(0, r),
+		]), Color(0.92, 0.93, 1.0, 0.4 + float(si % 4) * 0.12), Vector2(stx, sty))
+		si += 1
 
-	# Silhouette de la tour en ruine derrière les plateformes.
-	_poly(self, PackedVector2Array([
-		Vector2(-30, 2050), Vector2(-30, 320), Vector2(-10, 300), Vector2(30, 330),
-		Vector2(80, 260), Vector2(130, 310), Vector2(200, 280), Vector2(270, 320),
-		Vector2(330, 250), Vector2(400, 300), Vector2(470, 270), Vector2(520, 320),
-		Vector2(570, 290), Vector2(610, 330), Vector2(630, 2050),
-	]), Color(0.12, 0.1, 0.13, 0.9))
+	# Pagodes et collines noires au loin.
+	var far := ParallaxLayer.new()
+	far.motion_scale = Vector2(0.16, 0.7)
+	bg.add_child(far)
+	var mx := -200.0
+	var mi := 0
+	while mx < LEVEL_END + 900.0:
+		var mh := 150.0 + float(mi * 47 % 80)
+		_poly(far, PackedVector2Array([
+			Vector2(-300, 0), Vector2(-110, -mh + 40), Vector2(0, -mh),
+			Vector2(150, -mh + 50), Vector2(300, 0),
+		]), Color(0.1, 0.09, 0.15, 0.85), Vector2(mx, 600))
+		if mi % 2 == 1:
+			_build_pagoda(far, Vector2(mx + 120.0, 600.0), mi)
+		mx += 460.0 + float(mi * 31 % 120)
+		mi += 1
 
-	# Fenêtres en arche coiffées d'un petit toit de tuiles, éclairées
-	# de l'intérieur.
-	i = 0
-	while i < 5:
-		var wx := 150.0 if i % 2 == 0 else 450.0
-		var wy := 1740.0 - i * 330.0
-		_poly(self, PackedVector2Array([
-			Vector2(wx - 14, wy), Vector2(wx + 14, wy), Vector2(wx + 14, wy - 34),
-			Vector2(wx, wy - 48), Vector2(wx - 14, wy - 34),
-		]), Color(0.95, 0.62, 0.25, 0.13))
-		_poly(self, PackedVector2Array([
-			Vector2(wx - 30, wy - 52), Vector2(wx + 30, wy - 52),
-			Vector2(wx + 18, wy - 64), Vector2(wx - 18, wy - 64),
-		]), Color(0.17, 0.15, 0.19, 0.9))
-		_poly(self, PackedVector2Array([
-			Vector2(wx - 38, wy - 58), Vector2(wx - 30, wy - 52), Vector2(wx - 22, wy - 54),
-		]), Color(0.17, 0.15, 0.19, 0.9))
-		_poly(self, PackedVector2Array([
-			Vector2(wx + 38, wy - 58), Vector2(wx + 30, wy - 52), Vector2(wx + 22, wy - 54),
-		]), Color(0.17, 0.15, 0.19, 0.9))
-		_poly(self, PackedVector2Array([
-			Vector2(wx - 30, wy - 50), Vector2(wx + 30, wy - 50),
-			Vector2(wx + 28, wy - 54), Vector2(wx - 28, wy - 54),
-		]), Color(0.45, 0.13, 0.1, 0.8))
+	# Colonnes brisées, plan intermédiaire.
+	var mid := ParallaxLayer.new()
+	mid.motion_scale = Vector2(0.5, 1)
+	bg.add_child(mid)
+	var cx := 260.0
+	var ci := 0
+	while cx < LEVEL_END:
+		var ch := 120.0 + float(ci * 41 % 90)
+		_poly(mid, PackedVector2Array([
+			Vector2(-16, 0), Vector2(16, 0), Vector2(13, -ch), Vector2(-13, -ch),
+		]), Color(0.14, 0.12, 0.15, 0.85), Vector2(cx, 560.0))
+		_poly(mid, PackedVector2Array([
+			Vector2(-22, -ch), Vector2(22, -ch), Vector2(18, -ch - 10), Vector2(-18, -ch - 10),
+		]), Color(0.2, 0.17, 0.14, 0.8), Vector2(cx, 560.0))
+		cx += 520.0 + float(ci * 37 % 160)
+		ci += 1
+
+	# Brume nocturne au ras des terrasses.
+	var mist_layer := ParallaxLayer.new()
+	mist_layer.motion_scale = Vector2(0.55, 1)
+	bg.add_child(mist_layer)
+	var i := 0
+	while i < PLATFORMS.size():
+		var p: Vector2 = PLATFORMS[i]
+		var m := Sprite2D.new()
+		m.texture = mist_tex
+		m.position = Vector2(p.x, p.y + 30.0)
+		m.scale = Vector2(5.0, 1.6)
+		m.modulate = Color(0.72, 0.75, 0.95, 0.1)
+		mist_layer.add_child(m)
 		i += 1
 
-	# Colonnes fantômes laquées à l'intérieur de la tour.
-	for cx in [150.0, 300.0, 450.0]:
-		var yy := 1990.0
-		while yy > 420.0:
-			_poly(self, _rect_points(16.0, -360.0, 0.0), Color(0.3, 0.14, 0.12, 0.3), Vector2(cx, yy))
-			_poly(self, _rect_points(22.0, -378.0, -360.0), Color(0.5, 0.38, 0.2, 0.3), Vector2(cx, yy))
-			yy -= 390.0
+	# Braises qui montent autour d'Eneko.
+	embers = CPUParticles2D.new()
+	embers.amount = 24
+	embers.lifetime = 5.0
+	embers.preprocess = 5.0
+	embers.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	embers.emission_rect_extents = Vector2(320, 220)
+	embers.direction = Vector2(0, -1)
+	embers.spread = 30.0
+	embers.gravity = Vector2(0, -14)
+	embers.initial_velocity_min = 6.0
+	embers.initial_velocity_max = 20.0
+	embers.scale_amount_min = 1.4
+	embers.scale_amount_max = 2.8
+	embers.color = Color(1.0, 0.62, 0.2, 0.5)
+	add_child(embers)
 
-	# Piliers latéraux : colonnes de bois laqué rouge cerclées d'or,
-	# elles portent les torches.
-	for cx in [50.0, 550.0]:
-		var inner := 1.0 if cx < 300.0 else -1.0
-		# Fût continu.
-		_poly(self, _rect_points(20.0, -1720.0, 0.0), Color(0.36, 0.14, 0.1), Vector2(cx, 2020.0))
-		# Ombre côté extérieur, reflet côté intérieur.
-		_poly(self, PackedVector2Array([
-			Vector2(-20.0 * inner, -1720), Vector2(-10.0 * inner, -1720),
-			Vector2(-10.0 * inner, 0), Vector2(-20.0 * inner, 0),
-		]), Color(0.26, 0.1, 0.08), Vector2(cx, 2020.0))
-		_poly(self, PackedVector2Array([
-			Vector2(12.0 * inner, -1720), Vector2(20.0 * inner, -1720),
-			Vector2(20.0 * inner, 0), Vector2(12.0 * inner, 0),
-		]), Color(0.46, 0.2, 0.14), Vector2(cx, 2020.0))
-		# Anneaux dorés.
-		var yy := 1980.0
-		while yy > 320.0:
-			_poly(self, _rect_points(24.0, -10.0, 0.0), Color(0.8, 0.62, 0.28), Vector2(cx, yy))
-			yy -= 235.0
-		# Base de pierre et chapiteau.
-		_poly(self, _rect_points(30.0, -22.0, 0.0), STONE_DARK, Vector2(cx, 2020.0))
-		_poly(self, _rect_points(30.0, 0.0, 20.0), STONE_DARK, Vector2(cx, 300.0))
+## Silhouette de pagode à étages, tout au fond.
+func _build_pagoda(parent: Node, base: Vector2, seed_i: int) -> void:
+	var c := Color(0.12, 0.1, 0.16, 0.9)
+	var floors := 2 + seed_i % 3
+	var w := 46.0
+	var y := 0.0
+	for f in floors:
+		_poly(parent, PackedVector2Array([
+			Vector2(-w, y), Vector2(w, y), Vector2(w - 6, y - 40), Vector2(-w + 6, y - 40),
+		]), c, base)
+		# Toit débordant retroussé.
+		_poly(parent, PackedVector2Array([
+			Vector2(-w - 12, y - 40), Vector2(w + 12, y - 40),
+			Vector2(w - 2, y - 54), Vector2(-w + 2, y - 54),
+		]), c, base)
+		y -= 54.0
+		w -= 9.0
+	_poly(parent, PackedVector2Array([
+		Vector2(-2, y), Vector2(2, y), Vector2(1, y - 18), Vector2(-1, y - 18),
+	]), c, base)
 
-## Plateformes : balcons de bois laqué (petites) et terrasses de pierre
-## sculptée (grands paliers). La collision reste identique (24px centrés).
+# --- Terrasses ------------------------------------------------------------
+
+## Terrasses de pierre taillée (peintes par PlatformPainter), avec un
+## liseré de marches gravées sur le devant.
 func _build_platforms() -> void:
 	for i in PLATFORMS.size():
 		var p: Vector2 = PLATFORMS[i]
@@ -242,321 +300,182 @@ func _build_platforms() -> void:
 		body.position = p
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(hw * 2.0, 24.0)
+		rect.size = Vector2(hw * 2.0, 100.0)
 		shape.shape = rect
 		body.add_child(shape)
-		if hw >= 180.0:
-			_deco_terrace(body, hw)
-		else:
-			_deco_balcony(body, hw, i)
+		PlatformPainter.paint(body, hw, PLATFORM_THEME)
+		# Marches gravées sur la corniche avant.
+		var sx := -hw + 20.0
+		while sx < hw - 20.0:
+			_poly(body, PackedVector2Array([
+				Vector2(sx, -40), Vector2(sx + 14, -40), Vector2(sx + 14, -34), Vector2(sx, -34),
+			]), Color(0.36, 0.33, 0.3))
+			sx += 34.0
+		# Mousse aux angles.
+		_poly(body, PackedVector2Array([
+			Vector2(-hw, -50), Vector2(-hw + 26, -50), Vector2(-hw + 18, -56), Vector2(-hw - 2, -52),
+		]), Color(0.32, 0.44, 0.28, 0.7))
 		add_child(body)
 
-## Terrasse de pierre : corniche débordante, frise gravée, mousse.
-func _deco_terrace(body: Node, hw: float) -> void:
-	_poly(body, _rect_points(hw + 10.0, -12.0, -4.0), Color(0.6, 0.56, 0.48))
-	_poly(body, _rect_points(hw, -4.0, 48.0), STONE)
-	_poly(body, _rect_points(hw - 6.0, 8.0, 28.0), Color(0.38, 0.35, 0.3))
-	var mx := -hw + 18.0
-	while mx < hw - 18.0:
-		_poly(body, PackedVector2Array([
-			Vector2(mx, 13), Vector2(mx + 12, 13), Vector2(mx + 12, 23), Vector2(mx, 23),
-		]), Color(0.5, 0.46, 0.4))
-		mx += 30.0
-	_poly(body, _rect_points(hw, 40.0, 48.0), STONE_DARK)
-	_poly(body, PackedVector2Array([
-		Vector2(-hw - 10, -12), Vector2(-hw + 20, -12),
-		Vector2(-hw + 14, -18), Vector2(-hw - 2, -14),
-	]), MOSS)
-	_poly(body, PackedVector2Array([
-		Vector2(hw - 20, -12), Vector2(hw + 10, -12),
-		Vector2(hw + 2, -14), Vector2(hw - 14, -18),
-	]), MOSS)
-
-## Balcon de bois : plancher, poutre laquée rouge aux embouts dorés,
-## étais croisés, lanterne de papier ou bannière suspendue.
-func _deco_balcony(body: Node, hw: float, i: int) -> void:
-	# Plancher de bois avec rainures.
-	_poly(body, _rect_points(hw, -12.0, 2.0), Color(0.5, 0.34, 0.2))
-	var px := -hw + 34.0
-	while px < hw - 10.0:
-		_poly(body, PackedVector2Array([
-			Vector2(px, -12), Vector2(px + 2, -12), Vector2(px + 2, 2), Vector2(px, 2),
-		]), Color(0.38, 0.25, 0.14))
-		px += 42.0
-	# Poutre laquée rouge.
-	_poly(body, _rect_points(hw, 2.0, 18.0), Color(0.58, 0.16, 0.12))
-	_poly(body, _rect_points(hw, 14.0, 18.0), Color(0.42, 0.11, 0.08))
-	# Embouts dorés.
-	for side in [-1.0, 1.0]:
-		_poly(body, PackedVector2Array([
-			Vector2(side * (hw - 10.0), 0.0), Vector2(side * hw, 0.0),
-			Vector2(side * hw, 20.0), Vector2(side * (hw - 10.0), 20.0),
-		]), CLOTH_TRIM)
-	# Jambes de force sous le balcon.
-	for side in [-1.0, 1.0]:
-		_poly(body, PackedVector2Array([
-			Vector2(side * (hw - 18.0), 18.0), Vector2(side * (hw - 32.0), 18.0),
-			Vector2(side * 6.0, 82.0), Vector2(side * 20.0, 82.0),
-		]), Color(0.34, 0.21, 0.12))
-	_poly(body, PackedVector2Array([
-		Vector2(-24, 76), Vector2(24, 76), Vector2(18, 92), Vector2(-18, 92),
-	]), Color(0.28, 0.17, 0.1))
-	# Bannière ou lanterne suspendue.
-	var banner_side := -1.0 if i % 2 == 0 else 1.0
-	if i in BANNER_IDX:
-		var bx := banner_side * (hw - 34.0)
-		_poly(body, PackedVector2Array([
-			Vector2(bx - 12, 20), Vector2(bx + 12, 20),
-			Vector2(bx + 12, 122), Vector2(bx, 108), Vector2(bx - 12, 122),
-		]), CLOTH)
-		_poly(body, PackedVector2Array([
-			Vector2(bx - 12, 28), Vector2(bx + 12, 28),
-			Vector2(bx + 12, 34), Vector2(bx - 12, 34),
-		]), CLOTH_TRIM)
-		var em := PackedVector2Array()
-		var k := 0
-		while k < 8:
-			var a := k * TAU / 8.0
-			em.append(Vector2(bx + cos(a) * 6.0, 68.0 + sin(a) * 6.0))
-			k += 1
-		_poly(body, em, CLOTH_TRIM)
-	if i % 2 == 1:
-		var lantern_side := 1.0 if i % 4 == 1 else -1.0
-		if i in BANNER_IDX:
-			lantern_side = -banner_side
-		_build_lantern(body, Vector2(lantern_side * (hw - 26.0), 46.0))
-
-## Lanterne de papier ronde suspendue, au halo pulsant.
-func _build_lantern(parent: Node, pos: Vector2) -> void:
-	_poly(parent, PackedVector2Array([
-		Vector2(pos.x - 1, 18), Vector2(pos.x + 1, 18),
-		Vector2(pos.x + 1, pos.y - 12), Vector2(pos.x - 1, pos.y - 12),
-	]), Color(0.2, 0.15, 0.1))
-	var lg := Sprite2D.new()
-	lg.texture = load("res://assets/mist.svg")
-	lg.modulate = Color(1.0, 0.72, 0.35, 0.22)
-	lg.scale = Vector2(2.2, 2.2)
-	lg.position = pos
-	parent.add_child(lg)
-	_halos.append(lg)
-	var lpts := PackedVector2Array()
-	var k := 0
-	while k < 12:
-		var a := k * TAU / 12.0
-		lpts.append(Vector2(pos.x + cos(a) * 9.0, pos.y + sin(a) * 11.0))
-		k += 1
-	_poly(parent, lpts, Color(1.0, 0.62, 0.28, 0.95))
-	_poly(parent, PackedVector2Array([
-		Vector2(pos.x - 8, pos.y - 5), Vector2(pos.x + 8, pos.y - 5),
-		Vector2(pos.x + 8, pos.y - 3), Vector2(pos.x - 8, pos.y - 3),
-	]), Color(0.75, 0.4, 0.18))
-	_poly(parent, PackedVector2Array([
-		Vector2(pos.x - 8, pos.y + 3), Vector2(pos.x + 8, pos.y + 3),
-		Vector2(pos.x + 8, pos.y + 5), Vector2(pos.x - 8, pos.y + 5),
-	]), Color(0.75, 0.4, 0.18))
-
-## Torches accrochées aux piliers : flammes animées et halos pulsants.
-func _build_torches() -> void:
+## Braseros sur trépied aux flammes dansantes, posés sur des terrasses.
+func _build_braziers() -> void:
 	var mist_tex: Texture2D = load("res://assets/mist.svg")
-	var torch_xs := [50.0, 550.0]
-	var y := 1850.0
-	while y > 300.0:
-		for tx in torch_xs:
-			var t := Node2D.new()
-			t.position = Vector2(tx, y)
-			var dir := 1.0 if tx < 300.0 else -1.0
-			var fx := 20.0 * dir
-			# Bras de fer forgé
-			_poly(t, PackedVector2Array([
-				Vector2(0, -2), Vector2(fx, -4), Vector2(fx, 2), Vector2(0, 4),
-			]), Color(0.16, 0.14, 0.13))
-			# Coupelle
-			_poly(t, PackedVector2Array([
-				Vector2(fx - 8, -4), Vector2(fx + 8, -4), Vector2(fx + 5, 4), Vector2(fx - 5, 4),
-			]), Color(0.24, 0.2, 0.17))
-			# Halo doux (sprite radial)
-			var halo := Sprite2D.new()
-			halo.texture = mist_tex
-			halo.modulate = Color(1.0, 0.65, 0.25, 0.2)
-			halo.scale = Vector2(3.4, 3.4)
-			halo.position = Vector2(fx, -14.0)
-			t.add_child(halo)
-			_halos.append(halo)
-			# Flamme animée (base ancrée dans la coupelle)
-			var flame := Polygon2D.new()
-			flame.position = Vector2(fx, -3.0)
-			flame.polygon = PackedVector2Array([
-				Vector2(-6, 0), Vector2(6, 0), Vector2(4, -12), Vector2(0, -22), Vector2(-4, -12),
-			])
-			flame.color = Color(1.0, 0.6, 0.15)
-			var inner := Polygon2D.new()
-			inner.polygon = PackedVector2Array([
-				Vector2(-3, 0), Vector2(3, 0), Vector2(0, -14),
-			])
-			inner.color = Color(1.0, 0.9, 0.45)
-			flame.add_child(inner)
-			t.add_child(flame)
-			_flames.append(flame)
-			add_child(t)
-		y -= 160.0
+	for idx in BRAZIER_IDX:
+		var p: Vector2 = PLATFORMS[idx]
+		var hw: float = HALF_WIDTHS[idx]
+		var b := Node2D.new()
+		b.position = Vector2(p.x - hw + 40.0, _surface_y(idx))
+		_poly(b, PackedVector2Array([
+			Vector2(-10, 0), Vector2(-16, -26), Vector2(-12, -26),
+		]), Color(0.12, 0.1, 0.11))
+		_poly(b, PackedVector2Array([
+			Vector2(10, 0), Vector2(16, -26), Vector2(12, -26),
+		]), Color(0.12, 0.1, 0.11))
+		_poly(b, PackedVector2Array([
+			Vector2(-16, -26), Vector2(16, -26), Vector2(12, -36), Vector2(-12, -36),
+		]), Color(0.2, 0.16, 0.15))
+		var halo := Sprite2D.new()
+		halo.texture = mist_tex
+		halo.modulate = Color(1.0, 0.6, 0.25, 0.2)
+		halo.scale = Vector2(2.6, 2.6)
+		halo.position = Vector2(0, -46.0)
+		b.add_child(halo)
+		_halos.append(halo)
+		var flame := Polygon2D.new()
+		flame.position = Vector2(0, -36.0)
+		flame.polygon = PackedVector2Array([
+			Vector2(-7, 0), Vector2(7, 0), Vector2(5, -13), Vector2(0, -24), Vector2(-5, -13),
+		])
+		flame.color = Color(1.0, 0.58, 0.14)
+		var inner := Polygon2D.new()
+		inner.polygon = PackedVector2Array([
+			Vector2(-3, 0), Vector2(3, 0), Vector2(0, -15),
+		])
+		inner.color = Color(1.0, 0.88, 0.42)
+		flame.add_child(inner)
+		b.add_child(flame)
+		_flames.append(flame)
+		add_child(b)
 
-	# Braises flottantes qui suivent le joueur dans l'ascension.
-	embers = CPUParticles2D.new()
-	embers.amount = 26
-	embers.lifetime = 5.0
-	embers.preprocess = 5.0
-	embers.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	embers.emission_rect_extents = Vector2(340, 260)
-	embers.direction = Vector2(0, -1)
-	embers.spread = 30.0
-	embers.gravity = Vector2(0, -16)
-	embers.initial_velocity_min = 6.0
-	embers.initial_velocity_max = 20.0
-	embers.scale_amount_min = 1.4
-	embers.scale_amount_max = 2.8
-	embers.color = Color(1.0, 0.62, 0.2, 0.5)
-	add_child(embers)
-
-	# Nappes de brume nocturne accrochées à la tour, à plusieurs hauteurs
-	# (une passe devant la lune pour lui donner de la profondeur).
-	# NB : mist_tex est déjà déclarée en tête de cette fonction (torches).
-	var my := 260.0
-	var mj := 0
-	while my < 2000.0:
-		var m := Sprite2D.new()
-		m.texture = mist_tex
-		m.position = Vector2(90.0 + float((mj * 173) % 440), my)
-		m.scale = Vector2(4.5 + float(mj % 3), 1.5)
-		m.modulate = Color(0.75, 0.78, 0.95, 0.1)
-		add_child(m)
-		my += 340.0
-		mj += 1
-
+## Points de contrôle : lanterne de pierre (tōrō) encadrée de deux statues
+## gardiennes ; la flamme s'allume en vert au passage d'Eneko.
 func _build_checkpoints() -> void:
 	for idx in CHECKPOINT_IDX:
 		var p: Vector2 = PLATFORMS[idx]
 		var hw: float = HALF_WIDTHS[idx]
-		# Statues gardiennes aux deux bords du palier.
-		_build_statue(Vector2(p.x - hw + 36.0, p.y - 12.0), 1.0)
-		_build_statue(Vector2(p.x + hw - 36.0, p.y - 12.0), -1.0)
+		var surf := _surface_y(idx)
+		_build_statue(Vector2(p.x - hw + 34.0, surf), 1.0)
+		_build_statue(Vector2(p.x + hw - 34.0, surf), -1.0)
 		var cp := Area2D.new()
-		cp.position = Vector2(p.x, p.y - 80.0)
+		cp.position = Vector2(p.x, surf - 70.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
 		rect.size = Vector2(60, 120)
 		shape.shape = rect
 		cp.add_child(shape)
+		var stone := Color(0.4, 0.38, 0.4)
+		var stone_dark := Color(0.3, 0.28, 0.3)
 		_poly(cp, PackedVector2Array([
-			Vector2(-3, -60), Vector2(3, -60), Vector2(3, 60), Vector2(-3, 60),
-		]), Color(0.35, 0.28, 0.2))
+			Vector2(-16, 70), Vector2(16, 70), Vector2(13, 60), Vector2(-13, 60),
+		]), stone_dark)
+		_poly(cp, PackedVector2Array([
+			Vector2(-5, 60), Vector2(5, 60), Vector2(5, 6), Vector2(-5, 6),
+		]), stone)
+		_poly(cp, PackedVector2Array([
+			Vector2(-14, 6), Vector2(14, 6), Vector2(14, -22), Vector2(-14, -22),
+		]), stone)
 		var flag := _poly(cp, PackedVector2Array([
-			Vector2(3, -60), Vector2(40, -50), Vector2(3, -38),
-		]), Color(0.85, 0.75, 0.35))
+			Vector2(-8, 0), Vector2(8, 0), Vector2(8, -16), Vector2(-8, -16),
+		]), Color(0.95, 0.66, 0.28, 0.9))
+		_poly(cp, PackedVector2Array([
+			Vector2(-20, -22), Vector2(20, -22), Vector2(12, -34), Vector2(-12, -34),
+		]), stone_dark)
+		_poly(cp, PackedVector2Array([
+			Vector2(-4, -34), Vector2(4, -34), Vector2(2, -42), Vector2(-2, -42),
+		]), stone)
 		add_child(cp)
-		cp.body_entered.connect(_on_checkpoint.bind(cp, flag))
+		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
 
-## Statue gardienne (komainu stylisé) : socle, corps assis, tête dressée
-## et œil qui luit dans la pénombre.
+## Statue gardienne (komainu stylisé) posée sur une terrasse.
 func _build_statue(pos: Vector2, side: float) -> void:
 	var st := Node2D.new()
 	st.position = pos
 	st.scale = Vector2(side, 1.0)
 	add_child(st)
-	var stone := Color(0.4, 0.38, 0.34)
-	var dark := Color(0.29, 0.27, 0.24)
+	var stone := Color(0.42, 0.4, 0.36)
+	var dark := Color(0.3, 0.28, 0.25)
 	_poly(st, PackedVector2Array([
-		Vector2(-18, 0), Vector2(18, 0), Vector2(15, -8), Vector2(-15, -8),
+		Vector2(-16, 0), Vector2(16, 0), Vector2(13, -8), Vector2(-13, -8),
 	]), dark)
 	_poly(st, PackedVector2Array([
-		Vector2(-12, -8), Vector2(12, -8), Vector2(10, -26), Vector2(-2, -30), Vector2(-12, -20),
+		Vector2(-11, -8), Vector2(11, -8), Vector2(9, -24), Vector2(-2, -28), Vector2(-11, -18),
 	]), stone)
 	_poly(st, PackedVector2Array([
-		Vector2(-4, -18), Vector2(4, -18), Vector2(2, -26), Vector2(-4, -24),
-	]), dark)
-	_poly(st, PackedVector2Array([
-		Vector2(0, -30), Vector2(14, -30), Vector2(14, -44), Vector2(0, -44),
+		Vector2(0, -28), Vector2(12, -28), Vector2(12, -40), Vector2(0, -40),
 	]), stone)
 	_poly(st, PackedVector2Array([
-		Vector2(1, -44), Vector2(5, -50), Vector2(7, -44),
-	]), stone)
-	_poly(st, PackedVector2Array([
-		Vector2(8, -44), Vector2(12, -50), Vector2(14, -44),
-	]), stone)
-	_poly(st, PackedVector2Array([
-		Vector2(8, -40), Vector2(12, -40), Vector2(12, -37), Vector2(8, -37),
-	]), Color(0.95, 0.62, 0.2, 0.9))
+		Vector2(3, -32), Vector2(7, -32), Vector2(7, -36), Vector2(3, -36),
+	]), Color(1.0, 0.7, 0.3, 0.9))
 
 func _build_traps() -> void:
 	for idx in TRAP_IDX:
 		var p: Vector2 = PLATFORMS[idx]
 		var hw: float = HALF_WIDTHS[idx]
-		var side := 1.0 if idx % 2 == 0 else -1.0
 		var trap := Area2D.new()
-		trap.position = Vector2(p.x + side * (hw - 28.0), p.y - 18.0)
+		trap.position = Vector2(p.x + hw * 0.4, _surface_y(idx) - 4.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
 		rect.size = Vector2(44, 24)
 		shape.shape = rect
 		trap.add_child(shape)
 		_poly(trap, PackedVector2Array([
-			Vector2(-22, 12), Vector2(22, 12), Vector2(22, 4), Vector2(-22, 4),
-		]), Color(0.38, 0.24, 0.13))
-		var j := 0
-		while j < 3:
-			var ox := -16.0 + j * 16.0
+			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+		]), STONE_DARK)
+		for k in 3:
+			var ox := -16.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 5, 4), Vector2(ox + 5, 4), Vector2(ox, -10),
-			]), Color(0.52, 0.34, 0.18))
+				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+			]), Color(0.55, 0.53, 0.5))
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -8),
-			]), Color(0.62, 0.44, 0.24))
-			j += 1
+				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -12),
+			]), Color(0.68, 0.66, 0.62))
 		add_child(trap)
-		trap.body_entered.connect(_on_trap)
+		trap.body_entered.connect(_on_trap_body_entered)
 
+## Torii doré du sanctuaire, au sommet de l'escalier.
 func _build_goal() -> void:
-	var top: Vector2 = PLATFORMS[TOP_IDX]
+	var p: Vector2 = PLATFORMS[GOAL_IDX]
 	var goal := Area2D.new()
-	goal.position = Vector2(top.x, top.y - 90.0)
+	goal.position = Vector2(p.x, _surface_y(GOAL_IDX) - 70.0)
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
-	rect.size = Vector2(60, 120)
+	rect.size = Vector2(60, 140)
 	shape.shape = rect
 	goal.add_child(shape)
-	# Colonne de lumière sacrée qui monte vers la lune.
-	_poly(goal, PackedVector2Array([
-		Vector2(-26, -58), Vector2(26, -58), Vector2(44, -320), Vector2(-44, -320),
-	]), Color(0.85, 0.9, 1.0, 0.07))
 	var glow := Sprite2D.new()
 	glow.texture = load("res://assets/mist.svg")
-	glow.modulate = Color(0.85, 0.88, 1.0, 0.4)
-	glow.scale = Vector2(4.2, 4.2)
+	glow.modulate = Color(0.9, 0.9, 1.0, 0.5)
+	glow.scale = Vector2(4.5, 4.5)
 	goal.add_child(glow)
-	_poly(goal, PackedVector2Array([
-		Vector2(-28, -50), Vector2(-20, -50), Vector2(-20, 60), Vector2(-28, 60),
-	]), Color(0.85, 0.2, 0.15))
-	_poly(goal, PackedVector2Array([
-		Vector2(20, -50), Vector2(28, -50), Vector2(28, 60), Vector2(20, 60),
-	]), Color(0.85, 0.2, 0.15))
-	_poly(goal, PackedVector2Array([
-		Vector2(-24, -30), Vector2(24, -30), Vector2(24, -22), Vector2(-24, -22),
-	]), Color(0.85, 0.2, 0.15))
-	_poly(goal, PackedVector2Array([
-		Vector2(-34, -58), Vector2(34, -58), Vector2(30, -48), Vector2(-30, -48),
-	]), Color(0.78, 0.16, 0.12))
+	_poly(goal, PackedVector2Array([Vector2(-40, -60), Vector2(40, -60), Vector2(40, 66), Vector2(-40, 66)]), Color(0.85, 0.85, 1.0, 0.2))
+	_poly(goal, PackedVector2Array([Vector2(-28, -55), Vector2(-20, -55), Vector2(-20, 70), Vector2(-28, 70)]), CLOTH)
+	_poly(goal, PackedVector2Array([Vector2(20, -55), Vector2(28, -55), Vector2(28, 70), Vector2(20, 70)]), CLOTH)
+	_poly(goal, PackedVector2Array([Vector2(-42, -70), Vector2(42, -70), Vector2(38, -58), Vector2(-38, -58)]), Color(0.42, 0.11, 0.08))
+	_poly(goal, PackedVector2Array([Vector2(-32, -46), Vector2(32, -46), Vector2(32, -38), Vector2(-32, -38)]), CLOTH)
 	add_child(goal)
-	goal.body_entered.connect(_on_goal)
+	goal.body_entered.connect(_on_goal_body_entered)
 
+## Zone mortelle : large bande sous toutes les terrasses (chute = 1 cœur).
 func _build_kill_zone() -> void:
 	var kz := Area2D.new()
-	kz.position = Vector2(300.0, 2100.0)
+	kz.position = Vector2(LEVEL_END / 2.0, 820.0)
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
-	rect.size = Vector2(1600, 100)
+	rect.size = Vector2(LEVEL_END + 800.0, 200.0)
 	shape.shape = rect
 	kz.add_child(shape)
 	add_child(kz)
-	kz.body_entered.connect(_on_kill)
+	kz.body_entered.connect(_on_kill_zone_body_entered)
 
 func _spawn_entities() -> void:
 	for idx in PATROL_IDX:
@@ -573,29 +492,26 @@ func _spawn_entities() -> void:
 		el.position = _stand_y(idx)
 		add_child(el)
 		el.make_elite()
-	# Sanctuaire de Léonie : sur le balcon annexe (dernière entrée de
-	# PLATFORMS), à droite de la terrasse médiane. L'estrade est posée sur
-	# la surface réelle des poutres (p.y - 12, collision de 24 px) — elle
-	# flottait auparavant 38 px au-dessus et barrait la terrasse.
-	var annex: Vector2 = PLATFORMS[PLATFORMS.size() - 1]
-	PlatformPainter.build_sanctuary(self, annex.x, annex.y - 12.0)
+	for idx in SPIRIT_IDX:
+		var sp := SPIRIT_SCENE.instantiate()
+		sp.position = _stand_y(idx) + Vector2(0, -85.0)
+		add_child(sp)
+	# Sanctuaire de Léonie sur une terrasse dégagée (aucun ennemi ni piège).
+	var sp7: Vector2 = PLATFORMS[LEONIE_IDX]
+	PlatformPainter.build_sanctuary(self, sp7.x, _surface_y(LEONIE_IDX))
 	var leonie := LEONIE_SCENE.instantiate()
-	# Debout sur l'estrade : dessus = surface - 26, ancre du sprite à -23.
-	leonie.position = Vector2(annex.x, annex.y - 61.0)
+	leonie.position = Vector2(sp7.x, _surface_y(LEONIE_IDX) - 49.0)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
-	var i := 1
-	while i < PLATFORMS.size() - 1:
-		if not (i in CHECKPOINT_IDX) and i != TOP_IDX:
-			var orb := ORB_SCENE.instantiate()
-			orb.position = Vector2(PLATFORMS[i].x, PLATFORMS[i].y - 80.0)
-			add_child(orb)
-		i += 1
+	for o in ORBS:
+		var orb := ORB_SCENE.instantiate()
+		orb.position = o
+		add_child(orb)
 
 func _setup_audio() -> void:
 	var wind := AudioStreamPlayer.new()
 	wind.stream = load("res://assets/sfx/wind.wav")
-	wind.volume_db = -22.0
+	wind.volume_db = -20.0
 	wind.pitch_scale = 0.7
 	add_child(wind)
 	wind.finished.connect(wind.play)
@@ -605,44 +521,28 @@ func _setup_audio() -> void:
 	sfx_win.volume_db = -4.0
 	add_child(sfx_win)
 
-func _on_checkpoint(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
+# --- Déroulement ----------------------------------------------------------
+
+func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
 	if body == player:
 		player.set_checkpoint(Vector2(cp.global_position.x, cp.global_position.y + 30.0))
-		flag.color = Color(0.35, 0.8, 0.4)
+		flag.color = Color(0.4, 0.9, 0.5, 0.95)
 
-func _on_trap(body: Node2D) -> void:
+func _on_trap_body_entered(body: Node2D) -> void:
 	if body == player and body.has_method("take_damage"):
 		body.take_damage(1, body.global_position + Vector2(0, 40))
 
-func _on_kill(body: Node2D) -> void:
+func _on_kill_zone_body_entered(body: Node2D) -> void:
 	if body == player:
 		player.fall_damage()
 
-func _on_goal(body: Node2D) -> void:
+func _on_goal_body_entered(body: Node2D) -> void:
 	if body == player:
 		player.set_physics_process(false)
 		sfx_win.play()
 		SaveManager.complete_level(LEVEL_ID, player.orbs)
 		_display_challenge_results()
 		win_label.visible = true
-
-## Halo chaud autour d'Eneko : dans ce temple sombre, il porte sa propre
-## lumière (rendu derrière son sprite).
-func _attach_player_glow() -> void:
-	var glow := Sprite2D.new()
-	glow.texture = load("res://assets/mist.svg")
-	glow.modulate = Color(1.0, 0.8, 0.5, 0.16)
-	glow.scale = Vector2(3.2, 3.2)
-	glow.position = Vector2(0, -10)
-	glow.z_index = -1
-	player.add_child(glow)
-
-func _count_orbs() -> int:
-	var count := 0
-	for i in range(1, PLATFORMS.size() - 1):
-		if i not in CHECKPOINT_IDX and i != TOP_IDX:
-			count += 1
-	return count
 
 func _display_challenge_results() -> void:
 	var results := Challenge.finish_level()
@@ -667,8 +567,7 @@ func _display_challenge_results() -> void:
 			damage_label.text += "   •   Combo ×%d" % int(results["combo"])
 	if time_label:
 		time_label.text = "Temps : %s" % _format_time(results["time"])
-	# Élargit le panneau pour que la ligne la plus longue (celle du combo)
-	# reste à l'intérieur : le VBox est recentré et le fond suit.
+	# Élargit le panneau pour que la ligne la plus longue reste à l'intérieur.
 	var stats_half := 150.0
 	for child in challenge_stats.get_children():
 		if child is Label:
@@ -684,11 +583,6 @@ func _format_time(seconds: float) -> String:
 	var mins: int = int(seconds) / 60
 	var secs: int = int(seconds) % 60
 	return "%d:%02d" % [mins, secs]
-
-func _on_leonie_talk(lines: Array) -> void:
-	player.velocity = Vector2.ZERO
-	player.set_physics_process(false)
-	dialogue.start(lines)
 
 func _on_dialogue_finished() -> void:
 	player.set_physics_process(true)
