@@ -488,9 +488,9 @@ func _show_endgame_recap(results: Dictionary) -> void:
 	box.add_child(title)
 
 	var run := Label.new()
-	run.text = "Gardien vaincu — Grade : %s — %s — Orbes : %d/%d" % [
+	run.text = "Gardien vaincu — Grade : %s — %s — Orbes : %d/%d — Esprits vaincus : %d" % [
 		Challenge.grade_name(results["grade"]), _format_time(results["time"]),
-		results["orbs"], results["total_orbs"],
+		results["orbs"], results["total_orbs"], results["kills"],
 	]
 	run.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	run.add_theme_font_size_override("font_size", 18)

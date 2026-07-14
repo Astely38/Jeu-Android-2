@@ -79,6 +79,8 @@ var _bless_aura: Sprite2D
 @onready var sfx_slash: AudioStreamPlayer = $SfxSlash
 @onready var sfx_hurt: AudioStreamPlayer = $SfxHurt
 @onready var sfx_orb: AudioStreamPlayer = $SfxOrb
+@onready var sfx_dash: AudioStreamPlayer = $SfxDash
+@onready var sfx_checkpoint: AudioStreamPlayer = $SfxCheckpoint
 @onready var camera: Camera2D = $Camera2D
 @onready var _dash_icons: Array = [$HUD/DashButton/Icon, $HUD/DashButton/Icon2]
 
@@ -326,7 +328,7 @@ func dash() -> void:
 	# Pendant la ruée (et la marge de sortie), Eneko TRAVERSE les ennemis
 	# (couche 2) : l'esquive passe au travers des charges du Gardien.
 	set_collision_mask_value(2, false)
-	sfx_slash.play()
+	sfx_dash.play()
 
 ## Image rémanente bleutée semée pendant la ruée, qui s'estompe vite.
 func _spawn_ghost() -> void:
@@ -435,12 +437,14 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 		invuln = INVULN_TIME
 		_shake = 4.0
 		sfx_hurt.play()
+		Input.vibrate_handheld(25)
 		return
 	Challenge.register_damage()
 	health -= amount
 	_update_hearts()
 	sfx_hurt.play()
 	_shake = 7.0
+	Input.vibrate_handheld(45)
 	if health <= 0:
 		respawn()
 		return
@@ -464,6 +468,7 @@ func fall_damage() -> void:
 	_update_hearts()
 	sfx_hurt.play()
 	_shake = 7.0
+	Input.vibrate_handheld(45)
 	if health <= 0:
 		_die_and_restart()
 		return
@@ -533,8 +538,11 @@ func _return_to_checkpoint() -> void:
 	# reste hors-écran pendant ce temps.
 	camera.reset_smoothing()
 
-## Déplace le point de réapparition (checkpoint atteint).
+## Déplace le point de réapparition (checkpoint atteint). Un carillon ne
+## sonne que si le point change vraiment (pas en re-croisant le même).
 func set_checkpoint(pos: Vector2) -> void:
+	if pos.distance_to(start_position) > 1.0:
+		sfx_checkpoint.play()
 	start_position = pos
 
 ## Ramasse un orbe spirituel : recharge l'énergie, et tous les 5 orbes
@@ -566,7 +574,9 @@ func _update_hearts() -> void:
 func _on_attack_area_body_entered(body: Node2D) -> void:
 	if body.has_method("die"):
 		body.die()
+		Challenge.register_kill()
 		_shake = 3.5  # impact ressenti à chaque coup qui porte
+		Input.vibrate_handheld(18)
 		_hit_stop()
 
 ## Le sabre dissipe aussi les projectiles (orbes corrompus des Yūrei).
@@ -632,6 +642,18 @@ func _open_pause() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 38)
 	box.add_child(title)
+
+	# Stats de la tentative en cours.
+	var tsec := int(Challenge.get_time_elapsed())
+	var stats := Label.new()
+	stats.text = "Temps %d:%02d  •  Orbes %d/%d  •  Dégâts %d" % [
+		tsec / 60, tsec % 60,
+		Challenge.orbs_collected, Challenge.total_orbs, Challenge.damage_taken,
+	]
+	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats.add_theme_font_size_override("font_size", 16)
+	stats.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8, 0.85))
+	box.add_child(stats)
 
 	var resume := _pause_button("Reprendre", Color(0.45, 0.75, 0.4))
 	resume.pressed.connect(_close_pause)

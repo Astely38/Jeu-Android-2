@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/heart.svg" id="2"]
@@ -10,6 +10,8 @@
 [ext_resource type="AudioStream" path="res://assets/sfx/slash.wav" id="8"]
 [ext_resource type="AudioStream" path="res://assets/sfx/hurt.wav" id="9"]
 [ext_resource type="AudioStream" path="res://assets/sfx/orb.wav" id="10"]
+[ext_resource type="AudioStream" path="res://assets/sfx/dash.wav" id="11"]
+[ext_resource type="AudioStream" path="res://assets/sfx/checkpoint.wav" id="12"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(28, 46)
@@ -70,6 +72,14 @@ volume_db = -5.0
 [node name="SfxOrb" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("10")
 volume_db = -7.0
+
+[node name="SfxDash" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("11")
+volume_db = -6.0
+
+[node name="SfxCheckpoint" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("12")
+volume_db = -6.0
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position_smoothing_enabled = true

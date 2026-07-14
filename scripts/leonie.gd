@@ -52,6 +52,13 @@ func _heal(body: Node2D) -> void:
 		body.set_checkpoint(Vector2(global_position.x, body.global_position.y))
 	if body.has_method("bless"):
 		body.bless()
+	# Carillon doux du soin.
+	var chime := AudioStreamPlayer.new()
+	chime.stream = load("res://assets/sfx/heal.wav")
+	chime.volume_db = -4.0
+	add_child(chime)
+	chime.play()
+	chime.finished.connect(chime.queue_free)
 	var sparkle := CPUParticles2D.new()
 	sparkle.position = Vector2(0, -30)
 	sparkle.amount = 16

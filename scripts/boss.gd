@@ -57,6 +57,8 @@ var _base_tint := Color(1, 1, 1)
 @onready var sfx_hurt: AudioStreamPlayer = $SfxHurt
 @onready var aura: Sprite2D = get_node_or_null("Aura")
 
+var _sfx_slam: AudioStreamPlayer
+
 func _ready() -> void:
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SHINOBI + "Idle.png", "frames": 6, "fps": 7.0, "loop": true},
@@ -68,6 +70,10 @@ func _ready() -> void:
 	_base_tint = anim.modulate
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
+	_sfx_slam = AudioStreamPlayer.new()
+	_sfx_slam.stream = load("res://assets/sfx/slam.wav")
+	_sfx_slam.volume_db = -3.0
+	add_child(_sfx_slam)
 
 ## Le corps d'Eneko n'est jamais un obstacle physique pour le Gardien :
 ## sans cette exception, la dépénétration du boss « collait » Eneko
@@ -195,6 +201,8 @@ func _start_slam(dx: float) -> void:
 func _on_slam_impact() -> void:
 	_attack_lock = 0.55 if phase < 3 else 0.4
 	_play("idle")
+	_sfx_slam.play()
+	Input.vibrate_handheld(60)
 	var pl := get_tree().get_first_node_in_group("player")
 	if pl != null:
 		pl.set("_shake", 9.0)

@@ -461,7 +461,7 @@ func _display_challenge_results() -> void:
 	if orbs_label:
 		orbs_label.text = "Orbes : %d/%d" % [results["orbs"], results["total_orbs"]]
 	if damage_label:
-		damage_label.text = "Dégâts : %d" % results["damage"]
+		damage_label.text = "Dégâts : %d   •   Esprits vaincus : %d" % [results["damage"], results["kills"]]
 	if time_label:
 		time_label.text = "Temps : %s" % _format_time(results["time"])
 
