@@ -38,6 +38,10 @@ func _ready() -> void:
 	_play("idle")
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
+	var sh := ContactShadow.new()
+	sh.width = 28.0
+	add_child(sh)
+	move_child(sh, 0)
 
 ## Transforme cette Ombre en Ombre d'élite. À appeler après add_child
 ## (les nœuds @onready doivent exister). Le sprite grandit mais la

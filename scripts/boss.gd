@@ -79,6 +79,10 @@ func _ready() -> void:
 	_sfx_slam.stream = load("res://assets/sfx/slam.wav")
 	_sfx_slam.volume_db = -3.0
 	add_child(_sfx_slam)
+	var sh := ContactShadow.new()
+	sh.width = 52.0
+	add_child(sh)
+	move_child(sh, 0)
 
 ## Le corps d'Eneko n'est jamais un obstacle physique pour le Gardien :
 ## sans cette exception, la dépénétration du boss « collait » Eneko

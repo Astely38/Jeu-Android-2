@@ -30,6 +30,10 @@ func _ready() -> void:
 	_play("walk")
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
+	var sh := ContactShadow.new()
+	sh.width = 26.0
+	add_child(sh)
+	move_child(sh, 0)
 
 ## Le corps d'Eneko n'est jamais un obstacle physique pour cet ennemi :
 ## sans ça, la dépénétration de l'ennemi « colle » Eneko pendant la ruée

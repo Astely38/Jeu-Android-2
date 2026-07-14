@@ -100,6 +100,7 @@ func _ready() -> void:
 	attack_area.body_entered.connect(_on_attack_area_body_entered)
 	attack_area.area_entered.connect(_on_attack_area_area_entered)
 	_build_combo_label()
+	_add_contact_shadow(30.0)
 	if Challenge.kensei:
 		health = _max_health()
 		_update_hearts()
@@ -622,6 +623,13 @@ func _build_kensei_badge() -> void:
 	badge.add_theme_constant_override("shadow_offset_x", 1)
 	badge.add_theme_constant_override("shadow_offset_y", 1)
 	$HUD.add_child(badge)
+
+## Ombre de contact projetée au sol sous Eneko (rendue derrière le sprite).
+func _add_contact_shadow(w: float) -> void:
+	var sh := ContactShadow.new()
+	sh.width = w
+	add_child(sh)
+	move_child(sh, 0)
 
 ## Label « Combo ×N » en haut à droite, sous le compteur d'orbes (caché au
 ## repos) — le haut-centre est réservé au chrono et aux titres de victoire.

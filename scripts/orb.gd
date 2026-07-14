@@ -8,20 +8,40 @@ extends Area2D
 var _base_y := 0.0
 var _t := 0.0
 var _taken := false
+var _glow: Sprite2D
+var _glow_base := 0.34
 
 @onready var sprite: Sprite2D = $Sprite
 
 func _ready() -> void:
 	_base_y = position.y
 	body_entered.connect(_on_body_entered)
+	# Halo lumineux qui pulse doucement derrière l'orbe (rendu avant le
+	# sprite pour passer dessous). Bleu spirituel, doré pour l'orbe d'élite.
+	_glow = Sprite2D.new()
+	_glow.texture = load("res://assets/mist.svg")
 	if value > 1:
 		# Orbe dorée : plus grosse, chaude et lumineuse.
 		sprite.modulate = Color(1.0, 0.82, 0.35)
 		sprite.scale *= 1.35
+		_glow.modulate = Color(1.0, 0.82, 0.4, _glow_base)
+		_glow.scale = Vector2(2.1, 2.1)
+	else:
+		_glow.modulate = Color(0.55, 0.9, 1.0, _glow_base)
+		_glow.scale = Vector2(1.5, 1.5)
+	add_child(_glow)
+	# Rendu avant le sprite de l'orbe (passe dessous), mais au-dessus des
+	# plateformes puisque l'orbe est instanciée après elles.
+	move_child(_glow, 0)
 
 func _process(delta: float) -> void:
 	_t += delta
 	position.y = _base_y + sin(_t * 3.0) * 4.0
+	if _glow != null:
+		var pulse := 0.5 + 0.5 * sin(_t * 2.4)
+		_glow.modulate.a = _glow_base * (0.6 + 0.5 * pulse)
+		var s := (2.1 if value > 1 else 1.5) * (0.92 + 0.12 * pulse)
+		_glow.scale = Vector2(s, s)
 
 func _on_body_entered(body: Node2D) -> void:
 	if _taken:
