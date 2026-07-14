@@ -54,7 +54,7 @@ static func build_sanctuary(level: Node2D, x: float, ground_y: float) -> void:
 
 	# Deux petites lanternes de pierre aux extrémités de l'estrade.
 	for side in [-1.0, 1.0]:
-		var lx := side * 62.0
+		var lx := float(side) * 62.0
 		_poly(dais, PackedVector2Array([
 			Vector2(lx - 3, -26), Vector2(lx + 3, -26), Vector2(lx + 3, -46), Vector2(lx - 3, -46),
 		]), stone_dark)
