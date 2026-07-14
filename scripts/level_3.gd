@@ -9,6 +9,7 @@ const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 const SPIRIT_SCENE := preload("res://scenes/spirit.tscn")
+const LIFT_SCENE := preload("res://scenes/lift_platform.tscn")
 
 const GROUND_Y := 550.0    # centre vertical des plateformes
 const SPAWN_Y := 477.0     # hauteur d'apparition des personnages
@@ -50,6 +51,10 @@ const SHADOW_XS := [1400.0, 2650.0, 2900.0, 4600.0, 5350.0, 6100.0, 6600.0]
 ## vers Eneko ne doit pas l'attirer dans le vide.
 const SPIRIT_XS := [2250.0, 4550.0]
 const TRAP_XS := [800.0, 2050.0, 3850.0, 4850.0, 6450.0]
+## Ascenseur spirituel : x = centre, y = dessus de la dalle au point bas
+## (atteignable d'un saut depuis le bord du trou). Il monte de 175 px et
+## dessert les trois orbes bonus placées en hauteur.
+const LIFTS := [Vector2(1195, 470)]
 const BRAZIER_XS := [400.0, 1700.0, 2700.0, 3900.0, 5450.0, 6380.0]
 const ORBS := [
 	Vector2(330, 440), Vector2(560, 405), Vector2(870, 440),
@@ -59,6 +64,8 @@ const ORBS := [
 	Vector2(4040, 440), Vector2(4360, 405), Vector2(4670, 440),
 	Vector2(4990, 405), Vector2(5300, 440), Vector2(5620, 405),
 	Vector2(5930, 440), Vector2(6270, 405), Vector2(6620, 440),
+	# Orbes bonus desservies par l'ascenseur spirituel.
+	Vector2(1125, 258), Vector2(1195, 240), Vector2(1265, 258),
 ]
 
 const LEONIE_LINES := [
@@ -87,6 +94,7 @@ func _ready() -> void:
 	_build_braziers()
 	_build_checkpoints()
 	_build_traps()
+	_build_lifts()
 	_build_goal()
 	_build_kill_zone()
 	_spawn_entities()
@@ -473,6 +481,14 @@ func _build_checkpoints() -> void:
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
 
 ## Pièges en bois : pieux taillés plantés dans le sol.
+## Ascenseurs spirituels : dalles flottantes qui desservent les orbes bonus.
+func _build_lifts() -> void:
+	for i in LIFTS.size():
+		var v: Vector2 = LIFTS[i]
+		var lift := LIFT_SCENE.instantiate()
+		lift.position = v
+		add_child(lift)
+
 func _build_traps() -> void:
 	for i in TRAP_XS.size():
 		var x: float = TRAP_XS[i]
@@ -608,6 +624,8 @@ func _display_challenge_results() -> void:
 		orbs_label.text = "Orbes : %d/%d" % [results["orbs"], results["total_orbs"]]
 	if damage_label:
 		damage_label.text = "Dégâts : %d   •   Esprits vaincus : %d" % [results["damage"], results["kills"]]
+		if int(results["combo"]) >= 2:
+			damage_label.text += "   •   Meilleur combo : ×%d" % int(results["combo"])
 	if time_label:
 		time_label.text = "Temps : %s" % _format_time(results["time"])
 

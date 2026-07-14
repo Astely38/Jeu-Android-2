@@ -10,6 +10,7 @@ const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 const CRUMBLE_SCENE := preload("res://scenes/crumble_platform.tscn")
 const SPIRIT_SCENE := preload("res://scenes/spirit.tscn")
+const LIFT_SCENE := preload("res://scenes/lift_platform.tscn")
 
 const GROUND_Y := 550.0    # centre vertical des plateformes
 const SPAWN_Y := 477.0     # hauteur d'apparition des personnages
@@ -56,6 +57,10 @@ const CRUMBLES := [Vector2(3620, 70), Vector2(4825, 70)]
 ## Yūrei tireurs : toujours au-dessus d'une plateforme (jamais d'un pont
 ## ni d'un trou), pour ne pas transformer chaque traversée en piège.
 const SPIRIT_XS := [2080.0, 4540.0, 6420.0]
+## Ascenseur spirituel : x = centre, y = dessus de la dalle au point bas
+## (atteignable d'un saut depuis le bord du trou, juste après le sanctuaire).
+## Il monte de 175 px et dessert les trois orbes bonus placées en hauteur.
+const LIFTS := [Vector2(2995, 470)]
 const ORBS := [
 	Vector2(320, 420), Vector2(540, 385), Vector2(850, 420),
 	Vector2(1150, 385), Vector2(1470, 420), Vector2(1780, 385),
@@ -65,6 +70,8 @@ const ORBS := [
 	Vector2(4850, 385), Vector2(5160, 420), Vector2(5470, 385),
 	Vector2(5780, 420), Vector2(6100, 385), Vector2(6420, 420),
 	Vector2(6730, 385), Vector2(7040, 420),
+	# Orbes bonus desservies par l'ascenseur spirituel.
+	Vector2(2925, 258), Vector2(2995, 240), Vector2(3065, 258),
 ]
 
 const LEONIE_LINES := [
@@ -103,6 +110,7 @@ func _ready() -> void:
 	_build_crumbles()
 	_build_checkpoints()
 	_build_traps()
+	_build_lifts()
 	_build_goal()
 	_build_kill_zone()
 	_spawn_entities()
@@ -440,6 +448,14 @@ func _build_checkpoints() -> void:
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
 
 ## Pièges : stalactites de glace pointant du sol plutôt que des pieux de bois.
+## Ascenseurs spirituels : dalles flottantes qui desservent les orbes bonus.
+func _build_lifts() -> void:
+	for i in LIFTS.size():
+		var v: Vector2 = LIFTS[i]
+		var lift := LIFT_SCENE.instantiate()
+		lift.position = v
+		add_child(lift)
+
 func _build_traps() -> void:
 	for i in TRAP_XS.size():
 		var x: float = TRAP_XS[i]
@@ -577,6 +593,8 @@ func _display_challenge_results() -> void:
 		orbs_label.text = "Orbes : %d/%d" % [results["orbs"], results["total_orbs"]]
 	if damage_label:
 		damage_label.text = "Dégâts : %d   •   Esprits vaincus : %d" % [results["damage"], results["kills"]]
+		if int(results["combo"]) >= 2:
+			damage_label.text += "   •   Meilleur combo : ×%d" % int(results["combo"])
 	if time_label:
 		time_label.text = "Temps : %s" % _format_time(results["time"])
 

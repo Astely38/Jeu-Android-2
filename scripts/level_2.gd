@@ -649,6 +649,8 @@ func _display_challenge_results() -> void:
 		orbs_label.text = "Orbes : %d/%d" % [results["orbs"], results["total_orbs"]]
 	if damage_label:
 		damage_label.text = "Dégâts : %d   •   Esprits vaincus : %d" % [results["damage"], results["kills"]]
+		if int(results["combo"]) >= 2:
+			damage_label.text += "   •   Meilleur combo : ×%d" % int(results["combo"])
 	if time_label:
 		time_label.text = "Temps : %s" % _format_time(results["time"])
 

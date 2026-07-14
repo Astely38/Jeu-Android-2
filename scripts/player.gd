@@ -67,6 +67,12 @@ var _pause_layer: CanvasLayer
 ## Bénédiction de Léonie : le prochain coup encaissé est annulé.
 var blessed := false
 var _bless_aura: Sprite2D
+## Combo : esprits tranchés coup sur coup. La série grimpe tant qu'un
+## nouvel esprit tombe dans la fenêtre et qu'Eneko n'encaisse rien.
+const COMBO_WINDOW := 5.0
+var _combo := 0
+var _combo_timer := 0.0
+var _combo_label: Label
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var anim: AnimatedSprite2D = $Anim
@@ -93,6 +99,7 @@ func _ready() -> void:
 	attack_area.monitoring = false
 	attack_area.body_entered.connect(_on_attack_area_body_entered)
 	attack_area.area_entered.connect(_on_attack_area_area_entered)
+	_build_combo_label()
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SAMURAI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
 		{"name": "run", "path": SAMURAI + "Run.png", "frames": 8, "fps": 13.0, "loop": true},
@@ -166,6 +173,11 @@ func _physics_process(delta: float) -> void:
 		anim.modulate.a = 0.35 if int(invuln * 12.0) % 2 == 0 else 1.0
 	else:
 		anim.modulate.a = 1.0
+	# Fenêtre de combo : expire si Eneko reste trop longtemps sans trancher.
+	if _combo_timer > 0.0:
+		_combo_timer -= delta
+		if _combo_timer <= 0.0:
+			_end_combo()
 
 	# Verrou d'animation (attaque / touché).
 	if lock_timer > 0.0:
@@ -440,6 +452,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 		SaveManager.vibrate(25)
 		return
 	Challenge.register_damage()
+	_end_combo()
 	health -= amount
 	_update_hearts()
 	sfx_hurt.play()
@@ -464,6 +477,7 @@ func fall_damage() -> void:
 	if _dead:
 		return
 	Challenge.register_damage()
+	_end_combo()
 	health -= 1
 	_update_hearts()
 	sfx_hurt.play()
@@ -575,9 +589,50 @@ func _on_attack_area_body_entered(body: Node2D) -> void:
 	if body.has_method("die"):
 		body.die()
 		Challenge.register_kill()
+		_register_combo_kill()
 		_shake = 3.5  # impact ressenti à chaque coup qui porte
 		SaveManager.vibrate(18)
 		_hit_stop()
+
+## Label « Combo ×N » en haut au centre de l'écran (caché au repos).
+func _build_combo_label() -> void:
+	_combo_label = Label.new()
+	_combo_label.size = Vector2(220, 34)
+	_combo_label.position = Vector2(370, 54)
+	_combo_label.pivot_offset = Vector2(110, 17)
+	_combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_combo_label.add_theme_font_size_override("font_size", 24)
+	_combo_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.35))
+	_combo_label.add_theme_color_override("font_outline_color", Color(0.25, 0.1, 0.05, 0.9))
+	_combo_label.add_theme_constant_override("outline_size", 6)
+	_combo_label.visible = false
+	$HUD.add_child(_combo_label)
+
+## Un esprit de plus dans la série : affiche « Combo ×N » à partir de 2.
+func _register_combo_kill() -> void:
+	_combo += 1
+	_combo_timer = COMBO_WINDOW
+	Challenge.register_combo(_combo)
+	if _combo >= 2 and _combo_label != null:
+		_combo_label.text = "Combo ×%d" % _combo
+		_combo_label.modulate.a = 1.0
+		_combo_label.visible = true
+		_combo_label.scale = Vector2(1.45, 1.45)
+		var t := create_tween()
+		t.tween_property(_combo_label, "scale", Vector2.ONE, 0.18)
+
+## Fin de série (fenêtre expirée ou coup encaissé) : le compteur s'efface.
+func _end_combo() -> void:
+	_combo = 0
+	_combo_timer = 0.0
+	if _combo_label != null and _combo_label.visible:
+		var t := create_tween()
+		t.tween_property(_combo_label, "modulate:a", 0.0, 0.35)
+		# Ne cache le label que si aucune nouvelle série n'a démarré entre-temps.
+		t.finished.connect(func() -> void:
+			if _combo == 0:
+				_combo_label.visible = false
+		)
 
 ## Le sabre dissipe aussi les projectiles (orbes corrompus des Yūrei).
 func _on_attack_area_area_entered(area: Area2D) -> void:

@@ -27,6 +27,7 @@ var orbs_collected: int = 0
 var total_orbs: int = 0
 var damage_taken: int = 0  # nombre de fois le joueur a été frappé/tombé
 var kills: int = 0         # esprits vaincus au sabre
+var best_combo: int = 0    # plus longue série d'esprits sans être touché
 ## Survols d'introduction déjà joués cette session : après une mort, le
 ## niveau redémarre directement sans rejouer la cinématique.
 var _intros_seen: Array = []
@@ -41,6 +42,7 @@ func start_level(id: String, total_orbs_count: int) -> void:
 	total_orbs = maxf(1.0, float(total_orbs_count))
 	damage_taken = 0
 	kills = 0
+	best_combo = 0
 
 ## Relance le chronomètre : appelé quand le joueur prend réellement la
 ## main (après le survol d'introduction), pour que le temps affiché ne
@@ -67,6 +69,11 @@ func register_orb() -> void:
 func register_kill() -> void:
 	kills += 1
 
+## Le joueur vient d'atteindre une série de `combo` esprits d'affilée.
+func register_combo(combo: int) -> void:
+	if combo > best_combo:
+		best_combo = combo
+
 func get_time_elapsed() -> float:
 	var now := float(Time.get_ticks_msec()) / 1000.0
 	return maxf(0.0, now - start_time)
@@ -79,6 +86,7 @@ func get_results() -> Dictionary:
 		"total_orbs": total_orbs,
 		"damage": damage_taken,
 		"kills": kills,
+		"combo": best_combo,
 		"time": elapsed,
 		"grade": _calculate_grade(),
 	}
@@ -125,3 +133,4 @@ func reset() -> void:
 	total_orbs = 0
 	damage_taken = 0
 	kills = 0
+	best_combo = 0

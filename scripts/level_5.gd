@@ -497,6 +497,8 @@ func _show_endgame_recap(results: Dictionary) -> void:
 		Challenge.grade_name(results["grade"]), _format_time(results["time"]),
 		results["orbs"], results["total_orbs"], results["kills"],
 	]
+	if int(results["combo"]) >= 2:
+		run.text += " — Meilleur combo : ×%d" % int(results["combo"])
 	run.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	run.add_theme_font_size_override("font_size", 18)
 	box.add_child(run)
