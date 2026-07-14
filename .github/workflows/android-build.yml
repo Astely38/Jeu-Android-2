@@ -50,7 +50,9 @@ jobs:
         run: |
           sed -i "s|^version/code=.*|version/code=${GITHUB_RUN_NUMBER}|" export_presets.cfg
           sed -i "s|^version/name=.*|version/name=\"0.${GITHUB_RUN_NUMBER}\"|" export_presets.cfg
+          sed -i "s|^config/version=.*|config/version=\"0.${GITHUB_RUN_NUMBER}\"|" project.godot
           grep '^version/' export_presets.cfg
+          grep '^config/version' project.godot
 
       - name: Build debug APK
         run: |

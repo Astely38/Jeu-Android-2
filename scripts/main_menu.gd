@@ -14,6 +14,7 @@ func _ready() -> void:
 	# boss), le temps reprend son cours normal.
 	Engine.time_scale = 1.0
 	_build_scenery()
+	_show_version()
 	$ContinueButton.visible = SaveManager.has_save()
 	_style_button($ContinueButton, Color(0.92, 0.65, 0.3))
 	_style_button($LevelsButton, Color(0.92, 0.65, 0.3))
@@ -186,6 +187,20 @@ func _on_continue_pressed() -> void:
 
 func _on_levels_pressed() -> void:
 	get_tree().change_scene_to_file(LEVEL_SELECT)
+
+## Affiche la version de l'application en bas à gauche du menu (remplie
+## automatiquement par le CI : "0.NN" = numéro de build).
+func _show_version() -> void:
+	var v := str(ProjectSettings.get_setting("application/config/version", "dev"))
+	var vl := Label.new()
+	vl.text = "v" + v
+	vl.position = Vector2(12, 512)
+	vl.add_theme_font_size_override("font_size", 14)
+	vl.add_theme_color_override("font_color", Color(0.95, 0.92, 0.85, 0.55))
+	vl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
+	vl.add_theme_constant_override("shadow_offset_x", 1)
+	vl.add_theme_constant_override("shadow_offset_y", 1)
+	add_child(vl)
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()
