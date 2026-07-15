@@ -77,6 +77,7 @@ func die() -> void:
 	if _dying:
 		return
 	_dying = true
+	Atmosphere.release_soul(get_parent(), global_position + Vector2(0, -22), Color(1.0, 0.86, 0.55))
 	velocity = Vector2.ZERO
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)

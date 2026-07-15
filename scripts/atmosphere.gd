@@ -2,6 +2,52 @@ class_name Atmosphere
 extends Object
 ## Utilitaires d'ambiance visuelle réutilisables entre les niveaux.
 
+## Âme libérée : au moment où un esprit est vaincu, une petite lumière
+## chaude s'élève de sa position et s'efface — l'âme rendue à la Flamme.
+## Posée sur le niveau (host) : elle survit à la disparition de l'ennemi.
+static func release_soul(host: Node, at: Vector2, tint: Color) -> void:
+	if host == null or not is_instance_valid(host):
+		return
+	var soul := Node2D.new()
+	soul.z_index = 2
+	host.add_child(soul)
+	soul.global_position = at
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(tint.r, tint.g, tint.b, 0.75)
+	glow.scale = Vector2(0.6, 0.6)
+	soul.add_child(glow)
+	var core := Polygon2D.new()
+	var pts := PackedVector2Array()
+	for k in 10:
+		var a := k * TAU / 10.0
+		pts.append(Vector2(cos(a) * 4.0, sin(a) * 4.0))
+	core.polygon = pts
+	core.color = Color(1.0, 0.97, 0.85, 0.95)
+	soul.add_child(core)
+	var sparks := CPUParticles2D.new()
+	sparks.amount = 8
+	sparks.one_shot = true
+	sparks.emitting = true
+	sparks.explosiveness = 0.5
+	sparks.lifetime = 0.9
+	sparks.direction = Vector2(0, -1)
+	sparks.spread = 35.0
+	sparks.gravity = Vector2(0, -30)
+	sparks.initial_velocity_min = 20.0
+	sparks.initial_velocity_max = 55.0
+	sparks.scale_amount_min = 1.0
+	sparks.scale_amount_max = 2.0
+	sparks.color = Color(tint.r, tint.g, tint.b, 0.8)
+	soul.add_child(sparks)
+	var t := host.create_tween()
+	t.set_parallel(true)
+	t.tween_property(soul, "position:y", soul.position.y - 78.0, 1.0) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(soul, "scale", Vector2(0.4, 0.4), 1.0)
+	t.tween_property(soul, "modulate:a", 0.0, 1.0)
+	t.chain().tween_callback(soul.queue_free)
+
 ## Ajoute un plan de silhouettes sombres en avant-plan (feuillages suspendus
 ## en haut, herbes en bas), défilant plus vite que le décor pour créer de la
 ## profondeur. Basé sur Parallax2D (Node2D) : il respecte le z-index, donc il

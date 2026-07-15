@@ -80,6 +80,7 @@ const LEONIE_LINES := [
 
 var sfx_win: AudioStreamPlayer
 var wisps: CPUParticles2D
+var rain: CPUParticles2D
 var _flames: Array = []
 var _halos: Array = []
 var _t := 0.0
@@ -130,6 +131,8 @@ func _process(delta: float) -> void:
 func _physics_process(_delta: float) -> void:
 	if wisps != null and is_instance_valid(player):
 		wisps.position = Vector2(player.position.x, player.position.y - 200.0)
+	if rain != null and is_instance_valid(player):
+		rain.position = Vector2(player.position.x, player.position.y - 340.0)
 
 # --- Construction du niveau ---------------------------------------------
 
@@ -266,6 +269,23 @@ func _build_decor() -> void:
 	wisps.scale_amount_max = 4.0
 	wisps.color = Color(0.4, 0.25, 0.5, 0.3)
 	add_child(wisps)
+
+	# Pluie fine et froide qui tombe sur le village (suit Eneko, plan large).
+	rain = CPUParticles2D.new()
+	rain.amount = 130
+	rain.lifetime = 0.9
+	rain.preprocess = 0.9
+	rain.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	rain.emission_rect_extents = Vector2(620, 20)
+	rain.direction = Vector2(0.12, 1)
+	rain.spread = 0.0
+	rain.gravity = Vector2(30, 900)
+	rain.initial_velocity_min = 420.0
+	rain.initial_velocity_max = 520.0
+	rain.scale_amount_min = 0.6
+	rain.scale_amount_max = 1.2
+	rain.color = Color(0.7, 0.68, 0.85, 0.35)
+	add_child(rain)
 
 	# Lucioles chaudes qui dansent autour des cordées de lanternes :
 	# petites lumières vivantes au milieu du village mort.
