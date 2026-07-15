@@ -94,6 +94,7 @@ const WIND_STRENGTH := 130.0
 var sfx_win: AudioStreamPlayer
 var mist_wisps: CPUParticles2D
 var snow: CPUParticles2D
+var frost_trail: CPUParticles2D
 var _wind_t := 0.0
 var _wind_dir := 1.0
 var _wind_active := false
@@ -119,6 +120,9 @@ func _ready() -> void:
 	_spawn_entities()
 	_setup_audio()
 	_setup_ambient()
+	_build_frost_trail()
+	# Sur les sommets, Eneko soulève de la neige (et non de la terre).
+	player.set_land_dust_color(Color(0.92, 0.95, 1.0, 0.75))
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
 	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
@@ -139,6 +143,8 @@ func _physics_process(delta: float) -> void:
 		mist_wisps.position = Vector2(player.position.x, player.position.y - 40.0)
 	if snow != null:
 		snow.position = Vector2(player.position.x, player.position.y - 340.0)
+	if frost_trail != null:
+		frost_trail.position = Vector2(player.position.x, player.position.y + 6.0)
 
 	# Cycle des rafales de vent.
 	_wind_t += delta
@@ -158,6 +164,26 @@ func _physics_process(delta: float) -> void:
 		snow.gravity = Vector2(_wind_dir * 160.0, 26) if in_gust else Vector2(4, 26)
 
 # --- Construction du niveau ---------------------------------------------
+
+## Souffle glacé : de la brume pâle s'échappe autour d'Eneko et reste en
+## place derrière lui (coords globales), comme une haleine dans le froid.
+func _build_frost_trail() -> void:
+	frost_trail = CPUParticles2D.new()
+	frost_trail.local_coords = false
+	frost_trail.amount = 16
+	frost_trail.lifetime = 1.3
+	frost_trail.preprocess = 1.3
+	frost_trail.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	frost_trail.emission_rect_extents = Vector2(10, 18)
+	frost_trail.direction = Vector2(0, -1)
+	frost_trail.spread = 45.0
+	frost_trail.gravity = Vector2(0, -10)
+	frost_trail.initial_velocity_min = 5.0
+	frost_trail.initial_velocity_max = 18.0
+	frost_trail.scale_amount_min = 1.6
+	frost_trail.scale_amount_max = 3.2
+	frost_trail.color = Color(0.86, 0.92, 1.0, 0.22)
+	add_child(frost_trail)
 
 func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
 	var p := Polygon2D.new()

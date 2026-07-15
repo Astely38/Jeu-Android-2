@@ -80,6 +80,8 @@ var _barriers: Array = []
 var _shafts: Array = []
 ## Bannières de l'approche : elles ondulent doucement (voir _process).
 var _banners: Array = []
+## Taches de vitrail projetées au sol de l'arène (voir _process).
+var _glass: Array = []
 var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
@@ -93,6 +95,7 @@ var _t := 0.0
 func _ready() -> void:
 	_build_decor()
 	_build_platforms()
+	_build_glass_floor()
 	_build_pillars()
 	_build_crumbles()
 	_build_checkpoints()
@@ -136,8 +139,29 @@ func _process(delta: float) -> void:
 	for bnr in _banners:
 		var bn: Polygon2D = bnr["node"]
 		bn.rotation = 0.12 * sin(_t * 1.6 + float(bnr["phase"]))
+	for g in _glass:
+		var gn: Polygon2D = g["node"]
+		var ba: float = g["base_a"]
+		gn.color.a = ba * (0.35 + 0.65 * (0.5 + 0.5 * sin(_t * 0.6 + float(g["phase"]))))
 
 # --- Construction du niveau ---------------------------------------------
+
+## Taches de lumière colorée projetées au sol de l'arène, comme la clarté
+## qui tombe des verrières d'un sanctuaire ; leur intensité respire.
+func _build_glass_floor() -> void:
+	var cols := [Color(0.4, 0.6, 1.0), Color(1.0, 0.82, 0.4),
+		Color(0.9, 0.32, 0.36), Color(0.95, 0.95, 1.0)]
+	var x := ARENA_MIN_X + 90.0
+	var i := 0
+	while x < ARENA_MAX_X - 60.0:
+		var c: Color = cols[i % cols.size()]
+		var base_a := 0.1 + 0.04 * float(i % 3)
+		var pane := _poly(self, PackedVector2Array([
+			Vector2(-48, 0), Vector2(22, 0), Vector2(50, 42), Vector2(-20, 42),
+		]), Color(c.r, c.g, c.b, base_a), Vector2(x, GROUND_Y - 50.0))
+		_glass.append({"node": pane, "base_a": base_a, "phase": float(i) * 0.9})
+		x += 128.0
+		i += 1
 
 func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
 	var p := Polygon2D.new()

@@ -544,6 +544,12 @@ func fall_damage() -> void:
 		return
 	_return_to_checkpoint()
 
+## Permet à un niveau de teinter la poussière soulevée à l'atterrissage
+## (ex. neige blanche sur les sommets enneigés au lieu de terre).
+func set_land_dust_color(c: Color) -> void:
+	if _land_dust != null:
+		_land_dust.color = c
+
 ## Soin complet (accordé par Léonie au passage).
 func heal_full() -> void:
 	health = _max_health()

@@ -75,6 +75,9 @@ var sfx_win: AudioStreamPlayer
 var petals: CPUParticles2D
 var pollen: CPUParticles2D
 var _portal_used := false
+## Touffes d'herbe qui ondulent au vent et frémissent au passage d'Eneko.
+var _grass: Array = []
+var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -94,6 +97,7 @@ func _ready() -> void:
 	_build_goal()
 	_build_secret_portal()
 	_build_tutorial_signs()
+	_build_grass()
 	_build_kill_zone()
 	_spawn_entities()
 	_setup_audio()
@@ -602,6 +606,41 @@ func _physics_process(_delta: float) -> void:
 		petals.position = Vector2(player.position.x, player.position.y - 340.0)
 	if pollen != null and is_instance_valid(player):
 		pollen.position = Vector2(player.position.x, player.position.y - 120.0)
+
+## Touffes d'herbe : ondulation lente au vent + frémissement quand Eneko
+## passe à proximité (elles se penchent dans le sens opposé à son passage).
+func _build_grass() -> void:
+	var green := Color(0.36, 0.56, 0.28)
+	var green_hi := Color(0.5, 0.72, 0.36)
+	for p in PLATFORMS:
+		for side in [-1.0, 1.0]:
+			var cx: float = p.x + float(side) * (p.y - 60.0)
+			var clump := Node2D.new()
+			clump.position = Vector2(cx, GROUND_Y - 50.0)
+			clump.z_index = 1
+			add_child(clump)
+			var bi := 0
+			while bi < 5:
+				var bx := -12.0 + float(bi) * 6.0
+				var bh := 20.0 + float((bi * 7 + int(cx)) % 14)
+				var lean := (float(bi) - 2.0) * 3.0
+				var col := green_hi if bi % 2 == 0 else green
+				_poly(clump, PackedVector2Array([
+					Vector2(bx - 2.5, 0), Vector2(bx + 2.5, 0),
+					Vector2(bx + lean, -bh),
+				]), col)
+				bi += 1
+			_grass.append({"node": clump, "base_x": cx, "phase": cx * 0.02})
+
+func _process(delta: float) -> void:
+	_t += delta
+	var px := player.position.x if is_instance_valid(player) else -100000.0
+	for g in _grass:
+		var node: Node2D = g["node"]
+		var wind := 0.09 * sin(_t * 1.8 + float(g["phase"]))
+		var dx: float = float(g["base_x"]) - px
+		var near := clampf((90.0 - absf(dx)) / 90.0, 0.0, 1.0)
+		node.rotation = wind + 0.5 * near * signf(dx)
 
 func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
 	if body == player:
