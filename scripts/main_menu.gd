@@ -10,6 +10,7 @@ var _sun_glow: Sprite2D
 var _t := 0.0
 var _options: Control
 var _achievements_panel: Control
+var _prologue: Control
 
 func _ready() -> void:
 	# Garde-fou : si on arrive ici pendant un ralenti (hit-stop, mort du
@@ -30,6 +31,10 @@ func _ready() -> void:
 	$ContinueButton.pressed.connect(_on_continue_pressed)
 	$LevelsButton.pressed.connect(_on_levels_pressed)
 	$QuitButton.pressed.connect(_on_quit_pressed)
+	_build_prologue_button()
+	# Prologue au tout premier lancement (une seule fois).
+	if not SaveManager.prologue_seen():
+		_open_prologue()
 
 func _process(delta: float) -> void:
 	_t += delta
@@ -281,6 +286,68 @@ func _open_options() -> void:
 	_style_button(close, Color(0.92, 0.65, 0.3))
 	close.pressed.connect(func() -> void: _options.visible = false)
 	box.add_child(close)
+
+## ----------------------------------------------------------------- Prologue
+
+## Petit bouton « Prologue » pour (re)lire l'introduction quand on veut.
+func _build_prologue_button() -> void:
+	var b := Button.new()
+	b.text = "Prologue"
+	b.add_theme_font_size_override("font_size", 14)
+	b.position = Vector2(70, 498)
+	b.size = Vector2(120, 34)
+	_style_button(b, Color(0.6, 0.5, 0.45))
+	b.pressed.connect(_open_prologue)
+	add_child(b)
+
+func _open_prologue() -> void:
+	if _prologue != null:
+		_prologue.visible = true
+		return
+	_prologue = Control.new()
+	_prologue.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_prologue)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.02, 0.06, 0.88)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_prologue.add_child(dim)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 18)
+	box.position = Vector2(130, 70)
+	box.custom_minimum_size = Vector2(700, 0)
+	_prologue.add_child(box)
+
+	var title := Label.new()
+	title.text = "La Voie du Sabre"
+	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.custom_minimum_size = Vector2(700, 0)
+	box.add_child(title)
+
+	var story := Label.new()
+	story.text = "Eneko a grandi le sabre à la main, dans la Clairière des Bambous.\n\nQuand les Ombres corrompues ont envahi la contrée — engloutissant temples, villages et sommets — il a saisi la lame de ses ancêtres.\n\nGuidé par Léonie, l'esprit de lumière qui veille sur lui, il s'engage sur la Voie du Sabre : purifier chaque sanctuaire, et affronter, tout au sommet, le Gardien Corrompu."
+	story.add_theme_font_size_override("font_size", 20)
+	story.add_theme_color_override("font_color", Color(0.95, 0.92, 0.86))
+	story.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story.custom_minimum_size = Vector2(700, 0)
+	box.add_child(story)
+
+	var start := Button.new()
+	start.text = "Commencer l'aventure"
+	start.add_theme_font_size_override("font_size", 22)
+	start.custom_minimum_size = Vector2(700, 52)
+	_style_button(start, Color(0.92, 0.65, 0.3))
+	start.pressed.connect(_close_prologue)
+	box.add_child(start)
+
+func _close_prologue() -> void:
+	SaveManager.set_prologue_seen()
+	if _prologue != null:
+		_prologue.visible = false
 
 ## ------------------------------------------------------------------- Succès
 

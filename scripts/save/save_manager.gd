@@ -45,6 +45,7 @@ func load_data() -> void:
 		"achievements": {},
 		"stats": {},
 		"kensei_done": [],
+		"prologue_seen": false,
 	}
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
@@ -131,6 +132,14 @@ func mark_kensei_done(level_id: String) -> void:
 ## Le mode Kensei se débloque en battant le Gardien une première fois.
 func kensei_unlocked() -> bool:
 	return is_completed("level_5")
+
+## Prologue d'introduction : affiché une seule fois, au premier lancement.
+func prologue_seen() -> bool:
+	return bool(data.get("prologue_seen", false))
+
+func set_prologue_seen() -> void:
+	data["prologue_seen"] = true
+	save_data()
 
 ## Réglages du joueur ("music", "sfx", "vibrations") — activés par défaut.
 func setting_on(key: String) -> bool:
