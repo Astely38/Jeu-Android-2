@@ -328,7 +328,7 @@ func _open_prologue() -> void:
 	box.add_child(title)
 
 	var story := Label.new()
-	story.text = "Eneko a grandi le sabre à la main, dans la Clairière des Bambous.\n\nQuand les Ombres corrompues ont envahi la contrée — engloutissant temples, villages et sommets — il a saisi la lame de ses ancêtres.\n\nGuidé par Léonie, l'esprit de lumière qui veille sur lui, il s'engage sur la Voie du Sabre : purifier chaque sanctuaire, et affronter, tout au sommet, le Gardien Corrompu."
+	story.text = "Jadis, la Flamme d'Aube brûlait au cœur du Sanctuaire, et sa lumière tenait les Ombres loin des vivants.\n\nMais le Gardien qui la veillait a sombré dans le désespoir. La Flamme s'est éteinte — et les Ombres ont submergé la clairière, le temple, le village, la montagne.\n\nLéonie, dernier éclat de cette lumière, a trouvé Eneko : le seul dont la lame porte encore la clarté des aïeux.\n\nTon but : rassembler les éclats de la Flamme dispersés dans les terres souillées, atteindre le Sanctuaire, et délivrer le Gardien de sa corruption pour rallumer la Flamme d'Aube. Telle est la Voie du Sabre."
 	story.add_theme_font_size_override("font_size", 20)
 	story.add_theme_color_override("font_color", Color(0.95, 0.92, 0.86))
 	story.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

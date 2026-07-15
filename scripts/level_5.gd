@@ -64,11 +64,11 @@ const BOSS_SPAWN_X := 5250.0
 const LEVEL_END := 6000.0
 
 const BOSS_INTRO_LINES := [
-	{ "name": "???", "text": "Qui ose troubler le dernier repos du sanctuaire ?" },
-	{ "name": "Eneko", "text": "Je suis venu mettre fin à la corruption. Une bonne fois pour toutes." },
-	{ "name": "???", "text": "Alors viens. Voyons si ta lame vaut mieux que celles qui l'ont précédée." },
+	{ "name": "???", "text": "Qui ose troubler les cendres de ce sanctuaire ?" },
+	{ "name": "Eneko", "text": "Je viens rallumer la Flamme d'Aube. Et te délivrer, Gardien — Léonie m'a tout dit." },
+	{ "name": "???", "text": "Léonie... ce nom n'éveille plus rien en moi. Il ne reste que l'Ombre. Viens la briser, si tu le peux." },
 ]
-const VICTORY_LINE := "La Voie du Sabre est accomplie !"
+const VICTORY_LINE := "La Flamme d'Aube renaît !"
 
 var sfx_win: AudioStreamPlayer
 var motes: CPUParticles2D
@@ -375,9 +375,9 @@ func _spawn_boss() -> void:
 func _setup_ambient() -> void:
 	var amb := AmbientDialogue.new()
 	add_child(amb)
-	amb.add_line(self, 850.0, "Eneko", "Le marbre résonne encore de prières anciennes.")
-	amb.add_line(self, 2900.0, "Eneko", "Aucune trace de Léonie ici. À moi de finir le chemin.")
-	amb.add_line(self, 3600.0, "Voix", "Approche. Voyons si ta lame vaut mieux que celles d'avant.")
+	amb.add_line(self, 850.0, "Eneko", "Le marbre résonne encore des prières d'autrefois. Ici brûlait la Flamme.")
+	amb.add_line(self, 2900.0, "Eneko", "L'autel est froid. Il ne tient qu'à moi de le rallumer.")
+	amb.add_line(self, 3600.0, "Voix", "Approche, porteur de lumière. Voyons si ta flamme vaut mieux que la mienne.")
 
 func _setup_audio() -> void:
 	var wind := AudioStreamPlayer.new()
@@ -510,11 +510,22 @@ func _show_endgame_recap(results: Dictionary) -> void:
 	layer.add_child(box)
 
 	var title := Label.new()
-	title.text = "La Voie du Sabre est accomplie !"
+	title.text = "La Flamme d'Aube renaît !"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
 	box.add_child(title)
+
+	var epilogue := Label.new()
+	epilogue.text = "Libéré de l'Ombre, le Gardien s'incline une dernière fois, puis s'éteint en paix. La Flamme d'Aube s'élève à nouveau au cœur du Sanctuaire ; sa clarté redescend sur la montagne, le village, le temple, la clairière. Les âmes en peine trouvent enfin le repos, et Léonie, dernier éclat, peut rejoindre la lumière. La contrée est sauvée — par la Voie du Sabre d'Eneko."
+	epilogue.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	epilogue.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	epilogue.custom_minimum_size = Vector2(640, 0)
+	epilogue.add_theme_font_size_override("font_size", 16)
+	epilogue.add_theme_color_override("font_color", Color(0.94, 0.9, 0.82))
+	box.add_child(epilogue)
+
+	box.add_child(_spacer(6.0))
 
 	var run := Label.new()
 	run.text = "Gardien vaincu — Grade : %s — %s — Orbes : %d/%d — Esprits vaincus : %d" % [

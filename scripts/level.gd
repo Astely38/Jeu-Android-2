@@ -30,11 +30,11 @@ const PLATFORM_THEME := {
 }
 
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "Eneko, c'est bon de te voir." },
-	{ "name": "Léonie", "text": "La Clairière des Bambous est belle, mais ses secrets sont anciens et douloureux." },
-	{ "name": "Léonie", "text": "Tes ancêtres ont marché sur ce chemin. Ton sabre porte leur force." },
-	{ "name": "Léonie", "text": "Traverse cette forêt avec respect. Le torii t'attend." },
-	{ "name": "Eneko", "text": "Je suis prêt, Léonie." },
+	{ "name": "Léonie", "text": "Eneko, te voilà. La clairière où tu as grandi fut la première que les Ombres ont dévorée." },
+	{ "name": "Léonie", "text": "Ces orbes qui luisent sont des éclats de la Flamme d'Aube. Rassemble-les : chacun ravive un peu la lumière." },
+	{ "name": "Léonie", "text": "Je ne peux pas me battre. Mais ma clarté te protège un moment — sers-t'en pour avancer." },
+	{ "name": "Léonie", "text": "Franchis le torii, au bout du chemin. De sanctuaire en sanctuaire, nous remonterons jusqu'à la Flamme." },
+	{ "name": "Eneko", "text": "Alors allons-y. Je leur rendrai la lumière qu'on leur a prise." },
 ]
 
 ## Plateformes : x = centre, y = demi-largeur. Trous de 120 à 150 px

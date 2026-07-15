@@ -75,11 +75,11 @@ const ORBS := [
 ]
 
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "Tu progresses bien, Eneko. Ce temple ancien respire d'une malveillance ancienne." },
-	{ "name": "Léonie", "text": "Les Ombres y ont établi leur repaire depuis longtemps. Mais tu n'es pas seul." },
-	{ "name": "Léonie", "text": "Je veille sur toi. Ma lumière te protégera un moment. Utilise ce temps pour avancer." },
-	{ "name": "Léonie", "text": "Le sanctuaire au sommet attend ta purification. Gravis les marches sans crainte." },
-	{ "name": "Eneko", "text": "Merci, Léonie. Je vais les chasser de ce lieu." },
+	{ "name": "Léonie", "text": "Ce temple gardait autrefois une braise de la Flamme d'Aube. Les Ombres l'ont éteinte parmi les premières." },
+	{ "name": "Léonie", "text": "Plus tu rassembles d'éclats, plus la Flamme se souvient d'elle-même. Ne néglige aucune lueur." },
+	{ "name": "Léonie", "text": "Je veille sur toi. Ma lumière t'entoure encore un temps — profite-s'en." },
+	{ "name": "Léonie", "text": "Gravis les marches jusqu'au sanctuaire du sommet. La Voie ne fait que commencer." },
+	{ "name": "Eneko", "text": "Chaque marche me rapproche de la source. Je ne m'arrêterai pas." },
 ]
 
 var sfx_win: AudioStreamPlayer

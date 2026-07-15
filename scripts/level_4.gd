@@ -77,11 +77,11 @@ const ORBS := [
 ]
 
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "La Montagne des Brumes. L'air se raréfie, et les Ombres s'accrochent aux corniches." },
-	{ "name": "Léonie", "text": "Tu as traversé la forêt, le temple, le village. Chaque épreuve t'a rendu plus fort." },
-	{ "name": "Léonie", "text": "Le sommet cache le dernier sanctuaire. Ce qui t'y attend demandera tout ton courage." },
-	{ "name": "Léonie", "text": "Je ne peux pas monter plus haut avec toi. À partir d'ici, tu marches seul, Eneko." },
-	{ "name": "Eneko", "text": "Je continuerai. Pour tous ceux que j'ai croisés en chemin." },
+	{ "name": "Léonie", "text": "Nous y sommes presque. Le Sanctuaire Final, où brûlait la Flamme, se dresse au-delà de ces cimes." },
+	{ "name": "Léonie", "text": "Je dois te dire la vérité, Eneko. Le Gardien que tu vas affronter... je le connaissais. Il veillait la Flamme avec moi." },
+	{ "name": "Léonie", "text": "Le désespoir l'a corrompu quand la lumière a vacillé. Ta lame ne doit pas le détruire — mais le délivrer." },
+	{ "name": "Léonie", "text": "Je ne peux monter plus haut. Au sommet, tu marches seul. Mais ma lumière restera en toi." },
+	{ "name": "Eneko", "text": "Je le libérerai, et je rallumerai la Flamme. Je te le promets, Léonie." },
 ]
 
 ## Rafales de vent : toutes les WIND_PERIOD secondes, une bourrasque pousse
