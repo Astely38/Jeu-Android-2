@@ -99,6 +99,9 @@ var _wind_t := 0.0
 var _wind_dir := 1.0
 var _wind_active := false
 var _step_dist := 0.0
+## Éclats de neige qui pétillent au soleil sur les congères.
+var _glints: Array = []
+var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -122,6 +125,7 @@ func _ready() -> void:
 	_setup_audio()
 	_setup_ambient()
 	_build_frost_trail()
+	_build_snow_glints()
 	# Sur les sommets, Eneko soulève de la neige (et non de la terre).
 	player.set_land_dust_color(Color(0.92, 0.95, 1.0, 0.75))
 	win_label.visible = false
@@ -136,6 +140,32 @@ func _ready() -> void:
 		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
 	# Survol d'introduction : du torii du sommet jusqu'à Eneko.
 	player.intro_pan(Vector2(GOAL_X, 380.0))
+
+## Petits éclats blancs posés sur la neige des congères, qui pétillent au
+## soleil à des rythmes décalés. Purement décoratif, au ras du sol.
+func _build_snow_glints() -> void:
+	for pi in PLATFORMS.size():
+		var p: Vector2 = PLATFORMS[pi]
+		var top := p.y - 50.0
+		var n := 4
+		var gi := 0
+		while gi < n:
+			var gx := p.x - (p.y - 60.0) + float(gi) * (2.0 * (p.y - 60.0) / float(n))
+			gx += float((gi * 37 + pi * 53) % 40) - 20.0
+			var g := _poly(self, PackedVector2Array([
+				Vector2(0, -3), Vector2(2, 0), Vector2(0, 3), Vector2(-2, 0),
+			]), Color(1, 1, 1, 0.0), Vector2(gx, top - 2.0 - float(gi % 2) * 2.0))
+			g.z_index = 1
+			_glints.append({"node": g, "phase": float((int(gx) * 13) % 628) * 0.01})
+			gi += 1
+
+func _process(delta: float) -> void:
+	_t += delta
+	for gl in _glints:
+		var g: Polygon2D = gl["node"]
+		# Scintillement bref et espacé : la plupart du temps invisible.
+		var s := sin(_t * 3.2 + float(gl["phase"]))
+		g.modulate.a = clampf((s - 0.7) / 0.3, 0.0, 1.0) * 0.9
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(player):

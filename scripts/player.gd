@@ -469,29 +469,44 @@ func attack() -> void:
 	_play("attack")
 	_spawn_slash_trail()
 
-## Croissant blanc éphémère qui matérialise l'arc du coup de sabre.
-func _spawn_slash_trail() -> void:
+## Arc du coup de sabre : un halo doré large et un cœur blanc vif, tracés en
+## croissant, avec un léger balayage rotatif — la lame semble trancher l'air.
+func _slash_crescent(outer: float, inner: float) -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	var n := 8
 	var i := 0
 	while i <= n:
 		var a := -1.1 + 2.2 * float(i) / float(n)
-		pts.append(Vector2(cos(a) * 34.0, sin(a) * 34.0))
+		pts.append(Vector2(cos(a) * outer, sin(a) * outer))
 		i += 1
 	var j := n
 	while j >= 0:
 		var a2 := -1.1 + 2.2 * float(j) / float(n)
-		pts.append(Vector2(cos(a2) * 22.0, sin(a2) * 22.0))
+		pts.append(Vector2(cos(a2) * inner, sin(a2) * inner))
 		j -= 1
-	var trail := Polygon2D.new()
-	trail.polygon = pts
-	trail.color = Color(1, 1, 1, 0.6)
-	trail.position = Vector2(16.0 * facing, -8.0)
-	trail.scale = Vector2(facing, 1.0)
-	add_child(trail)
-	var t := create_tween()
-	t.tween_property(trail, "modulate:a", 0.0, 0.22)
-	t.finished.connect(trail.queue_free)
+	return pts
+
+func _spawn_slash_trail() -> void:
+	var pivot := Node2D.new()
+	pivot.position = Vector2(16.0 * facing, -8.0)
+	pivot.scale = Vector2(facing, 1.0)
+	pivot.rotation = -0.5
+	add_child(pivot)
+	# Halo doré, large et diffus.
+	var glow := Polygon2D.new()
+	glow.polygon = _slash_crescent(40.0, 18.0)
+	glow.color = Color(1.0, 0.85, 0.45, 0.4)
+	pivot.add_child(glow)
+	# Cœur blanc vif de la lame.
+	var core := Polygon2D.new()
+	core.polygon = _slash_crescent(34.0, 24.0)
+	core.color = Color(1, 1, 1, 0.75)
+	pivot.add_child(core)
+	var t := pivot.create_tween()
+	t.set_parallel(true)
+	t.tween_property(pivot, "rotation", 0.6, 0.2).set_ease(Tween.EASE_OUT)
+	t.tween_property(pivot, "modulate:a", 0.0, 0.24)
+	t.chain().tween_callback(pivot.queue_free)
 
 func take_damage(amount: int, from_position: Vector2) -> void:
 	if invuln > 0.0:
