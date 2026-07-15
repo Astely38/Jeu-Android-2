@@ -105,6 +105,7 @@ func _ready() -> void:
 	_build_kill_zone()
 	_spawn_entities()
 	_setup_audio()
+	_setup_ambient()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
 	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
@@ -508,13 +509,21 @@ func _spawn_entities() -> void:
 	var sp7: Vector2 = PLATFORMS[LEONIE_IDX]
 	PlatformPainter.build_sanctuary(self, sp7.x, _surface_y(LEONIE_IDX))
 	var leonie := LEONIE_SCENE.instantiate()
-	leonie.position = Vector2(sp7.x, _surface_y(LEONIE_IDX) - 49.0)
+	leonie.position = Vector2(sp7.x, _surface_y(LEONIE_IDX) - 23.0)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
 	for o in ORBS:
 		var orb := ORB_SCENE.instantiate()
 		orb.position = o
 		add_child(orb)
+
+## Répliques d'ambiance au fil du niveau (non bloquantes).
+func _setup_ambient() -> void:
+	var amb := AmbientDialogue.new()
+	add_child(amb)
+	amb.add_line(self, 1010.0, "Eneko", "Ce temple veillait sur la vallée depuis mille ans...")
+	amb.add_line(self, 2470.0, "Murmure", "Retourne d'où tu viens, mortel... ici règnent les Ombres.")
+	amb.add_line(self, 3980.0, "Eneko", "Leurs murmures ne m'arrêteront pas. Je monte.")
 
 func _setup_audio() -> void:
 	var wind := AudioStreamPlayer.new()

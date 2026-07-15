@@ -100,6 +100,7 @@ func _ready() -> void:
 	_spawn_entities()
 	_spawn_boss()
 	_setup_audio()
+	_setup_ambient()
 	win_label.visible = false
 	boss_ui.visible = false
 	# Si on vient de mourir pendant le combat, le niveau redémarre : on
@@ -370,6 +371,14 @@ func _spawn_boss() -> void:
 	add_child(boss)
 
 ## Vent ambiant, plus doux et plus clair que dans les niveaux précédents.
+## Répliques d'ambiance au fil du niveau (non bloquantes).
+func _setup_ambient() -> void:
+	var amb := AmbientDialogue.new()
+	add_child(amb)
+	amb.add_line(self, 850.0, "Eneko", "Le marbre résonne encore de prières anciennes.")
+	amb.add_line(self, 2900.0, "Eneko", "Aucune trace de Léonie ici. À moi de finir le chemin.")
+	amb.add_line(self, 3600.0, "Voix", "Approche. Voyons si ta lame vaut mieux que celles d'avant.")
+
 func _setup_audio() -> void:
 	var wind := AudioStreamPlayer.new()
 	wind.stream = load("res://assets/sfx/wind.wav")

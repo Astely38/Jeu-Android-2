@@ -96,6 +96,7 @@ func _ready() -> void:
 	_build_kill_zone()
 	_spawn_entities()
 	_setup_audio()
+	_setup_ambient()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
 	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
@@ -523,6 +524,14 @@ func _build_sign(x: float, text: String) -> void:
 	lbl.add_theme_color_override("font_outline_color", Color(0.18, 0.1, 0.05))
 	lbl.add_theme_constant_override("outline_size", 4)
 	post.add_child(lbl)
+
+## Répliques d'ambiance d'Eneko au fil de la clairière (non bloquantes).
+func _setup_ambient() -> void:
+	var amb := AmbientDialogue.new()
+	add_child(amb)
+	amb.add_line(self, 2200.0, "Eneko", "J'ai grandi dans ces bambous. Les voir se faner me serre le cœur.")
+	amb.add_line(self, 3900.0, "Eneko", "Chaque esprit tranché est une âme rendue au repos.")
+	amb.add_line(self, 5600.0, "Eneko", "Le torii, enfin. La clairière retrouvera la paix.")
 
 func _build_kill_zone() -> void:
 	var kz := Area2D.new()
