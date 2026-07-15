@@ -73,6 +73,7 @@ const ORBS := [
 
 var sfx_win: AudioStreamPlayer
 var petals: CPUParticles2D
+var pollen: CPUParticles2D
 var _portal_used := false
 
 @onready var player: CharacterBody2D = $Player
@@ -286,6 +287,24 @@ func _build_decor() -> void:
 	petals.scale_amount_max = 0.9
 	petals.color = Color(0.95, 0.74, 0.78)
 	add_child(petals)
+
+	# Poussière de pollen dorée en suspension, éclairée par le couchant :
+	# de fines lueurs qui flottent lentement et donnent de l'air à la scène.
+	pollen = CPUParticles2D.new()
+	pollen.amount = 20
+	pollen.lifetime = 6.5
+	pollen.preprocess = 6.5
+	pollen.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	pollen.emission_rect_extents = Vector2(560, 280)
+	pollen.direction = Vector2(0.2, -1)
+	pollen.spread = 45.0
+	pollen.gravity = Vector2(4, -5)
+	pollen.initial_velocity_min = 4.0
+	pollen.initial_velocity_max = 14.0
+	pollen.scale_amount_min = 1.0
+	pollen.scale_amount_max = 2.2
+	pollen.color = Color(1.0, 0.94, 0.68, 0.5)
+	add_child(pollen)
 
 ## Plateformes : collision + pilier de terre profond (fini le sol flottant),
 ## avec touffes d'herbe et cailloux pour casser la platitude des blocs.
@@ -581,6 +600,8 @@ func _setup_audio() -> void:
 func _physics_process(_delta: float) -> void:
 	if petals != null and is_instance_valid(player):
 		petals.position = Vector2(player.position.x, player.position.y - 340.0)
+	if pollen != null and is_instance_valid(player):
+		pollen.position = Vector2(player.position.x, player.position.y - 120.0)
 
 func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
 	if body == player:

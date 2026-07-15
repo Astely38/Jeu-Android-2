@@ -260,3 +260,7 @@ static func paint(parent: Node2D, half_w: float, theme: Dictionary) -> void:
 			Vector2(sx + r, sy), Vector2(sx, sy + r),
 		]), speck)
 		s += 1
+
+	# 9) Fin liseré très clair au tout bord supérieur : la lumière rasante
+	# accroche l'arête et détache la plateforme du fond.
+	_rect(parent, half_w - 2.0, TOP - 2.0, TOP, Color(top_light.r, top_light.g, top_light.b, 0.5))

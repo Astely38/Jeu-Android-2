@@ -375,6 +375,28 @@ func dash() -> void:
 	# (couche 2) : l'esquive passe au travers des charges du Gardien.
 	set_collision_mask_value(2, false)
 	sfx_dash.play()
+	_spawn_speed_lines()
+
+## Lignes de vitesse : traits horizontaux qui fusent derrière Eneko au
+## départ de la Ruée, glissent vers l'arrière et s'effacent — sensation
+## de vitesse pure.
+func _spawn_speed_lines() -> void:
+	for i in 5:
+		var line := Polygon2D.new()
+		var len_x := 26.0 + float(i % 3) * 14.0
+		line.polygon = PackedVector2Array([
+			Vector2(0, -1.4), Vector2(len_x, -0.6), Vector2(len_x, 0.6), Vector2(0, 1.4),
+		])
+		line.color = Color(0.7, 0.9, 1.0, 0.55)
+		var oy := -30.0 + float(i) * 14.0
+		line.position = Vector2(-facing * 18.0, oy)
+		line.scale.x = -facing
+		add_child(line)
+		var t := line.create_tween()
+		t.set_parallel(true)
+		t.tween_property(line, "position:x", line.position.x - facing * 60.0, 0.28)
+		t.tween_property(line, "modulate:a", 0.0, 0.28)
+		t.chain().tween_callback(line.queue_free)
 
 ## Image rémanente bleutée semée pendant la ruée, qui s'estompe vite.
 func _spawn_ghost() -> void:

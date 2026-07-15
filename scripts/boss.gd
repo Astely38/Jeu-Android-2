@@ -61,6 +61,7 @@ var _base_tint := Color(1, 1, 1)
 @onready var aura: Sprite2D = get_node_or_null("Aura")
 
 var _sfx_slam: AudioStreamPlayer
+var _aura_base_scale := Vector2.ONE
 
 func _ready() -> void:
 	if Challenge.kensei:
@@ -73,6 +74,8 @@ func _ready() -> void:
 	])
 	_play("idle")
 	_base_tint = anim.modulate
+	if aura != null:
+		_aura_base_scale = aura.scale
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
 	_sfx_slam = AudioStreamPlayer.new()
@@ -104,10 +107,15 @@ func activate() -> void:
 	active = true
 
 func _physics_process(delta: float) -> void:
-	# Aura sombre pulsante, plus intense à chaque phase.
+	# Aura pulsante : elle vire du violet sombre au rouge de rage et enfle
+	# à chaque phase — signal visuel clair de la fureur croissante du Gardien.
 	_t += delta
 	if aura != null:
-		aura.modulate.a = 0.18 + 0.07 * float(phase) + 0.08 * sin(_t * 3.0)
+		var rage := (float(phase) - 1.0) / 2.0  # 0 → 1 de la phase 1 à 3
+		var a := 0.18 + 0.08 * float(phase) + 0.08 * sin(_t * 3.0)
+		aura.modulate = Color(0.55 + 0.45 * rage, 0.25 + 0.08 * rage, 0.55 - 0.4 * rage, a)
+		var sc := 1.0 + 0.05 * float(phase) + 0.06 * rage * sin(_t * (3.5 + float(phase)))
+		aura.scale = _aura_base_scale * sc
 
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
