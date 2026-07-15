@@ -500,14 +500,21 @@ func _show_endgame_recap(results: Dictionary) -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(bg)
 
+	# Récap dans un conteneur défilant : l'histoire finale et le teaser
+	# peuvent s'étendre sans jamais être tronqués.
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.offset_left = 60.0
+	scroll.offset_right = -60.0
+	scroll.offset_top = 22.0
+	scroll.offset_bottom = -22.0
+	layer.add_child(scroll)
+
 	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_CENTER)
-	box.offset_left = -330.0
-	box.offset_right = 330.0
-	box.offset_top = -235.0
-	box.offset_bottom = 235.0
-	box.add_theme_constant_override("separation", 6)
-	layer.add_child(box)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 8)
+	scroll.add_child(box)
+	UiScroll.make_touch_friendly(scroll)
 
 	var title := Label.new()
 	title.text = "La Flamme d'Aube renaît !"
@@ -524,6 +531,15 @@ func _show_endgame_recap(results: Dictionary) -> void:
 	epilogue.add_theme_font_size_override("font_size", 16)
 	epilogue.add_theme_color_override("font_color", Color(0.94, 0.9, 0.82))
 	box.add_child(epilogue)
+
+	var farewell := Label.new()
+	farewell.text = "Léonie : « Merci, Eneko. Ma lumière peut enfin se reposer... mais garde ta lame près de toi. »"
+	farewell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	farewell.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	farewell.custom_minimum_size = Vector2(640, 0)
+	farewell.add_theme_font_size_override("font_size", 16)
+	farewell.add_theme_color_override("font_color", Color(1.0, 0.86, 0.5))
+	box.add_child(farewell)
 
 	box.add_child(_spacer(6.0))
 
@@ -562,6 +578,32 @@ func _show_endgame_recap(results: Dictionary) -> void:
 	var menu_b := _recap_button("Retour au menu", Color(0.6, 0.5, 0.45))
 	menu_b.pressed.connect(_on_menu_pressed)
 	buttons.add_child(menu_b)
+
+	# --- Amorce du chapitre suivant : la vraie source de l'Ombre s'éveille.
+	box.add_child(_spacer(18.0))
+	var suite := Label.new()
+	suite.text = "À suivre…"
+	suite.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	suite.add_theme_font_size_override("font_size", 22)
+	suite.add_theme_color_override("font_color", Color(1.0, 0.82, 0.4))
+	box.add_child(suite)
+
+	var chap := Label.new()
+	chap.text = "Chapitre II — Les Rivages de Cendre"
+	chap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	chap.add_theme_font_size_override("font_size", 18)
+	chap.add_theme_color_override("font_color", Color(0.85, 0.8, 0.9))
+	box.add_child(chap)
+
+	var hook := Label.new()
+	hook.text = "Dans son dernier souffle, le Gardien a murmuré : « Je n'étais que le premier à tomber... L'Ombre a une source, par-delà la mer de brume. Et elle s'éveille. » La Voie du Sabre ne fait que commencer."
+	hook.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hook.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hook.custom_minimum_size = Vector2(640, 0)
+	hook.add_theme_font_size_override("font_size", 15)
+	hook.add_theme_color_override("font_color", Color(0.82, 0.8, 0.86))
+	box.add_child(hook)
+	box.add_child(_spacer(10.0))
 
 ## Une ligne du récapitulatif : nom du niveau, meilleur grade (coloré) et
 ## meilleur temps.
