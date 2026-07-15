@@ -487,6 +487,15 @@ func _build_braziers() -> void:
 		halo.position = Vector2(0, -46.0)
 		b.add_child(halo)
 		_halos.append(halo)
+		# Reflet chaud du brasier sur la chaussée mouillée par la pluie :
+		# une flaque de lumière étirée au sol qui vacille avec la flamme.
+		var pool := Sprite2D.new()
+		pool.texture = mist_tex
+		pool.modulate = Color(1.0, 0.55, 0.22, 0.16)
+		pool.scale = Vector2(3.0, 0.7)
+		pool.position = Vector2(0, 4.0)
+		b.add_child(pool)
+		_halos.append(pool)
 		var flame := Polygon2D.new()
 		flame.position = Vector2(0, -36.0)
 		flame.polygon = PackedVector2Array([

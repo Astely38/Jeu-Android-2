@@ -78,6 +78,8 @@ var _boss_intro_done := false
 var _barriers: Array = []
 ## Rais de lumière de l'arène : chacun balance et respire (voir _process).
 var _shafts: Array = []
+## Bannières de l'approche : elles ondulent doucement (voir _process).
+var _banners: Array = []
 var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
@@ -131,6 +133,9 @@ func _process(delta: float) -> void:
 		var ph: float = s["phase"]
 		n.position.x = float(s["base_x"]) + sin(_t * 0.5 + ph) * 14.0
 		n.color.a = 0.06 + 0.05 * (0.5 + 0.5 * sin(_t * 0.8 + ph))
+	for bnr in _banners:
+		var bn: Polygon2D = bnr["node"]
+		bn.rotation = 0.12 * sin(_t * 1.6 + float(bnr["phase"]))
 
 # --- Construction du niveau ---------------------------------------------
 
@@ -213,9 +218,11 @@ func _build_decor() -> void:
 	bg.add_child(banners)
 	var bx := 400.0
 	while bx < ARENA_TRIGGER_X:
-		_poly(banners, PackedVector2Array([
+		var cloth := _poly(banners, PackedVector2Array([
 			Vector2(-14, 0), Vector2(14, 0), Vector2(14, 90), Vector2(0, 78), Vector2(-14, 90),
 		]), Color(0.95, 0.9, 0.8, 0.85), Vector2(bx, 250.0))
+		# La bannière ondule doucement, comme sous une brise sacrée.
+		_banners.append({"node": cloth, "phase": bx * 0.013})
 		_poly(banners, _rect_points(2.0, -40.0, 90.0), GOLD_TRIM, Vector2(bx, 250.0))
 		bx += 420.0
 
