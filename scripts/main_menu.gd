@@ -309,23 +309,43 @@ func _open_prologue() -> void:
 	add_child(_prologue)
 
 	var dim := ColorRect.new()
-	dim.color = Color(0.02, 0.02, 0.06, 0.88)
+	dim.color = Color(0.02, 0.02, 0.06, 0.9)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_prologue.add_child(dim)
 
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 18)
-	box.position = Vector2(130, 70)
-	box.custom_minimum_size = Vector2(700, 0)
-	_prologue.add_child(box)
-
+	# Titre figé en haut : toujours visible, ne défile pas.
 	var title := Label.new()
 	title.text = "La Voie du Sabre"
-	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(130, 20)
 	title.custom_minimum_size = Vector2(700, 0)
-	box.add_child(title)
+	title.size = Vector2(700, 40)
+	_prologue.add_child(title)
+
+	# Croix de fermeture en haut à droite : accessible même sans lire.
+	var close := Button.new()
+	close.text = "✕"
+	close.add_theme_font_size_override("font_size", 24)
+	close.position = Vector2(872, 14)
+	close.custom_minimum_size = Vector2(52, 44)
+	_style_button(close, Color(0.55, 0.3, 0.3))
+	close.pressed.connect(_close_prologue)
+	_prologue.add_child(close)
+
+	# Corps défilable : le texte long ne peut plus cacher le bouton.
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(130, 72)
+	scroll.custom_minimum_size = Vector2(700, 400)
+	scroll.size = Vector2(700, 400)
+	UiScroll.make_touch_friendly(scroll)
+	_prologue.add_child(scroll)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 18)
+	box.custom_minimum_size = Vector2(668, 0)
+	scroll.add_child(box)
 
 	var story := Label.new()
 	story.text = "Jadis, la Flamme d'Aube brûlait au cœur du Sanctuaire, et sa lumière tenait les Ombres loin des vivants.\n\nMais le Gardien qui la veillait a sombré dans le désespoir. La Flamme s'est éteinte — et les Ombres ont submergé la clairière, le temple, le village, la montagne.\n\nLéonie, dernier éclat de cette lumière, a trouvé Eneko : le seul dont la lame porte encore la clarté des aïeux.\n\nTon but : rassembler les éclats de la Flamme dispersés dans les terres souillées, atteindre le Sanctuaire, et délivrer le Gardien de sa corruption pour rallumer la Flamme d'Aube. Telle est la Voie du Sabre."
@@ -333,13 +353,13 @@ func _open_prologue() -> void:
 	story.add_theme_color_override("font_color", Color(0.95, 0.92, 0.86))
 	story.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	story.custom_minimum_size = Vector2(700, 0)
+	story.custom_minimum_size = Vector2(668, 0)
 	box.add_child(story)
 
 	var start := Button.new()
 	start.text = "Commencer l'aventure"
 	start.add_theme_font_size_override("font_size", 22)
-	start.custom_minimum_size = Vector2(700, 52)
+	start.custom_minimum_size = Vector2(668, 52)
 	_style_button(start, Color(0.92, 0.65, 0.3))
 	start.pressed.connect(_close_prologue)
 	box.add_child(start)
