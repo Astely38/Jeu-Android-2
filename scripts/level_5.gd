@@ -76,6 +76,9 @@ var boss: CharacterBody2D = null
 var _arena_triggered := false
 var _boss_intro_done := false
 var _barriers: Array = []
+## Rais de lumière de l'arène : chacun balance et respire (voir _process).
+var _shafts: Array = []
+var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -117,6 +120,16 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	if motes != null and is_instance_valid(player):
 		motes.position = Vector2(player.position.x, player.position.y - 200.0)
+
+## Anime les rais de lumière de l'arène : léger balancement horizontal et
+## respiration de l'intensité, chacun à son propre rythme.
+func _process(delta: float) -> void:
+	_t += delta
+	for s in _shafts:
+		var n: Polygon2D = s["node"]
+		var ph: float = s["phase"]
+		n.position.x = float(s["base_x"]) + sin(_t * 0.5 + ph) * 14.0
+		n.color.a = 0.06 + 0.05 * (0.5 + 0.5 * sin(_t * 0.8 + ph))
 
 # --- Construction du niveau ---------------------------------------------
 
@@ -163,10 +176,12 @@ func _build_decor() -> void:
 	var si := 0
 	while sx < LEVEL_END:
 		var sw := 55.0 + float(si * 31 % 45)
-		_poly(shafts, PackedVector2Array([
+		var beam := _poly(shafts, PackedVector2Array([
 			Vector2(-sw, 0), Vector2(sw * 0.4, 0),
 			Vector2(sw * 1.7, 560), Vector2(sw * 0.3, 560),
 		]), Color(1.0, 0.95, 0.75, 0.09), Vector2(sx, -10))
+		# Chaque rai balance doucement et respire à son propre rythme.
+		_shafts.append({"node": beam, "base_x": sx, "phase": float(si) * 1.4})
 		sx += 520.0 + float(si * 43 % 240)
 		si += 1
 

@@ -84,6 +84,7 @@ var _portal_used := false
 
 func _ready() -> void:
 	_build_decor()
+	Atmosphere.add_foreground(self, Color(0.06, 0.13, 0.08, 0.34))
 	_build_platforms()
 	PlatformPainter.build_sanctuary(self, 890.0, GROUND_Y - 50.0)
 	_build_checkpoints()

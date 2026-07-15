@@ -96,6 +96,7 @@ var _t := 0.0
 
 func _ready() -> void:
 	_build_decor()
+	Atmosphere.add_foreground(self, Color(0.07, 0.07, 0.13, 0.32))
 	_build_platforms()
 	_build_braziers()
 	_build_checkpoints()

@@ -106,6 +106,7 @@ var _wind_active := false
 
 func _ready() -> void:
 	_build_decor()
+	Atmosphere.add_foreground(self, Color(0.11, 0.12, 0.17, 0.3))
 	_build_platforms()
 	_build_cairns()
 	_build_bridges()

@@ -325,6 +325,30 @@ func _on_landed() -> void:
 		var t := create_tween()
 		t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.15)
 		_land_dust.restart()
+	# Réception franche : une onde de poussière s'étale au sol.
+	if _fall_speed > 520.0:
+		_spawn_landing_ring()
+		_shake = maxf(_shake, 3.0)
+
+## Anneau de poussière qui s'élargit et s'efface au point d'atterrissage
+## (posé sur le niveau : il reste au sol pendant qu'Eneko repart).
+func _spawn_landing_ring() -> void:
+	var ring := Line2D.new()
+	ring.width = 4.0
+	ring.default_color = Color(0.88, 0.83, 0.68, 0.55)
+	var pts := PackedVector2Array()
+	for k in 22:
+		var a := k * TAU / 22.0
+		pts.append(Vector2(cos(a) * 11.0, sin(a) * 4.0))
+	pts.append(pts[0])
+	ring.points = pts
+	ring.global_position = global_position + Vector2(0, 26.0)
+	get_parent().add_child(ring)
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(ring, "scale", Vector2(4.6, 4.6), 0.42)
+	t.tween_property(ring, "modulate:a", 0.0, 0.42)
+	t.chain().tween_callback(ring.queue_free)
 
 func _jump_held() -> bool:
 	return _touch_jump_held \
