@@ -81,6 +81,8 @@ const LEONIE_LINES := [
 var sfx_win: AudioStreamPlayer
 var wisps: CPUParticles2D
 var rain: CPUParticles2D
+var _flash: ColorRect
+var _bolt_t := 3.0
 var _flames: Array = []
 var _halos: Array = []
 var _t := 0.0
@@ -115,11 +117,37 @@ func _ready() -> void:
 	next_button.visible = next_scene != ""
 	if next_scene != "":
 		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+	_build_lightning()
 	# Survol d'introduction : du torii, à travers le village, jusqu'à Eneko.
 	player.intro_pan(Vector2(GOAL_X, 380.0))
 
+## Voile blanc qui servira aux éclairs de l'orage.
+func _build_lightning() -> void:
+	var fl := CanvasLayer.new()
+	fl.layer = 2
+	add_child(fl)
+	_flash = ColorRect.new()
+	_flash.color = Color(0.82, 0.86, 1.0, 0.0)
+	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fl.add_child(_flash)
+
+## Un éclair : double flash bref qui illumine tout l'écran.
+func _lightning() -> void:
+	if _flash == null:
+		return
+	var t := create_tween()
+	t.tween_property(_flash, "color:a", 0.5, 0.07)
+	t.tween_property(_flash, "color:a", 0.0, 0.13)
+	t.tween_property(_flash, "color:a", 0.34, 0.05)
+	t.tween_property(_flash, "color:a", 0.0, 0.28)
+
 func _process(delta: float) -> void:
 	_t += delta
+	_bolt_t -= delta
+	if _bolt_t <= 0.0:
+		_bolt_t = randf_range(6.5, 13.0)
+		_lightning()
 	for i in _flames.size():
 		var f: Polygon2D = _flames[i]
 		f.scale.y = 1.0 + 0.16 * sin(_t * 8.0 + i * 1.7)
@@ -631,6 +659,9 @@ func _setup_audio() -> void:
 
 func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
 	if body == player:
+		if not cp.has_meta("lit"):
+			cp.set_meta("lit", true)
+			Atmosphere.spark_burst(self, cp.global_position, Color(0.5, 1.0, 0.6))
 		player.set_checkpoint(Vector2(cp.global_position.x, SPAWN_Y))
 		flag.color = Color(0.4, 0.9, 0.5, 0.95)
 

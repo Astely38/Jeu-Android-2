@@ -48,6 +48,31 @@ static func release_soul(host: Node, at: Vector2, tint: Color) -> void:
 	t.tween_property(soul, "modulate:a", 0.0, 1.0)
 	t.chain().tween_callback(soul.queue_free)
 
+## Gerbe d'étincelles ponctuelle (one-shot) posée sur le niveau, qui se
+## libère puis se nettoie toute seule. Sert de récompense visuelle
+## (checkpoint allumé, etc.).
+static func spark_burst(host: Node, at: Vector2, tint: Color) -> void:
+	if host == null or not is_instance_valid(host):
+		return
+	var b := CPUParticles2D.new()
+	b.one_shot = true
+	b.emitting = true
+	b.explosiveness = 0.9
+	b.amount = 18
+	b.lifetime = 0.7
+	b.direction = Vector2(0, -1)
+	b.spread = 180.0
+	b.gravity = Vector2(0, 80)
+	b.initial_velocity_min = 45.0
+	b.initial_velocity_max = 135.0
+	b.scale_amount_min = 1.2
+	b.scale_amount_max = 2.8
+	b.color = tint
+	b.z_index = 3
+	host.add_child(b)
+	b.global_position = at
+	b.finished.connect(b.queue_free)
+
 ## Ajoute un plan de silhouettes sombres en avant-plan (feuillages suspendus
 ## en haut, herbes en bas), défilant plus vite que le décor pour créer de la
 ## profondeur. Basé sur Parallax2D (Node2D) : il respecte le z-index, donc il

@@ -106,6 +106,24 @@ static func build_sanctuary(level: Node2D, x: float, ground_y: float) -> void:
 	petals.color = Color(1.0, 0.86, 0.5, 0.6)
 	shrine.add_child(petals)
 
+	# Lucioles dorées qui vagabondent doucement autour du sanctuaire.
+	var flies := CPUParticles2D.new()
+	flies.position = Vector2(0, -42)
+	flies.amount = 7
+	flies.lifetime = 3.6
+	flies.preprocess = 3.6
+	flies.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	flies.emission_rect_extents = Vector2(74, 42)
+	flies.direction = Vector2(0, -1)
+	flies.spread = 180.0
+	flies.gravity = Vector2.ZERO
+	flies.initial_velocity_min = 4.0
+	flies.initial_velocity_max = 13.0
+	flies.scale_amount_min = 1.2
+	flies.scale_amount_max = 2.2
+	flies.color = Color(1.0, 0.9, 0.5, 0.85)
+	shrine.add_child(flies)
+
 static func _poly(parent: Node, pts: PackedVector2Array, color: Color) -> void:
 	var p := Polygon2D.new()
 	p.polygon = pts

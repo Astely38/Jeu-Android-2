@@ -53,14 +53,19 @@ func _process(delta: float) -> void:
 	# de la tête d'Eneko ; le follet flotte, jamais tout à fait immobile.
 	position = Vector2(cos(_t * 1.6) * 15.0 - 6.0, -34.0 + sin(_t * 2.3) * 6.0)
 	var pulse := 0.5 + 0.5 * sin(_t * 3.0)
-	# Sous la bénédiction de Léonie, le follet s'embrase et bat plus vite.
-	var blessed := false
+	# Sous la bénédiction de Léonie, le follet s'embrase et bat plus vite ;
+	# il pétille aussi brièvement quand Eneko ramasse un éclat de lumière.
+	var boost := 1.0
+	var scale_mult := 1.0
 	var p := get_parent()
 	if p != null and p.get("blessed") == true:
-		blessed = true
 		pulse = 0.5 + 0.5 * sin(_t * 6.0)
-	var boost := 1.7 if blessed else 1.0
+		boost = 1.7
+		scale_mult = 1.35
+	elif p != null and float(p.get("_orb_flash")) > 0.0:
+		boost = 1.5
+		scale_mult = 1.25
 	_glow.modulate.a = minf(1.0, (0.32 + 0.26 * pulse) * boost)
-	var s := (0.58 + 0.16 * pulse) * (1.35 if blessed else 1.0)
+	var s := (0.58 + 0.16 * pulse) * scale_mult
 	_glow.scale = Vector2(s, s)
 	_core.scale = Vector2(0.85 + 0.25 * pulse, 0.85 + 0.25 * pulse)

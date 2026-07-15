@@ -72,6 +72,8 @@ var _bless_aura: Sprite2D
 const COMBO_WINDOW := 5.0
 var _combo := 0
 var _combo_timer := 0.0
+## Bref éclat du feu follet quand un éclat de lumière est ramassé.
+var _orb_flash := 0.0
 var _combo_label: Label
 
 @onready var attack_area: Area2D = $AttackArea
@@ -184,6 +186,8 @@ func _physics_process(delta: float) -> void:
 		_combo_timer -= delta
 		if _combo_timer <= 0.0:
 			_end_combo()
+	if _orb_flash > 0.0:
+		_orb_flash -= delta
 
 	# Verrou d'animation (attaque / touché).
 	if lock_timer > 0.0:
@@ -610,6 +614,7 @@ func collect_orb(count: int = 1) -> void:
 		orb_label.text = "x%d" % orbs
 	sfx_orb.play()
 	_orb_burst.restart()
+	_orb_flash = 0.45  # le feu follet de Léonie s'illumine : la Flamme grandit
 	_update_heart_hint()
 
 ## Compte à rebours vers le prochain cœur (un tous les 5 orbes).
