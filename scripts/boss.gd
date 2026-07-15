@@ -62,6 +62,8 @@ var _base_tint := Color(1, 1, 1)
 
 var _sfx_slam: AudioStreamPlayer
 var _aura_base_scale := Vector2.ONE
+## Fissures rougeoyantes qui s'ouvrent sur le corps du Gardien à chaque phase.
+var _cracks: Array = []
 
 func _ready() -> void:
 	if Challenge.kensei:
@@ -116,6 +118,10 @@ func _physics_process(delta: float) -> void:
 		aura.modulate = Color(0.55 + 0.45 * rage, 0.25 + 0.08 * rage, 0.55 - 0.4 * rage, a)
 		var sc := 1.0 + 0.05 * float(phase) + 0.06 * rage * sin(_t * (3.5 + float(phase)))
 		aura.scale = _aura_base_scale * sc
+	if _cracks.size() > 0:
+		var cp := 0.45 + 0.35 * sin(_t * 5.0)
+		for cr in _cracks:
+			cr.modulate.a = cp
 
 	if not is_on_floor():
 		velocity.y += GRAVITY * delta
@@ -297,6 +303,28 @@ func _play(n: String) -> void:
 		_cur = n
 		anim.play(n)
 
+## Ouvre deux fissures rougeoyantes sur le corps du Gardien (appelé à chaque
+## montée de phase : la corruption le lézarde de plus en plus).
+func _spawn_cracks() -> void:
+	for c in 2:
+		var line := Line2D.new()
+		line.width = 2.0
+		line.default_color = Color(1.0, 0.45, 0.2, 1.0)
+		var ox := -14.0 + randf() * 28.0
+		var oy := -36.0 + randf() * 24.0
+		var pts := PackedVector2Array([Vector2(ox, oy)])
+		var seg := 3 + (randi() % 2)
+		var k := 0
+		while k < seg:
+			ox += randf_range(-8.0, 8.0)
+			oy += randf_range(6.0, 12.0)
+			pts.append(Vector2(ox, oy))
+			k += 1
+		line.points = pts
+		line.z_index = 1
+		anim.add_child(line)
+		_cracks.append(line)
+
 func _on_hitbox_body_entered(body: Node2D) -> void:
 	if _dying or not active:
 		return
@@ -321,6 +349,7 @@ func die() -> void:
 	if new_phase > phase:
 		phase = new_phase
 		phase_changed.emit(phase)
+		_spawn_cracks()
 	_hurt_timer = 0.3
 	sfx_hurt.play()
 	anim.modulate = Color(1.8, 1.8, 1.8)

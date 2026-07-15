@@ -98,6 +98,7 @@ var frost_trail: CPUParticles2D
 var _wind_t := 0.0
 var _wind_dir := 1.0
 var _wind_active := false
+var _step_dist := 0.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -146,6 +147,13 @@ func _physics_process(delta: float) -> void:
 	if frost_trail != null:
 		frost_trail.position = Vector2(player.position.x, player.position.y + 6.0)
 
+	# Traces de pas enfoncées dans la neige, semées à intervalles réguliers.
+	if player.is_on_floor() and absf(player.velocity.x) > 30.0:
+		_step_dist += absf(player.velocity.x) * delta
+		if _step_dist >= 46.0:
+			_step_dist = 0.0
+			_spawn_footprint()
+
 	# Cycle des rafales de vent.
 	_wind_t += delta
 	var in_gust := fmod(_wind_t, WIND_PERIOD) < WIND_DURATION
@@ -167,6 +175,22 @@ func _physics_process(delta: float) -> void:
 
 ## Souffle glacé : de la brume pâle s'échappe autour d'Eneko et reste en
 ## place derrière lui (coords globales), comme une haleine dans le froid.
+## Empreinte creusée dans la neige au pied d'Eneko, qui s'efface lentement.
+func _spawn_footprint() -> void:
+	var f := Polygon2D.new()
+	var pts := PackedVector2Array()
+	for k in 8:
+		var a := k * TAU / 8.0
+		pts.append(Vector2(cos(a) * 7.0, sin(a) * 3.0))
+	f.polygon = pts
+	f.color = Color(0.42, 0.47, 0.58, 0.5)
+	f.global_position = player.global_position + Vector2(-player.facing * 6.0, 28.0)
+	add_child(f)
+	var t := create_tween()
+	t.tween_interval(2.2)
+	t.tween_property(f, "modulate:a", 0.0, 2.0)
+	t.finished.connect(f.queue_free)
+
 func _build_frost_trail() -> void:
 	frost_trail = CPUParticles2D.new()
 	frost_trail.local_coords = false

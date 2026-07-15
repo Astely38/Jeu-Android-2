@@ -98,6 +98,7 @@ func _ready() -> void:
 	_build_decor()
 	Atmosphere.add_foreground(self, Color(0.07, 0.07, 0.13, 0.32))
 	_build_platforms()
+	_build_puddles()
 	_build_braziers()
 	_build_checkpoints()
 	_build_traps()
@@ -325,6 +326,31 @@ func _build_platforms() -> void:
 			Vector2(-hw, -50), Vector2(-hw + 26, -50), Vector2(-hw + 18, -56), Vector2(-hw - 2, -52),
 		]), Color(0.32, 0.44, 0.28, 0.7))
 		add_child(body)
+
+## Flaques d'eau sur quelques terrasses : elles reflètent la lune d'un
+## reflet pâle qui scintille (le reflet est un halo pulsant).
+func _build_puddles() -> void:
+	for idx in [2, 6, 10]:
+		var p: Vector2 = PLATFORMS[idx]
+		var pud := Node2D.new()
+		pud.position = Vector2(p.x, _surface_y(idx) + 2.0)
+		add_child(pud)
+		var water := PackedVector2Array()
+		var k := 0
+		while k < 16:
+			var a := k * TAU / 16.0
+			water.append(Vector2(cos(a) * 48.0, sin(a) * 8.0))
+			k += 1
+		_poly(pud, water, Color(0.28, 0.36, 0.55, 0.35))
+		_poly(pud, PackedVector2Array([
+			Vector2(-48, -3), Vector2(48, -3), Vector2(46, -1), Vector2(-46, -1),
+		]), Color(0.5, 0.56, 0.72, 0.4))
+		var glint := Sprite2D.new()
+		glint.texture = load("res://assets/mist.svg")
+		glint.modulate = Color(0.82, 0.88, 1.0, 0.25)
+		glint.scale = Vector2(1.7, 0.42)
+		pud.add_child(glint)
+		_halos.append(glint)
 
 ## Braseros sur trépied aux flammes dansantes, posés sur des terrasses.
 func _build_braziers() -> void:

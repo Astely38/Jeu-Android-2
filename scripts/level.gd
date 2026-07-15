@@ -77,6 +77,8 @@ var pollen: CPUParticles2D
 var _portal_used := false
 ## Touffes d'herbe qui ondulent au vent et frémissent au passage d'Eneko.
 var _grass: Array = []
+## Oiseaux posés qui s'envolent quand Eneko approche.
+var _birds: Array = []
 var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
@@ -98,6 +100,7 @@ func _ready() -> void:
 	_build_secret_portal()
 	_build_tutorial_signs()
 	_build_grass()
+	_build_birds()
 	_build_kill_zone()
 	_spawn_entities()
 	_setup_audio()
@@ -632,6 +635,25 @@ func _build_grass() -> void:
 				bi += 1
 			_grass.append({"node": clump, "base_x": cx, "phase": cx * 0.02})
 
+## Oiseaux noirs posés au sol le long du chemin.
+func _build_birds() -> void:
+	var bird_c := Color(0.14, 0.1, 0.15)
+	for bx in [720.0, 2000.0, 3300.0, 4650.0, 5950.0]:
+		var b := Node2D.new()
+		b.position = Vector2(float(bx), GROUND_Y - 52.0)
+		b.z_index = 1
+		_poly(b, PackedVector2Array([
+			Vector2(-6, 0), Vector2(6, 0), Vector2(5, -7), Vector2(-4, -6),
+		]), bird_c)
+		_poly(b, PackedVector2Array([
+			Vector2(3, -6), Vector2(9, -9), Vector2(4, -3),
+		]), bird_c)
+		_poly(b, PackedVector2Array([
+			Vector2(-6, -5), Vector2(-14, -7), Vector2(-5, -2),
+		]), bird_c)
+		add_child(b)
+		_birds.append({"node": b, "base_x": float(bx), "flown": false})
+
 func _process(delta: float) -> void:
 	_t += delta
 	var px := player.position.x if is_instance_valid(player) else -100000.0
@@ -641,6 +663,28 @@ func _process(delta: float) -> void:
 		var dx: float = float(g["base_x"]) - px
 		var near := clampf((90.0 - absf(dx)) / 90.0, 0.0, 1.0)
 		node.rotation = wind + 0.5 * near * signf(dx)
+	for bd in _birds:
+		if bool(bd["flown"]):
+			continue
+		if absf(float(bd["base_x"]) - px) < 130.0:
+			bd["flown"] = true
+			_fly_away(bd["node"], px)
+
+## Envol effarouché : l'oiseau file vers le haut, à l'opposé d'Eneko, en
+## battant des ailes, puis disparaît.
+func _fly_away(node: Node2D, px: float) -> void:
+	var dir := signf(node.position.x - px)
+	if dir == 0.0:
+		dir = 1.0
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(node, "position", node.position + Vector2(dir * 300.0, -260.0), 1.3)
+	t.tween_property(node, "modulate:a", 0.0, 1.3)
+	t.chain().tween_callback(node.queue_free)
+	var flap := node.create_tween()
+	flap.set_loops(7)
+	flap.tween_property(node, "rotation", 0.3 * dir, 0.09)
+	flap.tween_property(node, "rotation", -0.1 * dir, 0.09)
 
 func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
 	if body == player:
