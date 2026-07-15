@@ -101,6 +101,7 @@ func _ready() -> void:
 	attack_area.area_entered.connect(_on_attack_area_area_entered)
 	_build_combo_label()
 	_add_contact_shadow(30.0)
+	add_child(GuardianWisp.new())  # le feu follet de Léonie veille sur Eneko
 	if Challenge.kensei:
 		health = _max_health()
 		_update_hearts()
