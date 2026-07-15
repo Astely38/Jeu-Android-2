@@ -510,6 +510,22 @@ func _build_braziers() -> void:
 		flame.add_child(inner)
 		b.add_child(flame)
 		_flames.append(flame)
+		# Vapeur : la pluie qui grésille sur les braises monte en volutes pâles.
+		var steam := CPUParticles2D.new()
+		steam.position = Vector2(0, -34.0)
+		steam.amount = 10
+		steam.lifetime = 2.4
+		steam.local_coords = false
+		steam.direction = Vector2(0, -1)
+		steam.spread = 18.0
+		steam.gravity = Vector2(0, -22.0)
+		steam.initial_velocity_min = 14.0
+		steam.initial_velocity_max = 28.0
+		steam.scale_amount_min = 2.0
+		steam.scale_amount_max = 4.0
+		steam.color = Color(0.85, 0.85, 0.9, 0.16)
+		steam.texture = mist_tex
+		b.add_child(steam)
 		add_child(b)
 
 ## Points de contrôle : lanternes de pierre (tōrō) dont la flamme

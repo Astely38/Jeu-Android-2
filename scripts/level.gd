@@ -79,6 +79,10 @@ var _portal_used := false
 var _grass: Array = []
 ## Oiseaux posés qui s'envolent quand Eneko approche.
 var _birds: Array = []
+## Papillons qui voltigent en suivant un chemin sinueux.
+var _butterflies: Array = []
+## Taches de lumière dorée qui dansent au sol sous la frondaison.
+var _dapples: Array = []
 var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
@@ -101,6 +105,8 @@ func _ready() -> void:
 	_build_tutorial_signs()
 	_build_grass()
 	_build_birds()
+	_build_dapples()
+	_build_butterflies()
 	_build_kill_zone()
 	_spawn_entities()
 	_setup_audio()
@@ -654,6 +660,61 @@ func _build_birds() -> void:
 		add_child(b)
 		_birds.append({"node": b, "base_x": float(bx), "flown": false})
 
+## Taches de soleil filtrées par les feuilles : ovales dorés très diffus posés
+## au sol, qui dérivent lentement et respirent en intensité.
+func _build_dapples() -> void:
+	var tex: Texture2D = load("res://assets/mist.svg")
+	var dx := 300.0
+	var di := 0
+	while dx < LEVEL_END:
+		var s := Sprite2D.new()
+		s.texture = tex
+		s.modulate = Color(1.0, 0.9, 0.55, 0.14)
+		var sc := 1.4 + float(di % 3) * 0.5
+		s.scale = Vector2(sc, sc * 0.4)
+		s.position = Vector2(dx, GROUND_Y - 46.0 - float(di % 2) * 8.0)
+		s.z_index = 0
+		add_child(s)
+		_dapples.append({
+			"node": s, "base_x": dx, "phase": dx * 0.01,
+			"amp": 24.0 + float(di % 3) * 12.0, "a0": 0.14,
+		})
+		dx += 420.0 + float(di * 53 % 160)
+		di += 1
+
+## Papillons : deux ailes triangulaires qui battent, portés sur un vol sinueux
+## autour d'un point d'attache le long du chemin.
+func _build_butterflies() -> void:
+	var cols := [
+		Color(0.98, 0.72, 0.3), Color(0.95, 0.5, 0.55),
+		Color(0.85, 0.85, 0.95), Color(0.7, 0.55, 0.85),
+	]
+	var bx := 620.0
+	var bi := 0
+	while bx < LEVEL_END:
+		var col: Color = cols[bi % cols.size()]
+		var b := Node2D.new()
+		b.position = Vector2(bx, GROUND_Y - 150.0 - float(bi % 3) * 40.0)
+		b.z_index = 3
+		add_child(b)
+		var lw := _poly(b, PackedVector2Array([
+			Vector2(0, 0), Vector2(-11, -8), Vector2(-9, 6),
+		]), col)
+		var rw := _poly(b, PackedVector2Array([
+			Vector2(0, 0), Vector2(11, -8), Vector2(9, 6),
+		]), col)
+		_poly(b, PackedVector2Array([
+			Vector2(-1, -5), Vector2(1, -5), Vector2(1, 6), Vector2(-1, 6),
+		]), Color(0.15, 0.1, 0.12))
+		_butterflies.append({
+			"node": b, "lw": lw, "rw": rw,
+			"base": b.position, "phase": bx * 0.03,
+			"rx": 90.0 + float(bi % 3) * 30.0, "ry": 34.0 + float(bi % 2) * 16.0,
+			"spd": 0.5 + float(bi % 3) * 0.18,
+		})
+		bx += 780.0 + float(bi * 47 % 260)
+		bi += 1
+
 func _process(delta: float) -> void:
 	_t += delta
 	var px := player.position.x if is_instance_valid(player) else -100000.0
@@ -669,6 +730,28 @@ func _process(delta: float) -> void:
 		if absf(float(bd["base_x"]) - px) < 130.0:
 			bd["flown"] = true
 			_fly_away(bd["node"], px)
+	for dp in _dapples:
+		var dn: Sprite2D = dp["node"]
+		var ph: float = float(dp["phase"])
+		dn.position.x = float(dp["base_x"]) + float(dp["amp"]) * sin(_t * 0.35 + ph)
+		var a: float = float(dp["a0"]) * (0.6 + 0.4 * sin(_t * 0.8 + ph * 1.7))
+		dn.modulate.a = a
+	for bf in _butterflies:
+		var bn: Node2D = bf["node"]
+		var ph2: float = float(bf["phase"])
+		var spd: float = float(bf["spd"])
+		var base: Vector2 = bf["base"]
+		var nx := base.x + float(bf["rx"]) * sin(_t * spd + ph2)
+		var ny := base.y + float(bf["ry"]) * sin(_t * spd * 2.0 + ph2) * 0.6
+		bn.position = Vector2(nx, ny)
+		# Face au sens du vol.
+		bn.scale.x = 1.0 if cos(_t * spd + ph2) >= 0.0 else -1.0
+		# Battement d'ailes.
+		var flap := 0.55 + 0.45 * sin(_t * 14.0 + ph2)
+		var lw: Polygon2D = bf["lw"]
+		var rw: Polygon2D = bf["rw"]
+		lw.scale.x = flap
+		rw.scale.x = flap
 
 ## Envol effarouché : l'oiseau file vers le haut, à l'opposé d'Eneko, en
 ## battant des ailes, puis disparaît.

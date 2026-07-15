@@ -87,6 +87,9 @@ var embers: CPUParticles2D
 var _flames: Array = []
 var _halos: Array = []
 var _t := 0.0
+## Ciel : couche presque fixe où filent les étoiles filantes.
+var _sky: ParallaxLayer
+var _meteor_cd := 3.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -131,6 +134,35 @@ func _process(delta: float) -> void:
 	for i in _halos.size():
 		var h: Sprite2D = _halos[i]
 		h.modulate.a = 0.17 + 0.06 * sin(_t * 5.0 + i * 1.3)
+	# Étoiles filantes : de loin en loin, une traînée file dans le ciel.
+	_meteor_cd -= delta
+	if _meteor_cd <= 0.0 and _sky != null:
+		_meteor_cd = randf_range(3.5, 8.0)
+		_spawn_meteor()
+
+## Une étoile filante : traînée lumineuse qui traverse le ciel en diagonale
+## puis s'efface. Purement décoratif, dans la couche du ciel.
+func _spawn_meteor() -> void:
+	var start := Vector2(randf_range(200.0, 1000.0), randf_range(-40.0, 140.0))
+	var dir := Vector2(-1.0, 0.5).normalized()
+	var len := randf_range(70.0, 130.0)
+	var trail := Line2D.new()
+	trail.width = 2.2
+	trail.default_color = Color(0.9, 0.95, 1.0, 0.0)
+	trail.points = PackedVector2Array([start, start + dir * len])
+	# Dégradé : tête vive, queue estompée.
+	var grad := Gradient.new()
+	grad.set_color(0, Color(1, 1, 1, 0.0))
+	grad.set_color(1, Color(0.85, 0.92, 1.0, 0.95))
+	trail.gradient = grad
+	trail.z_index = -1
+	_sky.add_child(trail)
+	var travel := dir * randf_range(360.0, 520.0)
+	var tw := trail.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(trail, "position", travel, 0.7)
+	tw.tween_property(trail, "modulate:a", 0.0, 0.7).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(trail.queue_free)
 
 func _physics_process(_delta: float) -> void:
 	if embers != null and is_instance_valid(player):
@@ -176,6 +208,7 @@ func _build_decor() -> void:
 	var sky := ParallaxLayer.new()
 	sky.motion_scale = Vector2(0.05, 0.05)
 	bg.add_child(sky)
+	_sky = sky
 	var moon_glow := Sprite2D.new()
 	moon_glow.texture = mist_tex
 	moon_glow.modulate = Color(0.8, 0.85, 1.0, 0.35)
