@@ -133,6 +133,8 @@ func _build_decor() -> void:
 			Vector2(-1.7, 0), Vector2(0, -1.7), Vector2(1.7, 0), Vector2(0, 1.7),
 		]), Color(1.0, 0.95, 0.85, 0.55), Vector2(sx, sy))
 		si += 1
+	# Voiles nuageux dorés de l'aube qui dérivent au-dessus de la mer de nuages.
+	TextureLab.add_clouds(sky_layer, 5, 130.0, 320.0, LEVEL_END, Color(1.0, 0.88, 0.66, 0.17))
 
 	# Îles lointaines qui flottent à l'horizon, avec leur pointe qui pend.
 	var far := ParallaxLayer.new()

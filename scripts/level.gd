@@ -215,6 +215,8 @@ func _build_decor() -> void:
 			]), Color(1, 1, 1, 0.55), Vector2(cx, cy))
 		cx += 650.0 + float(ci * 37 % 140)
 		ci += 1
+	# Voiles nuageux texturés qui dérivent doucement au-dessus des amas.
+	TextureLab.add_clouds(clouds, 6, 30.0, 170.0, LEVEL_END, Color(1, 1, 1, 0.16))
 
 	# Vols d'oiseaux : petits chevrons sombres par groupes de trois.
 	var bx := 500.0

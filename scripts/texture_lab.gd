@@ -39,6 +39,55 @@ static func platform_grain() -> NoiseTexture2D:
 		_grain = mottle(128, 0.05, 1337, 0.55, 3)
 	return _grain
 
+## Cache : texture de voile nuageux (nuages vaporeux tuilables).
+static var _cloud: NoiseTexture2D
+
+## Voile nuageux doux et tuilable : bruit fractal fondu vers le blanc, avec
+## un seuil qui ne garde que les crêtes (aspect vaporeux, pas un aplat).
+static func cloud_veil() -> NoiseTexture2D:
+	if _cloud == null:
+		var n := FastNoiseLite.new()
+		n.noise_type = FastNoiseLite.TYPE_PERLIN
+		n.frequency = 0.014
+		n.fractal_octaves = 4
+		n.seed = 909
+		var t := NoiseTexture2D.new()
+		t.width = 256
+		t.height = 256
+		t.seamless = true
+		t.generate_mipmaps = false
+		var g := Gradient.new()
+		g.set_color(0, Color(1.0, 1.0, 1.0, 0.0))
+		g.set_color(1, Color(1.0, 1.0, 1.0, 0.9))
+		g.add_point(0.52, Color(1.0, 1.0, 1.0, 0.0))
+		t.color_ramp = g
+		t.noise = n
+		_cloud = t
+	return _cloud
+
+## Sème quelques voiles nuageux texturés dans une couche de ciel, chacun
+## teinté par `tint` et animé d'une lente oscillation horizontale (dérive
+## sans saut). `span` = largeur du niveau.
+static func add_clouds(layer: Node2D, count: int, y0: float, y1: float,
+		span: float, tint: Color) -> void:
+	var i := 0
+	while i < count:
+		var s := Sprite2D.new()
+		s.texture = cloud_veil()
+		var bx := 200.0 + span * float(i) / float(count) + float((i * 137) % 200)
+		var by := y0 + (y1 - y0) * float((i * 53) % 100) / 100.0
+		s.position = Vector2(bx, by)
+		s.scale = Vector2(2.6 + float(i % 3) * 0.7, 0.9 + float(i % 2) * 0.3)
+		var a := tint.a * (0.7 + 0.3 * float(i % 3))
+		s.modulate = Color(tint.r, tint.g, tint.b, a)
+		layer.add_child(s)
+		var drift := 26.0 + float(i % 3) * 12.0
+		var dur := 7.0 + float(i % 4) * 2.0
+		var tw := s.create_tween().set_loops()
+		tw.tween_property(s, "position:x", bx + drift, dur).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(s, "position:x", bx - drift, dur).set_trans(Tween.TRANS_SINE)
+		i += 1
+
 ## Ajoute une surcouche de grain tuilé sur un polygone rectangulaire donné.
 ## `alpha` règle la force globale ; `off` décale la texture pour varier.
 static func add_grain(parent: Node2D, half_w: float, top: float, bottom: float,

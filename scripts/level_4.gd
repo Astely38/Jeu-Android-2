@@ -325,6 +325,8 @@ func _build_decor() -> void:
 		})
 		bx += 1100.0 + float(bi * 71 % 350)
 		bi += 1
+	# Voiles nuageux d'altitude, pâles et froids, qui dérivent lentement.
+	TextureLab.add_clouds(sky, 5, 90.0, 210.0, LEVEL_END, Color(0.92, 0.95, 1.0, 0.14))
 
 	# Pics lointains, bleu-gris, sommets enneigés.
 	var far := ParallaxLayer.new()
