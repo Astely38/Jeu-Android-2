@@ -62,6 +62,8 @@ var _base_tint := Color(1, 1, 1)
 
 var _sfx_slam: AudioStreamPlayer
 var _aura_base_scale := Vector2.ONE
+## Voile texturé qui tourbillonne derrière le Gardien (rage grandissante).
+var _swirl: Sprite2D
 ## Fissures rougeoyantes qui s'ouvrent sur le corps du Gardien à chaque phase.
 var _cracks: Array = []
 
@@ -78,6 +80,14 @@ func _ready() -> void:
 	_base_tint = anim.modulate
 	if aura != null:
 		_aura_base_scale = aura.scale
+		# Voile texturé de corruption, tourbillonnant derrière le Gardien.
+		_swirl = Sprite2D.new()
+		_swirl.texture = TextureLab.cloud_veil()
+		_swirl.scale = Vector2(0.7, 0.7)
+		_swirl.modulate = Color(0.5, 0.2, 0.5, 0.2)
+		_swirl.z_index = -1
+		add_child(_swirl)
+		move_child(_swirl, 0)
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
 	_sfx_slam = AudioStreamPlayer.new()
@@ -118,6 +128,13 @@ func _physics_process(delta: float) -> void:
 		aura.modulate = Color(0.55 + 0.45 * rage, 0.25 + 0.08 * rage, 0.55 - 0.4 * rage, a)
 		var sc := 1.0 + 0.05 * float(phase) + 0.06 * rage * sin(_t * (3.5 + float(phase)))
 		aura.scale = _aura_base_scale * sc
+	if _swirl != null:
+		var rage2 := (float(phase) - 1.0) / 2.0
+		_swirl.rotation += delta * (0.5 + 0.7 * rage2)
+		var sa := 0.16 + 0.12 * rage2 + 0.05 * sin(_t * 2.4)
+		_swirl.modulate = Color(0.5 + 0.45 * rage2, 0.2, 0.55 - 0.4 * rage2, sa)
+		var ss := 0.7 + 0.12 * float(phase)
+		_swirl.scale = Vector2(ss, ss)
 	if _cracks.size() > 0:
 		var cp := 0.45 + 0.35 * sin(_t * 5.0)
 		for cr in _cracks:
