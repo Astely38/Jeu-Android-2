@@ -13,18 +13,19 @@ extends Node2D
 ## Distance maximale de projection vers le sol.
 @export var max_drop := 320.0
 
-var _ellipse: Polygon2D
+## Ombre DOUCE : un dégradé radial aplati (mist.svg), sans bord dur, qui
+## s'estompe naturellement — bien plus soigné qu'une ellipse polygonale.
+var _shadow: Sprite2D
+var _base := 1.0
 var _exclude: Array = []
 
 func _ready() -> void:
-	_ellipse = Polygon2D.new()
-	_ellipse.color = Color(0, 0, 0, 0.3)
-	var pts := PackedVector2Array()
-	for i in 18:
-		var a := i * TAU / 18.0
-		pts.append(Vector2(cos(a) * width, sin(a) * width * 0.32))
-	_ellipse.polygon = pts
-	add_child(_ellipse)
+	_shadow = Sprite2D.new()
+	_shadow.texture = load("res://assets/mist.svg")
+	_shadow.modulate = Color(0.0, 0.0, 0.05, 0.45)
+	add_child(_shadow)
+	# mist.svg fait 64 px : on aplatit un disque doux à la largeur voulue.
+	_base = (width * 2.1) / 64.0
 	var parent := get_parent()
 	if parent is CollisionObject2D:
 		_exclude = [parent.get_rid()]
@@ -37,13 +38,13 @@ func _physics_process(_delta: float) -> void:
 	q.exclude = _exclude
 	var hit := space.intersect_ray(q)
 	if hit.is_empty():
-		_ellipse.visible = false
+		_shadow.visible = false
 		return
-	_ellipse.visible = true
+	_shadow.visible = true
 	var pos: Vector2 = hit["position"]
 	var drop: float = pos.y - from.y
-	# k = 1 au ras du sol, décroît avec la hauteur.
+	# k = 1 au ras du sol, décroît avec la hauteur (ombre plus petite/pâle).
 	var k := clampf(1.0 - drop / max_drop, 0.4, 1.0)
-	_ellipse.global_position = pos
-	_ellipse.scale = Vector2(k, k)
-	_ellipse.color.a = 0.32 * k
+	_shadow.global_position = pos + Vector2(0.0, 1.0)
+	_shadow.scale = Vector2(_base * k, _base * 0.42 * k)
+	_shadow.modulate.a = 0.4 * k

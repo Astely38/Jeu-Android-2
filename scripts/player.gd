@@ -61,12 +61,9 @@ var _touch_jump_held := false
 var _was_on_floor := false
 var _fall_speed := 0.0
 var _shake := 0.0
-## Bruitages créés en code : pas, atterrissage, impact sur un ennemi.
-var _sfx_step: AudioStreamPlayer
+## Bruitages créés en code : atterrissage, impact sur un ennemi.
 var _sfx_land: AudioStreamPlayer
 var _sfx_hit: AudioStreamPlayer
-## Distance parcourue au sol depuis le dernier bruit de pas.
-var _step_dist := 0.0
 var _dash_timer := 0.0
 var _dash_cd := 0.0
 var _ghost_timer := 0.0
@@ -115,7 +112,6 @@ func _ready() -> void:
 	_build_combo_label()
 	_add_contact_shadow(30.0)
 	add_child(GuardianWisp.new())  # le feu follet de Léonie veille sur Eneko
-	_sfx_step = _make_sfx("res://assets/sfx/footstep.wav", -14.0)
 	_sfx_land = _make_sfx("res://assets/sfx/land.wav", -6.0)
 	_sfx_hit = _make_sfx("res://assets/sfx/enemy_hit.wav", -4.0)
 	# Cœurs supplémentaires (mode détente) puis vie de départ au maximum.
@@ -260,15 +256,6 @@ func _physics_process(delta: float) -> void:
 
 	if _dust != null:
 		_dust.emitting = is_on_floor() and absf(velocity.x) > 40.0
-
-	# Bruits de pas cadencés pendant la course au sol.
-	if is_on_floor() and absf(velocity.x) > 40.0:
-		_step_dist += absf(velocity.x) * delta
-		if _step_dist >= 42.0:
-			_step_dist = 0.0
-			Sfx.varied(_sfx_step, 0.88, 1.14)
-	else:
-		_step_dist = 42.0  # le prochain pas sonne dès la reprise de course
 
 	# Coyote time, buffer de saut et impact d'atterrissage.
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
