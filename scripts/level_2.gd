@@ -92,6 +92,9 @@ var _sky: ParallaxLayer
 var _meteor_cd := 3.0
 ## Lucioles qui errent dans la nuit et pulsent leur lueur (voir _process).
 var _fireflies: Array = []
+## Positions des flaques ; des ondulations y troublent la surface.
+var _puddles: Array = []
+var _ripple_cd := 1.5
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -151,6 +154,34 @@ func _process(delta: float) -> void:
 	if _meteor_cd <= 0.0 and _sky != null:
 		_meteor_cd = randf_range(3.5, 8.0)
 		_spawn_meteor()
+	# Ondulations qui troublent la surface des flaques de lune.
+	_ripple_cd -= delta
+	if _ripple_cd <= 0.0 and not _puddles.is_empty():
+		_ripple_cd = randf_range(1.2, 2.6)
+		_spawn_puddle_ripple()
+
+## Rond d'onde bleuté qui s'élargit sur une flaque au hasard.
+func _spawn_puddle_ripple() -> void:
+	var base: Vector2 = _puddles[randi() % _puddles.size()]
+	var pos := base + Vector2(randf_range(-30.0, 30.0), randf_range(-2.0, 3.0))
+	var ring := Line2D.new()
+	ring.width = 1.5
+	ring.default_color = Color(0.72, 0.82, 1.0, 0.45)
+	ring.closed = true
+	var pts := PackedVector2Array()
+	var k := 0
+	while k < 14:
+		var a := k * TAU / 14.0
+		pts.append(Vector2(cos(a) * 8.0, sin(a) * 2.4))
+		k += 1
+	ring.points = pts
+	ring.position = pos
+	add_child(ring)
+	var tw := ring.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ring, "scale", Vector2(3.2, 3.2), 1.1)
+	tw.tween_property(ring, "modulate:a", 0.0, 1.1)
+	tw.chain().tween_callback(ring.queue_free)
 
 ## Une étoile filante : traînée lumineuse qui traverse le ciel en diagonale
 ## puis s'efface. Purement décoratif, dans la couche du ciel.
@@ -408,6 +439,7 @@ func _build_puddles() -> void:
 		var pud := Node2D.new()
 		pud.position = Vector2(p.x, _surface_y(idx) + 2.0)
 		add_child(pud)
+		_puddles.append(pud.position)
 		var water := PackedVector2Array()
 		var k := 0
 		while k < 16:
