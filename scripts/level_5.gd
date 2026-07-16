@@ -105,6 +105,7 @@ func _ready() -> void:
 	_build_crumbles()
 	_build_checkpoints()
 	_build_traps()
+	_build_hazards()
 	_build_arena_trigger()
 	_build_kill_zone()
 	_spawn_entities()
@@ -353,6 +354,18 @@ func _build_checkpoints() -> void:
 		]), GOLD_TRIM)
 		add_child(cp)
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
+
+## Lanceurs de dards spectraux gardant l'approche du sanctuaire : posés au
+## bord droit de deux plateformes, ils tirent vers la gauche — les dards
+## viennent à la rencontre d'Eneko qui avance, et s'esquivent d'un saut.
+func _build_hazards() -> void:
+	for entry in [{"x": 1680.0, "ph": 0.0}, {"x": 3080.0, "ph": 1.2}]:
+		var d := DartLauncher.new()
+		d.position = Vector2(entry["x"], GROUND_Y - 50.0)
+		d.dir = -1.0
+		d.phase = entry["ph"]
+		d.tint = Color(0.7, 0.5, 1.0)
+		add_child(d)
 
 func _build_traps() -> void:
 	for x in TRAP_XS:
