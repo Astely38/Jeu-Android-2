@@ -53,3 +53,18 @@ static func add_grain(parent: Node2D, half_w: float, top: float, bottom: float,
 	p.texture_offset = Vector2(off, off * 0.6)
 	p.color = Color(1.0, 1.0, 1.0, alpha)
 	parent.add_child(p)
+
+## Texture un polygone de forme quelconque (montagne, colline...) avec le
+## grain de matière, à `pos`. Le grain suit les UV = sommets, donc il tuile
+## naturellement sur toute la surface de la forme.
+static func grain_poly(parent: Node2D, points: PackedVector2Array, alpha: float,
+		off: Vector2, pos := Vector2.ZERO) -> Polygon2D:
+	var p := Polygon2D.new()
+	p.polygon = points
+	p.position = pos
+	p.texture = platform_grain()
+	p.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	p.texture_offset = off
+	p.color = Color(1.0, 1.0, 1.0, alpha)
+	parent.add_child(p)
+	return p

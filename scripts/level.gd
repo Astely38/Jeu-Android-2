@@ -171,9 +171,12 @@ func _build_decor() -> void:
 	var mi := 0
 	while mx < LEVEL_END + 900.0:
 		var mh := 220.0 + float(mi * 53 % 100)
-		_poly(mountains, PackedVector2Array([
+		var mtri := PackedVector2Array([
 			Vector2(-280, 0), Vector2(0, -mh), Vector2(280, 0),
-		]), Color(0.55, 0.62, 0.74, 0.6), Vector2(mx, 560))
+		])
+		_poly(mountains, mtri, Color(0.55, 0.62, 0.74, 0.6), Vector2(mx, 560))
+		# Grain rocheux tuilé sur le flanc de la montagne.
+		TextureLab.grain_poly(mountains, mtri, 0.1, Vector2(mx, 0), Vector2(mx, 560))
 		_poly(mountains, PackedVector2Array([
 			Vector2(-34, -mh + 34), Vector2(0, -mh), Vector2(34, -mh + 34), Vector2(0, -mh + 48),
 		]), Color(0.92, 0.94, 0.98, 0.55), Vector2(mx, 560))
@@ -188,10 +191,12 @@ func _build_decor() -> void:
 	mi = 0
 	while mx < LEVEL_END + 900.0:
 		var hh := 150.0 + float(mi * 37 % 70)
-		_poly(hills, PackedVector2Array([
+		var htri := PackedVector2Array([
 			Vector2(-240, 0), Vector2(-80, -hh + 30), Vector2(0, -hh),
 			Vector2(110, -hh + 40), Vector2(240, 0),
-		]), Color(0.44, 0.56, 0.5, 0.55), Vector2(mx, 570))
+		])
+		_poly(hills, htri, Color(0.44, 0.56, 0.5, 0.55), Vector2(mx, 570))
+		TextureLab.grain_poly(hills, htri, 0.12, Vector2(mx * 0.7, 0), Vector2(mx, 570))
 		mx += 340.0 + float(mi * 29 % 90)
 		mi += 1
 

@@ -334,9 +334,11 @@ func _build_decor() -> void:
 	var mi := 0
 	while mx < LEVEL_END + 900.0:
 		var mh := 260.0 + float(mi * 61 % 140)
-		_poly(far, PackedVector2Array([
+		var ftri := PackedVector2Array([
 			Vector2(-320, 0), Vector2(0, -mh), Vector2(320, 0),
-		]), Color(0.5, 0.56, 0.66, 0.55), Vector2(mx, 540))
+		])
+		_poly(far, ftri, Color(0.5, 0.56, 0.66, 0.55), Vector2(mx, 540))
+		TextureLab.grain_poly(far, ftri, 0.09, Vector2(mx, 0), Vector2(mx, 540))
 		_poly(far, PackedVector2Array([
 			Vector2(-42, -mh + 40), Vector2(0, -mh), Vector2(42, -mh + 40), Vector2(0, -mh + 56),
 		]), Color(0.95, 0.96, 1.0, 0.75), Vector2(mx, 540))
@@ -351,10 +353,12 @@ func _build_decor() -> void:
 	mi = 0
 	while mx < LEVEL_END + 900.0:
 		var rh := 170.0 + float(mi * 39 % 90)
-		_poly(near_ridge, PackedVector2Array([
+		var rtri := PackedVector2Array([
 			Vector2(-220, 0), Vector2(-60, -rh + 26), Vector2(20, -rh),
 			Vector2(100, -rh + 34), Vector2(220, 0),
-		]), Color(0.38, 0.4, 0.46, 0.6), Vector2(mx, 560))
+		])
+		_poly(near_ridge, rtri, Color(0.38, 0.4, 0.46, 0.6), Vector2(mx, 560))
+		TextureLab.grain_poly(near_ridge, rtri, 0.14, Vector2(mx * 0.8, 0), Vector2(mx, 560))
 		mx += 360.0 + float(mi * 33 % 100)
 		mi += 1
 
