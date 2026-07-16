@@ -98,6 +98,9 @@ var _t := 0.0
 func _ready() -> void:
 	_build_decor()
 	Atmosphere.add_foreground(self, Color(0.09, 0.05, 0.11, 0.34))
+	# Brume texturée qui roule au ras des dalles trempées par la pluie.
+	TextureLab.add_ground_mist(self, 8, GROUND_Y - 44.0, LEVEL_END,
+		Color(0.62, 0.6, 0.72, 0.12), 1)
 	_build_platforms()
 	_build_braziers()
 	_build_checkpoints()

@@ -95,6 +95,9 @@ var _t := 0.0
 func _ready() -> void:
 	_build_decor()
 	Atmosphere.add_foreground(self, Color(0.06, 0.13, 0.08, 0.34))
+	# Fine brume du matin qui traîne au ras de l'herbe.
+	TextureLab.add_ground_mist(self, 7, GROUND_Y - 44.0, LEVEL_END,
+		Color(0.85, 0.9, 0.85, 0.08), 1)
 	_build_platforms()
 	PlatformPainter.build_sanctuary(self, 890.0, GROUND_Y - 50.0)
 	_build_checkpoints()

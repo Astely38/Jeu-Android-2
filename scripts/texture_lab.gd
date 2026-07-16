@@ -88,6 +88,28 @@ static func add_clouds(layer: Node2D, count: int, y0: float, y1: float,
 		tw.tween_property(s, "position:x", bx - drift, dur).set_trans(Tween.TRANS_SINE)
 		i += 1
 
+## Bancs de brume TEXTURÉE qui roulent au ras du sol : nappes larges et
+## plates, très diffuses, qui dérivent lentement. `y` = hauteur du sol.
+static func add_ground_mist(parent: Node2D, count: int, y: float, span: float,
+		tint: Color, z: int = 2) -> void:
+	var i := 0
+	while i < count:
+		var s := Sprite2D.new()
+		s.texture = cloud_veil()
+		var bx := 150.0 + span * float(i) / float(count) + float((i * 113) % 220)
+		var by := y - float((i * 29) % 26)
+		s.position = Vector2(bx, by)
+		s.scale = Vector2(3.4 + float(i % 3) * 0.9, 0.5 + float(i % 2) * 0.18)
+		s.z_index = z
+		s.modulate = Color(tint.r, tint.g, tint.b, tint.a * (0.7 + 0.3 * float(i % 3)))
+		parent.add_child(s)
+		var drift := 40.0 + float(i % 4) * 14.0
+		var dur := 6.0 + float(i % 4) * 2.0
+		var tw := s.create_tween().set_loops()
+		tw.tween_property(s, "position:x", bx + drift, dur).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(s, "position:x", bx - drift, dur).set_trans(Tween.TRANS_SINE)
+		i += 1
+
 ## Ajoute une surcouche de grain tuilé sur un polygone rectangulaire donné.
 ## `alpha` règle la force globale ; `off` décale la texture pour varier.
 static func add_grain(parent: Node2D, half_w: float, top: float, bottom: float,
