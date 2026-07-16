@@ -11,6 +11,7 @@ var _t := 0.0
 var _options: Control
 var _achievements_panel: Control
 var _prologue: Control
+var _sfx_click: AudioStreamPlayer
 
 func _ready() -> void:
 	# Garde-fou : si on arrive ici pendant un ralenti (hit-stop, mort du
@@ -20,6 +21,11 @@ func _ready() -> void:
 	# toujours en mode normal, la sélection de niveaux le réarme au besoin.
 	Challenge.kensei = false
 	Music.play_world()
+	# Clic d'interface : joué à chaque bouton (routé vers le bus « Sons »).
+	_sfx_click = AudioStreamPlayer.new()
+	_sfx_click.stream = load("res://assets/sfx/ui_click.wav")
+	_sfx_click.volume_db = -8.0
+	add_child(_sfx_click)
 	_build_scenery()
 	_show_version()
 	_build_options_button()
@@ -214,6 +220,9 @@ func _style_button(b: Button, accent: Color) -> void:
 	b.add_theme_color_override("font_color", CREAM)
 	b.add_theme_color_override("font_hover_color", Color(1, 0.98, 0.92))
 	b.add_theme_color_override("font_pressed_color", Color(1, 0.98, 0.92))
+	b.pressed.connect(func() -> void:
+		if _sfx_click != null:
+			Sfx.varied(_sfx_click, 0.96, 1.06))
 
 func _on_continue_pressed() -> void:
 	get_tree().change_scene_to_file(SaveManager.get_last_level_scene())

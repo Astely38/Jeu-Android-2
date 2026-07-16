@@ -57,6 +57,12 @@ var _touch_jump_held := false
 var _was_on_floor := false
 var _fall_speed := 0.0
 var _shake := 0.0
+## Bruitages créés en code : pas, atterrissage, impact sur un ennemi.
+var _sfx_step: AudioStreamPlayer
+var _sfx_land: AudioStreamPlayer
+var _sfx_hit: AudioStreamPlayer
+## Distance parcourue au sol depuis le dernier bruit de pas.
+var _step_dist := 0.0
 var _dash_timer := 0.0
 var _dash_cd := 0.0
 var _ghost_timer := 0.0
@@ -104,6 +110,9 @@ func _ready() -> void:
 	_build_combo_label()
 	_add_contact_shadow(30.0)
 	add_child(GuardianWisp.new())  # le feu follet de Léonie veille sur Eneko
+	_sfx_step = _make_sfx("res://assets/sfx/footstep.wav", -14.0)
+	_sfx_land = _make_sfx("res://assets/sfx/land.wav", -6.0)
+	_sfx_hit = _make_sfx("res://assets/sfx/enemy_hit.wav", -4.0)
 	if Challenge.kensei:
 		health = _max_health()
 		_update_hearts()
@@ -241,6 +250,15 @@ func _physics_process(delta: float) -> void:
 	if _dust != null:
 		_dust.emitting = is_on_floor() and absf(velocity.x) > 40.0
 
+	# Bruits de pas cadencés pendant la course au sol.
+	if is_on_floor() and absf(velocity.x) > 40.0:
+		_step_dist += absf(velocity.x) * delta
+		if _step_dist >= 42.0:
+			_step_dist = 0.0
+			Sfx.varied(_sfx_step, 0.88, 1.14)
+	else:
+		_step_dist = 42.0  # le prochain pas sonne dès la reprise de course
+
 	# Coyote time, buffer de saut et impact d'atterrissage.
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
 	if is_on_floor():
@@ -322,9 +340,20 @@ func _do_jump() -> void:
 	var t := create_tween()
 	t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.18)
 
+## Crée un lecteur de bruitage en code (routé vers le bus « Sons » par le
+## gestionnaire de musique) et le rattache à Eneko.
+func _make_sfx(path: String, vol_db: float) -> AudioStreamPlayer:
+	var p := AudioStreamPlayer.new()
+	p.stream = load(path)
+	p.volume_db = vol_db
+	add_child(p)
+	return p
+
 ## Atterrissage : écrasement du sprite + bouffée de poussière si la chute
 ## était rapide.
 func _on_landed() -> void:
+	if _fall_speed > 120.0:
+		Sfx.varied(_sfx_land, 0.94, 1.08)
 	if _fall_speed > 300.0:
 		anim.scale = Vector2(1.19, 0.78)
 		var t := create_tween()
@@ -675,6 +704,7 @@ func _on_attack_area_body_entered(body: Node2D) -> void:
 		# Ombres d'élite encaisse le premier coup) ; les die() void (boss,
 		# anciens ennemis) renvoient null et comptent comme un coup qui tue.
 		var res: Variant = body.call("die")
+		Sfx.varied(_sfx_hit, 0.9, 1.12)  # claquement du sabre sur la cible
 		if res is bool and bool(res) == false:
 			_shake = 2.0  # le coup a porté, mais l'esprit tient debout
 			SaveManager.vibrate(12)

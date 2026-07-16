@@ -61,6 +61,8 @@ var _base_tint := Color(1, 1, 1)
 @onready var aura: Sprite2D = get_node_or_null("Aura")
 
 var _sfx_slam: AudioStreamPlayer
+## Rugissement de rage joué à chaque montée de phase.
+var _sfx_roar: AudioStreamPlayer
 var _aura_base_scale := Vector2.ONE
 ## Voile texturé qui tourbillonne derrière le Gardien (rage grandissante).
 var _swirl: Sprite2D
@@ -94,6 +96,10 @@ func _ready() -> void:
 	_sfx_slam.stream = load("res://assets/sfx/slam.wav")
 	_sfx_slam.volume_db = -3.0
 	add_child(_sfx_slam)
+	_sfx_roar = AudioStreamPlayer.new()
+	_sfx_roar.stream = load("res://assets/sfx/roar.wav")
+	_sfx_roar.volume_db = -2.0
+	add_child(_sfx_roar)
 	var sh := ContactShadow.new()
 	sh.width = 52.0
 	add_child(sh)
@@ -367,6 +373,8 @@ func die() -> void:
 		phase = new_phase
 		phase_changed.emit(phase)
 		_spawn_cracks()
+		if _sfx_roar != null:
+			_sfx_roar.play()  # rugissement de rage à chaque montée de phase
 	_hurt_timer = 0.3
 	Sfx.varied(sfx_hurt, 0.9, 1.1)
 	anim.modulate = Color(1.8, 1.8, 1.8)
