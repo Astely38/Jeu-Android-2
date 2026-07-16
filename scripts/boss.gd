@@ -25,7 +25,17 @@ const PHASE_SLAM_CD := [4.5, 3.8, 3.0]
 var _kmult := 1.0
 const DASH_SPEED := 380.0
 const DASH_DURATION := 0.45
-const ATTACK_RANGE := 60.0
+const ATTACK_RANGE := 72.0
+## Attaque au sabre en trois temps : armement (télégraphe), frappe (dégât),
+## récupération (fenêtre de riposte). Parable en frappant pendant l'armement.
+const SWING_WINDUP := 0.45
+const SWING_ACTIVE := 0.22
+const SWING_RECOVER := 0.55
+const SWING_RECOVER_PARRIED := 1.0
+const SWING_CD := 0.45
+## Fenêtre de parade : seulement la toute fin de l'armement (+ la frappe).
+## Frapper AVANT ne pare pas — le coup sort quand même : il faut esquiver.
+const PARRY_LEAD := 0.15
 const SLAM_JUMP_VY := -640.0
 const WAVE_SPEED := 300.0
 const VOLLEY_ORB := preload("res://scenes/spirit_orb.tscn")
@@ -49,6 +59,14 @@ var _slam_air := false
 var _waves: Array = []
 var _cur := ""
 var _t := 0.0
+## État de l'attaque au sabre : "" / "windup" / "active" / "recover".
+var _swing := ""
+var _swing_t := 0.0
+var _swing_cd := 0.0
+var _swing_dir := 1.0
+var _swing_did_damage := false
+var _swing_hit: Area2D
+var _swing_warn: Polygon2D
 ## Teinte sombre du sprite (définie dans le .tscn) : les flashs de dégâts
 ## et de charge doivent revenir vers elle, pas vers le blanc.
 var _base_tint := Color(1, 1, 1)
@@ -104,6 +122,28 @@ func _ready() -> void:
 	sh.width = 52.0
 	add_child(sh)
 	move_child(sh, 0)
+
+	# Zone de dégât du coup de sabre (activée uniquement pendant la frappe).
+	_swing_hit = Area2D.new()
+	_swing_hit.monitoring = false
+	var swing_shape := CollisionShape2D.new()
+	var swing_rect := RectangleShape2D.new()
+	swing_rect.size = Vector2(78, 66)
+	swing_shape.shape = swing_rect
+	_swing_hit.add_child(swing_shape)
+	add_child(_swing_hit)
+	_swing_hit.body_entered.connect(_on_swing_hit)
+
+	# Télégraphe : un arc rouge qui grandit devant le Gardien à l'armement.
+	_swing_warn = Polygon2D.new()
+	_swing_warn.polygon = PackedVector2Array([
+		Vector2(6, -54), Vector2(48, -40), Vector2(60, -8), Vector2(48, 20),
+		Vector2(30, 6), Vector2(38, -18), Vector2(18, -34),
+	])
+	_swing_warn.color = Color(1.0, 0.3, 0.25, 0.0)
+	_swing_warn.z_index = 2
+	_swing_warn.visible = false
+	add_child(_swing_warn)
 
 ## Le corps d'Eneko n'est jamais un obstacle physique pour le Gardien :
 ## sans cette exception, la dépénétration du boss « collait » Eneko
@@ -176,6 +216,33 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 
+	# Attaque au sabre en cours : le Gardien est immobile, la logique se
+	# déroule en trois temps (armement télégraphié → frappe → récupération).
+	if _swing != "":
+		_swing_t -= delta
+		velocity.x = 0.0
+		move_and_slide()
+		if _swing == "windup":
+			var w := 1.0 - clampf(_swing_t / (SWING_WINDUP / _kmult), 0.0, 1.0)
+			_swing_warn.color.a = 0.15 + 0.55 * w
+			_swing_warn.scale = Vector2(_swing_dir * (0.7 + 0.3 * w), 0.7 + 0.3 * w)
+			if _swing_t <= 0.0:
+				_begin_swing()
+		elif _swing == "active":
+			if not _swing_did_damage:
+				for b in _swing_hit.get_overlapping_bodies():
+					_on_swing_hit(b)
+			if _swing_t <= 0.0:
+				_swing = "recover"
+				_swing_t = SWING_RECOVER / _kmult
+				_swing_hit.monitoring = false
+		else:  # recover : le Gardien est vulnérable, fenêtre de riposte.
+			if _swing_t <= 0.0:
+				_swing = ""
+				_swing_cd = SWING_CD / _kmult
+				_play("idle")
+		return
+
 	if _attack_lock > 0.0:
 		_attack_lock -= delta
 		velocity.x = 0.0
@@ -186,6 +253,7 @@ func _physics_process(delta: float) -> void:
 
 	_dash_cd -= delta
 	_slam_cd -= delta
+	_swing_cd = maxf(0.0, _swing_cd - delta)
 
 	if player == null or not is_instance_valid(player):
 		velocity.x = move_toward(velocity.x, 0.0, PHASE_SPEED[0])
@@ -316,10 +384,76 @@ func _fire_volley() -> void:
 		orb.speed = 215.0
 		get_parent().add_child(orb)
 
+## Déclenche l'attaque au sabre : phase d'armement (télégraphe). Ignorée si
+## une frappe est déjà en cours ou en temps de recharge.
 func _attack() -> void:
-	# En phase 3 le Gardien enchaîne ses coups plus vite.
-	_attack_lock = 0.6 if phase < 3 else 0.4
+	if _swing != "" or _swing_cd > 0.0:
+		return
+	_swing = "windup"
+	_swing_t = SWING_WINDUP / _kmult
+	_swing_did_damage = false
+	_swing_dir = signf(player.global_position.x - global_position.x) if player != null else 1.0
+	if _swing_dir == 0.0:
+		_swing_dir = 1.0
+	anim.flip_h = _swing_dir < 0.0
 	_play("attack")
+	_swing_warn.position = Vector2(0, 0)
+	_swing_warn.visible = true
+	_swing_warn.color = Color(1.0, 0.3, 0.25, 0.15)
+	# Lueur d'armement (vire au rouge de rage).
+	anim.modulate = Color(1.7, 0.55, 0.5)
+
+## Fin de l'armement : la lame s'abat. La zone de dégât s'ouvre devant le
+## Gardien pendant un bref instant.
+func _begin_swing() -> void:
+	_swing = "active"
+	_swing_t = SWING_ACTIVE
+	_swing_warn.visible = false
+	anim.modulate = _base_tint
+	_swing_hit.position = Vector2(_swing_dir * 46.0, -18.0)
+	_swing_hit.monitoring = true
+	# Éclair blanc de la frappe (arc qui file puis s'efface).
+	var slash := Polygon2D.new()
+	slash.polygon = PackedVector2Array([
+		Vector2(10, -52), Vector2(56, -34), Vector2(64, -4), Vector2(52, 22),
+		Vector2(40, 6), Vector2(46, -16), Vector2(22, -34),
+	])
+	slash.color = Color(1.0, 0.95, 0.9, 0.9)
+	slash.scale = Vector2(_swing_dir, 1.0)
+	slash.z_index = 2
+	add_child(slash)
+	var st := slash.create_tween()
+	st.tween_property(slash, "modulate:a", 0.0, 0.22)
+	st.tween_callback(slash.queue_free)
+	Sfx.varied(_sfx_slam, 1.05, 1.18)
+
+func _on_swing_hit(body: Node2D) -> void:
+	if _swing != "active" or _swing_did_damage:
+		return
+	if body.is_in_group("player") and body.has_method("take_damage"):
+		_swing_did_damage = true
+		body.take_damage(1, global_position)
+
+## PARADE : Eneko frappe le Gardien pendant l'armement de son coup. La lame
+## est déviée, le Gardien chancelle longuement (grande fenêtre de riposte) et
+## Eneko ne subit aucun dégât.
+func _parry() -> void:
+	_swing_did_damage = true  # le coup dévié ne blessera pas Eneko
+	_swing = "recover"
+	_swing_t = SWING_RECOVER_PARRIED / _kmult
+	_swing_hit.monitoring = false
+	_swing_warn.visible = false
+	_swing_cd = SWING_CD / _kmult
+	# Gerbe d'étincelles claires + retour animé, comme un choc de lames.
+	Atmosphere.spark_burst(get_parent(), global_position + Vector2(_swing_dir * 34.0, -32.0),
+		Color(1.0, 0.96, 0.75))
+	SaveManager.vibrate(45)
+	anim.modulate = Color(1.9, 1.9, 2.0)
+	var tw := create_tween()
+	tw.tween_property(anim, "modulate", _base_tint, 0.4)
+	var pl := get_tree().get_first_node_in_group("player")
+	if pl != null:
+		pl.set("_shake", 5.0)
 
 func _play(n: String) -> void:
 	if _cur != n:
@@ -359,6 +493,13 @@ func _on_hitbox_body_entered(body: Node2D) -> void:
 func die() -> void:
 	if _dying or not active:
 		return
+	# PARADE : ne réussit que si Eneko frappe au bon moment — la toute fin de
+	# l'armement ou pendant la frappe elle-même. Frapper trop tôt inflige des
+	# dégâts mais ne dévie PAS le coup (il faudra l'esquiver).
+	var parryable := (_swing == "active" and not _swing_did_damage) \
+		or (_swing == "windup" and _swing_t <= PARRY_LEAD)
+	if parryable:
+		_parry()
 	health -= 1
 	health_changed.emit(health, MAX_HEALTH)
 	if health <= 0:
