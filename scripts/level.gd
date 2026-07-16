@@ -48,8 +48,8 @@ const PLATFORMS := [
 const CHECKPOINT_XS := [1650.0, 3400.0, 5100.0]
 ## La plateforme 2 (630-1150) est le sanctuaire de Léonie : aucun ennemi
 ## ni piège n'y est placé.
-const PATROL_XS := [1550.0, 2200.0, 2750.0, 3450.0, 4700.0, 5900.0, 6500.0]
-const SHADOW_XS := [1600.0, 2560.0, 5300.0, 6480.0]
+const PATROL_XS := [1550.0, 3450.0, 4700.0, 5900.0]
+const SHADOW_XS := [2560.0, 6480.0]
 ## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
 const ELITE_XS := [4100.0]
 ## Pièges à pics : proches d'un bord de plateforme, contournables en marchant

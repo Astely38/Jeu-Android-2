@@ -45,8 +45,8 @@ const PLATFORMS := [
 const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
 ## La plateforme 2440-2920 est le sanctuaire de Léonie : aucun ennemi ni
 ## piège n'y est placé.
-const PATROL_XS := [900.0, 1500.0, 2150.0, 3200.0, 3850.0, 4600.0, 5300.0, 6300.0]
-const SHADOW_XS := [1420.0, 2200.0, 3300.0, 4450.0, 6350.0, 6900.0]
+const PATROL_XS := [900.0, 1500.0, 3850.0, 5300.0, 6300.0]
+const SHADOW_XS := [1420.0, 4450.0, 6350.0, 6900.0]
 ## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
 const ELITE_XS := [5200.0]
 const TRAP_XS := [700.0, 2000.0, 3150.0, 4400.0, 5650.0, 6850.0]
@@ -58,7 +58,7 @@ const BRIDGES := [Vector2(1790, 100), Vector2(4235, 115), Vector2(6080, 110)]
 const CRUMBLES := [Vector2(3620, 70), Vector2(4825, 70)]
 ## Yūrei tireurs : toujours au-dessus d'une plateforme (jamais d'un pont
 ## ni d'un trou), pour ne pas transformer chaque traversée en piège.
-const SPIRIT_XS := [2080.0, 4540.0, 6420.0]
+const SPIRIT_XS := [2080.0]
 ## Ascenseur spirituel : x = centre, y = dessus de la dalle au point bas
 ## (atteignable d'un saut depuis le bord du trou, juste après le sanctuaire).
 ## Il monte de 175 px et dessert les trois orbes bonus placées en hauteur.

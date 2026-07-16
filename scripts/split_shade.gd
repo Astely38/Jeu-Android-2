@@ -1,102 +1,125 @@
 extends CharacterBody2D
-## Gelée d'Ombre : une créature amorphe et gélatineuse (dessinée à la main,
-## PAS le sprite humanoïde des autres ennemis) qui rampe vers Eneko en
-## tremblotant. Tranchée, elle SE DÉDOUBLE bruyamment en deux gelées plus
-## petites qui bondissent de chaque côté. Les petites meurent en un coup.
+## Masque d'Oni : un yokai — masque de démon japonais rouge à cornes et crocs —
+## qui FLOTTE dans l'air en poursuivant Eneko. Tranché, il SE FEND en deux
+## petits masques qui s'écartent en jaillissant, bien visibles. Les petits
+## masques ne se refendent pas et meurent en un coup.
 
-@export var speed := 92.0
-@export var detect_range := 380.0
-@export var attack_range := 40.0
-## Petite gelée issue d'un dédoublement : ne se rescinde pas.
+@export var speed := 74.0
+@export var detect_range := 460.0
 @export var small := false
-## Élan donné aux petites gelées quand elles jaillissent.
-@export var spawn_vx := 0.0
-@export var spawn_vy := 0.0
+@export var spawn_vel := Vector2.ZERO
 
-const GRAVITY := 980.0
 const SELF_SCENE := preload("res://scenes/split_shade.tscn")
-## Corps froid et spectral, distinct des Ombres violettes et des braises.
-const OOZE := Color(0.16, 0.4, 0.5)
-const OOZE_RIM := Color(0.5, 0.95, 1.0)
+const RED := Color(0.72, 0.13, 0.12)
+const RED_DARK := Color(0.5, 0.08, 0.09)
+const BONE := Color(0.93, 0.88, 0.74)
+const EYE := Color(1.0, 0.85, 0.2)
 
 var player: Node2D = null
-var lock_timer := 0.0
 var _dying := false
 var _t := 0.0
 var _face := 1.0
-var _r := 15.0
+var _r := 17.0
+var _lunge_cd := 1.2
 
-var _body: Node2D
-var _blob: Polygon2D
-var _rim: Polygon2D
+var _mask: Node2D
 var _eyes: Array[Polygon2D] = []
-var _glow: Sprite2D
 
 @onready var hitbox: Area2D = $Hitbox
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
 @onready var sfx_die: AudioStreamPlayer = $SfxDie
 
 func _ready() -> void:
+	# Yokai spectral : il flotte et traverse le décor (aucune collision monde).
+	collision_mask = 0
 	if Challenge.kensei:
 		speed *= 1.25
 	if small:
-		_r = 9.0
-		speed *= 1.5
-		detect_range += 80.0
-		velocity = Vector2(spawn_vx, spawn_vy)
-	_build_blob()
+		_r = 11.0
+		speed *= 1.4
+		velocity = spawn_vel
+	_build_mask()
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
 	var sh := ContactShadow.new()
-	sh.width = _r * 1.5
+	sh.width = _r * 1.4
+	sh.max_drop = 520.0
 	add_child(sh)
 	move_child(sh, 0)
 
-## Construit la gelée : halo, corps rond, reflet et deux yeux luisants.
-func _build_blob() -> void:
-	_body = Node2D.new()
-	# La demi-hauteur de la collision est 14 : on pose la gelée au sol.
-	_body.position = Vector2(0, 13.0 - _r)
-	add_child(_body)
+## Construit le masque d'Oni : lueur, face rouge, cornes, sourcils, yeux
+## luisants, gueule à crocs.
+func _build_mask() -> void:
+	_mask = Node2D.new()
+	add_child(_mask)
+	var k := _r / 17.0
 
-	_glow = Sprite2D.new()
-	_glow.texture = load("res://assets/mist.svg")
-	_glow.modulate = Color(OOZE_RIM.r, OOZE_RIM.g, OOZE_RIM.b, 0.25)
-	_glow.scale = Vector2(_r / 16.0, _r / 16.0) * 1.6
-	_body.add_child(_glow)
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(1.0, 0.35, 0.25, 0.3)
+	glow.scale = Vector2(k, k) * 2.0
+	_mask.add_child(glow)
 
-	# Corps rond légèrement aplati.
-	var pts := PackedVector2Array()
-	for i in 20:
-		var a := i * TAU / 20.0
-		pts.append(Vector2(cos(a) * _r, sin(a) * _r * 0.82 + 2.0))
-	_blob = Polygon2D.new()
-	_blob.polygon = pts
-	_blob.color = OOZE
-	_body.add_child(_blob)
+	# Cornes (derrière la face).
+	for s in [-1.0, 1.0]:
+		_poly(PackedVector2Array([
+			Vector2(s * 8, -12), Vector2(s * 20, -30), Vector2(s * 14, -26),
+			Vector2(s * 12, -12),
+		]) , BONE, k)
 
-	# Liseré lumineux sur le dessus.
-	var rim := PackedVector2Array()
-	for i in 11:
-		var a := PI + i * PI / 10.0
-		rim.append(Vector2(cos(a) * _r * 0.92, sin(a) * _r * 0.72 + 1.0))
-	_rim = Polygon2D.new()
-	_rim.polygon = rim
-	_rim.color = Color(OOZE_RIM.r, OOZE_RIM.g, OOZE_RIM.b, 0.5)
-	_body.add_child(_rim)
+	# Face : contour anguleux qui descend en menton pointu.
+	_poly(PackedVector2Array([
+		Vector2(-16, -12), Vector2(-14, -18), Vector2(0, -20), Vector2(14, -18),
+		Vector2(16, -12), Vector2(14, 4), Vector2(6, 16), Vector2(0, 20),
+		Vector2(-6, 16), Vector2(-14, 4),
+	]), RED, k)
+	# Ombrage du bas du visage.
+	_poly(PackedVector2Array([
+		Vector2(-14, 4), Vector2(14, 4), Vector2(6, 16), Vector2(0, 20), Vector2(-6, 16),
+	]), RED_DARK, k)
 
-	# Deux yeux luisants.
-	for sx in [-0.4, 0.4]:
+	# Sourcils froncés.
+	for s in [-1.0, 1.0]:
+		_poly(PackedVector2Array([
+			Vector2(s * 3, -10), Vector2(s * 15, -13), Vector2(s * 15, -8), Vector2(s * 5, -5),
+		]), RED_DARK, k)
+
+	# Yeux luisants.
+	for s in [-1.0, 1.0]:
 		var eye := Polygon2D.new()
 		var ep := PackedVector2Array()
-		for i in 10:
-			var a := i * TAU / 10.0
-			ep.append(Vector2(cos(a) * _r * 0.16, sin(a) * _r * 0.22))
+		for i in 8:
+			var a := i * TAU / 8.0
+			ep.append(Vector2(cos(a) * 3.2, sin(a) * 2.4))
 		eye.polygon = ep
-		eye.position = Vector2(sx * _r, -_r * 0.15)
-		eye.color = Color(0.95, 1.0, 1.0, 0.95)
-		_body.add_child(eye)
+		eye.position = Vector2(s * 8.0 * k, -8.0 * k)
+		eye.color = EYE
+		_mask.add_child(eye)
 		_eyes.append(eye)
+
+	# Gueule sombre + crocs.
+	_poly(PackedVector2Array([
+		Vector2(-9, 6), Vector2(9, 6), Vector2(6, 13), Vector2(-6, 13),
+	]), Color(0.1, 0.03, 0.04), k)
+	for fx in [-6.0, -2.0, 2.0, 6.0]:
+		var up := fx < 0.0
+		if up:
+			_poly(PackedVector2Array([
+				Vector2(fx, 6.5), Vector2(fx + 2.4, 6.5), Vector2(fx + 1.2, 11.5),
+			]), BONE, k)
+		else:
+			_poly(PackedVector2Array([
+				Vector2(fx, 12.5), Vector2(fx + 2.4, 12.5), Vector2(fx + 1.2, 8.0),
+			]), BONE, k)
+
+func _poly(pts: PackedVector2Array, c: Color, k: float) -> void:
+	var p := Polygon2D.new()
+	var scaled := PackedVector2Array()
+	for v in pts:
+		scaled.append(v * k)
+	p.polygon = scaled
+	p.color = c
+	_mask.add_child(p)
 
 func _ignore_player_body() -> void:
 	var pl := get_tree().get_first_node_in_group("player")
@@ -107,46 +130,31 @@ func _physics_process(delta: float) -> void:
 	if _dying:
 		return
 	_t += delta
+	_lunge_cd -= delta
 	if player == null:
 		player = get_tree().get_first_node_in_group("player")
 
-	if not is_on_floor():
-		velocity.y += GRAVITY * delta
-	else:
-		velocity.y = 0.0
+	var desired := Vector2.ZERO
+	if player != null and is_instance_valid(player):
+		var to: Vector2 = player.global_position + Vector2(0, -24) - global_position
+		if to.x != 0.0:
+			_face = signf(to.x)
+		if to.length() < detect_range:
+			desired = to.normalized() * speed
+			# Fonte rapide (« lunge ») de temps en temps quand il est proche.
+			if _lunge_cd <= 0.0 and to.length() < 150.0:
+				_lunge_cd = 2.0
+				desired = to.normalized() * speed * 2.6
 
-	if lock_timer > 0.0:
-		lock_timer -= delta
-
-	if player != null and lock_timer <= 0.0:
-		var dx: float = player.global_position.x - global_position.x
-		var dy: float = player.global_position.y - global_position.y
-		var dist := absf(dx)
-		if dist < detect_range and absf(dy) < 90.0:
-			var dir := signf(dx)
-			if dir != 0.0:
-				_face = dir
-			if dist > attack_range:
-				velocity.x = dir * speed
-			else:
-				velocity.x = 0.0
-				lock_timer = 0.5
-		else:
-			velocity.x = move_toward(velocity.x, 0.0, speed)
-	else:
-		velocity.x = move_toward(velocity.x, 0.0, speed)
-
+	# Poursuite flottante et souple, avec un léger flottement vertical.
+	velocity = velocity.lerp(desired, 0.06)
 	move_and_slide()
+	position.y += sin(_t * 3.0) * 0.4
 
-	# Tremblotement gélatineux + regard qui glisse vers Eneko.
-	if _body != null:
-		var wob := 0.12 * sin(_t * 7.0)
-		_body.scale = Vector2(1.0 + wob, 1.0 - wob)
-		var i := 0
-		for eye in _eyes:
-			var base := (-0.4 if i == 0 else 0.4) * _r
-			eye.position.x = base + _face * _r * 0.14
-			i += 1
+	# Le masque oscille (menaçant) et regarde Eneko.
+	if _mask != null:
+		_mask.scale.x = _face
+		_mask.rotation = 0.08 * sin(_t * 2.2)
 
 func _on_hitbox_body_entered(body: Node2D) -> void:
 	if _dying:
@@ -154,40 +162,39 @@ func _on_hitbox_body_entered(body: Node2D) -> void:
 	if body.has_method("take_damage"):
 		body.take_damage(1, global_position)
 
-## Tranchée : si c'est une grande gelée, elle se DÉDOUBLE (jet d'étincelles +
-## deux moitiés qui bondissent), puis se dissout. Renvoie toujours true.
+## Tranché : un grand masque se FEND en deux petits masques qui jaillissent
+## (éclat au point de rupture), puis se dissout. Renvoie toujours true.
 func die() -> bool:
 	if _dying:
 		return false
 	_dying = true
 	if not small:
 		_split()
-	velocity = Vector2.ZERO
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
-	Sfx.varied(sfx_die, 1.1, 1.3)
-	# Dissolution : le corps s'aplatit et s'efface.
-	if _body != null:
-		var tw := _body.create_tween()
+	Sfx.varied(sfx_die, 0.85, 1.05)
+	# Dissolution : le masque se disloque vers le haut en s'effaçant.
+	if _mask != null:
+		var tw := _mask.create_tween()
 		tw.set_parallel(true)
-		tw.tween_property(_body, "scale", Vector2(1.6, 0.2), 0.28)
-		tw.tween_property(_body, "modulate:a", 0.0, 0.28)
+		tw.tween_property(_mask, "position:y", -26.0, 0.3)
+		tw.tween_property(_mask, "rotation", _face * 1.2, 0.3)
+		tw.tween_property(_mask, "modulate:a", 0.0, 0.3)
 		tw.chain().tween_callback(queue_free)
 	else:
 		queue_free()
 	return true
 
-## Deux petites gelées jaillissent bien visiblement de part et d'autre, avec
-## un éclat lumineux au point de scission.
+## Fait jaillir deux petits masques, l'un vers le haut-gauche, l'autre vers le
+## haut-droite, bien séparés — le dédoublement est impossible à manquer.
 func _split() -> void:
 	var parent := get_parent()
 	if parent == null:
 		return
-	Atmosphere.spark_burst(parent, global_position + Vector2(0, -_r), OOZE_RIM)
+	Atmosphere.spark_burst(parent, global_position + Vector2(0, -6), Color(1.0, 0.5, 0.3))
 	for s in [-1.0, 1.0]:
 		var child := SELF_SCENE.instantiate()
 		child.small = true
-		child.spawn_vx = s * 135.0
-		child.spawn_vy = -250.0
-		child.position = global_position + Vector2(s * 10.0, -8.0)
+		child.spawn_vel = Vector2(s * 190.0, -150.0)
+		child.position = global_position + Vector2(s * 14.0, -4.0)
 		parent.call_deferred("add_child", child)
