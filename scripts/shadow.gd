@@ -68,6 +68,15 @@ func _ignore_player_body() -> void:
 	if pl is PhysicsBody2D:
 		add_collision_exception_with(pl)
 
+## Y a-t-il du sol juste devant, dans la direction `dir` ? (rayon vers le bas
+## à ~26 px en avant). Sert à éviter que l'Ombre ne coure dans un trou.
+func _ground_ahead(dir: float) -> bool:
+	var space := get_world_2d().direct_space_state
+	var from := global_position + Vector2(dir * 26.0, -2.0)
+	var q := PhysicsRayQueryParameters2D.create(from, from + Vector2(0, 52.0), 1)
+	q.exclude = [get_rid()]
+	return not space.intersect_ray(q).is_empty()
+
 func _physics_process(delta: float) -> void:
 	if _dying:
 		return
@@ -95,8 +104,14 @@ func _physics_process(delta: float) -> void:
 			if dir != 0.0:
 				anim.flip_h = dir < 0.0
 			if dist > attack_range:
-				velocity.x = dir * speed
-				moving = true
+				# Ne fonce vers Eneko que s'il y a du sol devant : sinon
+				# l'Ombre s'arrête au bord (plus de chute suicide dans un trou).
+				if is_on_floor() and not _ground_ahead(dir):
+					velocity.x = 0.0
+					moving = false
+				else:
+					velocity.x = dir * speed
+					moving = true
 			else:
 				velocity.x = 0.0
 				_attack()

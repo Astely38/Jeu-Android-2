@@ -53,6 +53,10 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0
 
+	# Demi-tour au bord d'une plateforme : ne patrouille jamais dans le vide.
+	if is_on_floor() and not _ground_ahead(direction):
+		direction *= -1.0
+
 	velocity.x = direction * speed
 	move_and_slide()
 
@@ -60,6 +64,14 @@ func _physics_process(delta: float) -> void:
 		direction *= -1.0
 
 	anim.flip_h = direction < 0.0
+
+## Y a-t-il du sol juste devant, dans la direction `dir` ?
+func _ground_ahead(dir: float) -> bool:
+	var space := get_world_2d().direct_space_state
+	var from := global_position + Vector2(dir * 26.0, -2.0)
+	var q := PhysicsRayQueryParameters2D.create(from, from + Vector2(0, 52.0), 1)
+	q.exclude = [get_rid()]
+	return not space.intersect_ray(q).is_empty()
 
 func _play(n: String) -> void:
 	if _cur != n:
