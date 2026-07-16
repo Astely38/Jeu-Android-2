@@ -96,6 +96,9 @@ var _t := 0.0
 
 func _ready() -> void:
 	_build_decor()
+	# Brume sacrée texturée qui rampe au sol du sanctuaire.
+	TextureLab.add_ground_mist(self, 8, GROUND_Y - 44.0, LEVEL_END,
+		Color(0.86, 0.82, 0.7, 0.1), 1)
 	_build_platforms()
 	_build_glass_floor()
 	_build_pillars()
