@@ -377,7 +377,8 @@ func die() -> void:
 			_sfx_roar.play()  # rugissement de rage à chaque montée de phase
 	_hurt_timer = 0.3
 	Sfx.varied(sfx_hurt, 0.9, 1.1)
-	anim.modulate = Color(1.8, 1.8, 1.8)
+	# Éclat blanc au coup encaissé — atténué si le joueur a réduit les flashs.
+	anim.modulate = Color(1.8, 1.8, 1.8) if SaveManager.setting_on("flash") else Color(1.3, 1.3, 1.3)
 	var tween := create_tween()
 	tween.tween_property(anim, "modulate", _base_tint, 0.25)
 

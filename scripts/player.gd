@@ -113,9 +113,10 @@ func _ready() -> void:
 	_sfx_step = _make_sfx("res://assets/sfx/footstep.wav", -14.0)
 	_sfx_land = _make_sfx("res://assets/sfx/land.wav", -6.0)
 	_sfx_hit = _make_sfx("res://assets/sfx/enemy_hit.wav", -4.0)
+	# Cœurs supplémentaires (mode détente) puis vie de départ au maximum.
+	_ensure_hearts()
+	health = _max_health()
 	if Challenge.kensei:
-		health = _max_health()
-		_update_hearts()
 		_build_kensei_badge()
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SAMURAI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
@@ -273,9 +274,13 @@ func _physics_process(delta: float) -> void:
 	_was_on_floor = is_on_floor()
 
 	# Secousse de caméra (dégâts, coups de sabre) qui s'amortit vite.
+	# Accessibilité : supprimée si le joueur a coupé les secousses d'écran.
 	if _shake > 0.0:
 		_shake = maxf(0.0, _shake - delta * 30.0)
-		camera.offset = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
+		if SaveManager.setting_on("shake"):
+			camera.offset = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
+		else:
+			camera.offset = Vector2.ZERO
 	elif camera.offset != Vector2.ZERO:
 		camera.offset = Vector2.ZERO
 
@@ -599,9 +604,22 @@ func heal_full() -> void:
 	health = _max_health()
 	_update_hearts()
 
-## Plafond de cœurs : 2 en mode Kensei, 3 sinon.
+## Plafond de cœurs : 2 en mode Kensei ; sinon 3, plus le bonus du mode
+## détente (accessibilité) si le joueur l'a activé.
 func _max_health() -> int:
-	return 2 if Challenge.kensei else MAX_HEALTH
+	if Challenge.kensei:
+		return 2
+	return MAX_HEALTH + SaveManager.bonus_hearts()
+
+## Crée au besoin des cœurs d'interface supplémentaires (mode détente) en
+## dupliquant le dernier, pour que la barre de vie affiche jusqu'à 5 cœurs.
+func _ensure_hearts() -> void:
+	while hearts.size() < _max_health():
+		var last: Sprite2D = hearts[hearts.size() - 1]
+		var h: Sprite2D = last.duplicate()
+		h.position = last.position + Vector2(44, 0)
+		last.get_parent().add_child(h)
+		hearts.append(h)
 
 ## Bénédiction de Léonie : une aura dorée entoure Eneko et le prochain
 ## coup encaissé est annulé.

@@ -296,9 +296,23 @@ func _open_options() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 
-	box.add_child(_setting_row("Musique", "music"))
-	box.add_child(_setting_row("Effets sonores", "sfx"))
-	box.add_child(_setting_row("Vibrations", "vibrations"))
+	# Contenu défilable : audio + accessibilité (évite tout débordement).
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(300, 300)
+	UiScroll.make_touch_friendly(scroll)
+	box.add_child(scroll)
+	var rows := VBoxContainer.new()
+	rows.add_theme_constant_override("separation", 12)
+	rows.custom_minimum_size = Vector2(288, 0)
+	scroll.add_child(rows)
+
+	rows.add_child(_setting_row("Musique", "music"))
+	rows.add_child(_setting_row("Effets sonores", "sfx"))
+	rows.add_child(_setting_row("Vibrations", "vibrations"))
+	rows.add_child(_section_label("Accessibilité"))
+	rows.add_child(_setting_row("Secousses d'écran", "shake"))
+	rows.add_child(_setting_row("Flashs lumineux", "flash"))
+	rows.add_child(_setting_row("Mode détente (+2 cœurs)", "assist", false))
 
 	var close := Button.new()
 	close.text = "Fermer"
@@ -486,16 +500,24 @@ func _achievement_row(d: Dictionary) -> Control:
 	v.add_child(desc_l)
 	return row
 
-func _setting_row(label_text: String, key: String) -> HBoxContainer:
+## Petit intertitre de section dans les réglages.
+func _section_label(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 15)
+	l.add_theme_color_override("font_color", Color(0.92, 0.65, 0.3))
+	return l
+
+func _setting_row(label_text: String, key: String, default_on: bool = true) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var lbl := Label.new()
 	lbl.text = label_text
-	lbl.add_theme_font_size_override("font_size", 20)
+	lbl.add_theme_font_size_override("font_size", 19)
 	lbl.add_theme_color_override("font_color", CREAM)
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(lbl)
 	var check := CheckButton.new()
-	check.button_pressed = SaveManager.setting_on(key)
+	check.button_pressed = SaveManager.setting_on(key, default_on)
 	check.toggled.connect(func(on: bool) -> void:
 		SaveManager.set_setting(key, on)
 		Music.apply_settings()

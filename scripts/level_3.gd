@@ -145,10 +145,16 @@ func _lightning() -> void:
 	if _flash == null:
 		return
 	var t := create_tween()
-	t.tween_property(_flash, "color:a", 0.5, 0.07)
-	t.tween_property(_flash, "color:a", 0.0, 0.13)
-	t.tween_property(_flash, "color:a", 0.34, 0.05)
-	t.tween_property(_flash, "color:a", 0.0, 0.28)
+	if SaveManager.setting_on("flash"):
+		# Éclair franc : double flash lumineux.
+		t.tween_property(_flash, "color:a", 0.5, 0.07)
+		t.tween_property(_flash, "color:a", 0.0, 0.13)
+		t.tween_property(_flash, "color:a", 0.34, 0.05)
+		t.tween_property(_flash, "color:a", 0.0, 0.28)
+	else:
+		# Accessibilité (photosensibilité) : une seule lueur douce, sans strobe.
+		t.tween_property(_flash, "color:a", 0.14, 0.35)
+		t.tween_property(_flash, "color:a", 0.0, 0.5)
 
 func _process(delta: float) -> void:
 	_t += delta

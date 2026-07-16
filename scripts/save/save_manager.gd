@@ -141,9 +141,19 @@ func set_prologue_seen() -> void:
 	data["prologue_seen"] = true
 	save_data()
 
-## Réglages du joueur ("music", "sfx", "vibrations") — activés par défaut.
-func setting_on(key: String) -> bool:
-	return bool(data.get("settings", {}).get(key, true))
+## Réglages du joueur ("music", "sfx", "vibrations", "shake", "flash" —
+## activés par défaut ; "assist" — désactivé par défaut). `default_on` permet
+## de choisir la valeur par défaut d'une clé absente de la sauvegarde.
+func setting_on(key: String, default_on: bool = true) -> bool:
+	return bool(data.get("settings", {}).get(key, default_on))
+
+## Mode détente (accessibilité) : désactivé par défaut ; offre des cœurs
+## supplémentaires au joueur qui le souhaite.
+func assist_on() -> bool:
+	return setting_on("assist", false)
+
+func bonus_hearts() -> int:
+	return 2 if assist_on() else 0
 
 func set_setting(key: String, value: bool) -> void:
 	if not data.has("settings"):
