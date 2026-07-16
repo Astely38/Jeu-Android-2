@@ -174,6 +174,12 @@ static func paint(parent: Node2D, half_w: float, theme: Dictionary) -> void:
 		_wavy_band(parent, half_w, 150.0, BOTTOM, 34, seed_i, 11, body_b)
 		_wavy_band(parent, half_w, 320.0, BOTTOM, 40, seed_i, 47, dark)
 
+	# 1b) Grain de matière : voile de mouchetures sombres tuilé sur le corps,
+	# pour que la pierre/terre ne paraisse plus lisse et plate. Décalé selon
+	# la position du bloc pour éviter toute répétition visible.
+	TextureLab.add_grain(parent, half_w, SURF_BOTTOM, 260.0,
+		0.14 if cut else 0.18, float(seed_i % 128))
+
 	# 2) Ombrage des flancs : le bloc paraît arrondi au lieu de tranché.
 	var side_shade := Color(dark.r, dark.g, dark.b, 0.5)
 	_poly(parent, PackedVector2Array([
