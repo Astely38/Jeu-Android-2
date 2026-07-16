@@ -87,6 +87,8 @@ var _flames: Array = []
 var _halos: Array = []
 ## Papillons de nuit qui tournent autour des braseros (voir _process).
 var _moths: Array = []
+## Délai avant la prochaine ondulation de pluie au sol.
+var _ripple_cd := 0.5
 var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
@@ -173,6 +175,36 @@ func _process(delta: float) -> void:
 		mn.scale.x = 1.0 if sin(ang) >= 0.0 else -1.0
 		var rw: Polygon2D = m["rwing"]
 		rw.scale.y = 0.5 + 0.5 * sin(_t * 18.0 + ph)
+	# Ondulations de pluie : gouttes qui frappent le sol trempé près d'Eneko.
+	_ripple_cd -= delta
+	if _ripple_cd <= 0.0 and is_instance_valid(player):
+		_ripple_cd = randf_range(0.25, 0.6)
+		_spawn_ripple()
+
+## Rond d'onde qui s'élargit et s'efface là où une goutte touche le sol,
+## dans un rayon autour d'Eneko (plat, en perspective de sol).
+func _spawn_ripple() -> void:
+	var px: float = player.position.x + randf_range(-260.0, 260.0)
+	var py := GROUND_Y - 46.0 + randf_range(-6.0, 6.0)
+	var ring := Line2D.new()
+	ring.width = 1.6
+	ring.default_color = Color(0.7, 0.8, 0.95, 0.5)
+	ring.closed = true
+	var pts := PackedVector2Array()
+	var k := 0
+	while k < 14:
+		var a := k * TAU / 14.0
+		pts.append(Vector2(cos(a) * 10.0, sin(a) * 3.2))
+		k += 1
+	ring.points = pts
+	ring.position = Vector2(px, py)
+	ring.z_index = 1
+	add_child(ring)
+	var tw := ring.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ring, "scale", Vector2(2.6, 2.6), 0.6)
+	tw.tween_property(ring, "modulate:a", 0.0, 0.6)
+	tw.chain().tween_callback(ring.queue_free)
 
 func _physics_process(_delta: float) -> void:
 	if wisps != null and is_instance_valid(player):
