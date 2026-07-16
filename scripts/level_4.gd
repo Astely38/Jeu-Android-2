@@ -115,6 +115,7 @@ func _ready() -> void:
 	_build_decor()
 	Atmosphere.add_foreground(self, Color(0.11, 0.12, 0.17, 0.3))
 	_build_platforms()
+	_build_hazards()
 	_build_cairns()
 	_build_bridges()
 	_build_crumbles()
@@ -488,6 +489,20 @@ func _build_platforms() -> void:
 			]), Color(0.36, 0.36, 0.4))
 
 		add_child(body)
+
+## Pièges spectraux des sommets : un geyser et une faux teintée de givre, sur
+## des plateformes dégagées (à l'écart des patrouilles, pièges et cairns).
+func _build_hazards() -> void:
+	var gy := SpiritGeyser.new()
+	gy.position = Vector2(2680.0, GROUND_Y - 50.0)
+	gy.phase = 0.3
+	add_child(gy)
+	var pd := SpectralPendulum.new()
+	pd.position = Vector2(4050.0, GROUND_Y - 50.0)
+	pd.arm_len = 145.0
+	pd.phase = 1.1
+	pd.tint = Color(0.6, 0.85, 1.0)  # faux de givre spectral
+	add_child(pd)
 
 ## Cairns décoratifs (piles de pierres) sur certaines plateformes.
 func _build_cairns() -> void:

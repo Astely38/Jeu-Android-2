@@ -104,6 +104,7 @@ func _ready() -> void:
 	TextureLab.add_ground_mist(self, 8, GROUND_Y - 44.0, LEVEL_END,
 		Color(0.62, 0.6, 0.72, 0.12), 1)
 	_build_platforms()
+	_build_hazards()
 	_build_braziers()
 	_build_checkpoints()
 	_build_traps()
@@ -471,6 +472,19 @@ func _build_lantern_string(parent: Node, base: Vector2, mist_tex: Texture2D) -> 
 			k += 1
 		_poly(parent, lpts, Color(1.0, 0.6, 0.26, 0.9), base)
 		li += 1
+
+## Pièges spectraux du temple : un geyser au sol et une faux pendulaire, sur
+## des zones dégagées (à l'écart des braseros, patrouilles et checkpoints).
+func _build_hazards() -> void:
+	var gy := SpiritGeyser.new()
+	gy.position = Vector2(3250.0, GROUND_Y - 50.0)
+	gy.phase = 0.5
+	add_child(gy)
+	var pd := SpectralPendulum.new()
+	pd.position = Vector2(4180.0, GROUND_Y - 50.0)
+	pd.arm_len = 145.0
+	pd.phase = 0.8
+	add_child(pd)
 
 ## Rue du village : terre sombre, pavés, herbes fanées et clôtures.
 func _build_platforms() -> void:

@@ -106,6 +106,7 @@ func _ready() -> void:
 	_build_decor()
 	Atmosphere.add_foreground(self, Color(0.07, 0.07, 0.13, 0.32))
 	_build_platforms()
+	_build_hazards()
 	_build_fireflies()
 	_build_puddles()
 	_build_braziers()
@@ -402,6 +403,21 @@ func _build_platforms() -> void:
 			Vector2(-hw, -50), Vector2(-hw + 26, -50), Vector2(-hw + 18, -56), Vector2(-hw - 2, -52),
 		]), Color(0.32, 0.44, 0.28, 0.7))
 		add_child(body)
+
+## Faux spectrales suspendues aux poutres du temple, sur des terrasses
+## dégagées (ni sanctuaire, ni checkpoint, ni brasero) : on passe dessous
+## quand la lame est écartée. Amplitude réduite, adaptée aux terrasses.
+func _build_hazards() -> void:
+	for entry in [{"idx": 3, "ph": 0.0}, {"idx": 8, "ph": 0.9}]:
+		var idx: int = entry["idx"]
+		var pd := SpectralPendulum.new()
+		pd.max_angle = 0.6
+		pd.arm_len = 128.0
+		pd.pivot_h = 150.0
+		pd.speed = 1.8
+		pd.phase = entry["ph"]
+		pd.position = Vector2(PLATFORMS[idx].x, _surface_y(idx))
+		add_child(pd)
 
 ## Lucioles : petites lueurs jaune-vert qui errent au-dessus des terrasses en
 ## trajectoire de Lissajous et respirent leur éclat, chacune à son rythme.
