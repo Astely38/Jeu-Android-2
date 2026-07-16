@@ -241,7 +241,7 @@ func _start_slam(dx: float) -> void:
 func _on_slam_impact() -> void:
 	_attack_lock = 0.55 if phase < 3 else 0.4
 	_play("idle")
-	_sfx_slam.play()
+	Sfx.varied(_sfx_slam, 0.95, 1.06)
 	SaveManager.vibrate(60)
 	var pl := get_tree().get_first_node_in_group("player")
 	if pl != null:
@@ -368,7 +368,7 @@ func die() -> void:
 		phase_changed.emit(phase)
 		_spawn_cracks()
 	_hurt_timer = 0.3
-	sfx_hurt.play()
+	Sfx.varied(sfx_hurt, 0.9, 1.1)
 	anim.modulate = Color(1.8, 1.8, 1.8)
 	var tween := create_tween()
 	tween.tween_property(anim, "modulate", _base_tint, 0.25)

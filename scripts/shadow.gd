@@ -150,7 +150,7 @@ func die() -> bool:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	_play("dead")
-	sfx_die.play()
+	Sfx.varied(sfx_die, 0.9, 1.12)
 	if elite:
 		_drop_golden_orb()
 		Achievements.unlock("chasseur")

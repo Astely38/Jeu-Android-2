@@ -316,7 +316,7 @@ func jump() -> void:
 func _do_jump() -> void:
 	velocity.y = JUMP_VELOCITY
 	_coyote = 0.0
-	sfx_jump.play()
+	Sfx.varied(sfx_jump, 0.9, 1.1)
 	# Étirement vertical au décollage (squash & stretch).
 	anim.scale = Vector2(0.82, 1.18)
 	var t := create_tween()
@@ -374,7 +374,7 @@ func dash() -> void:
 	# Pendant la ruée (et la marge de sortie), Eneko TRAVERSE les ennemis
 	# (couche 2) : l'esquive passe au travers des charges du Gardien.
 	set_collision_mask_value(2, false)
-	sfx_dash.play()
+	Sfx.varied(sfx_dash, 0.95, 1.08)
 	_spawn_speed_lines()
 
 ## Lignes de vitesse : traits horizontaux qui fusent derrière Eneko au
@@ -465,7 +465,7 @@ func attack() -> void:
 	attacking = true
 	lock_timer = ATTACK_DURATION
 	attack_area.monitoring = true
-	sfx_slash.play()
+	Sfx.varied(sfx_slash, 0.9, 1.12)
 	_play("attack")
 	_spawn_slash_trail()
 
@@ -519,14 +519,14 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 			_bless_aura.visible = false
 		invuln = INVULN_TIME
 		_shake = 4.0
-		sfx_hurt.play()
+		Sfx.varied(sfx_hurt, 0.92, 1.08)
 		SaveManager.vibrate(25)
 		return
 	Challenge.register_damage()
 	_end_combo()
 	health -= amount
 	_update_hearts()
-	sfx_hurt.play()
+	Sfx.varied(sfx_hurt, 0.92, 1.08)
 	_shake = 7.0
 	SaveManager.vibrate(45)
 	if health <= 0:
@@ -551,7 +551,7 @@ func fall_damage() -> void:
 	_end_combo()
 	health -= 1
 	_update_hearts()
-	sfx_hurt.play()
+	Sfx.varied(sfx_hurt, 0.92, 1.08)
 	_shake = 7.0
 	SaveManager.vibrate(45)
 	if health <= 0:
@@ -602,7 +602,7 @@ func _die_and_restart() -> void:
 	Achievements.add_death()
 	health = 0
 	_update_hearts()
-	sfx_hurt.play()
+	Sfx.varied(sfx_hurt, 0.92, 1.08)
 	_flash_game_over()
 	set_physics_process(false)
 	await get_tree().create_timer(1.1).timeout
@@ -655,7 +655,7 @@ func collect_orb(count: int = 1) -> void:
 		orb_label.text = "%d/%d" % [orbs, Challenge.total_orbs]
 	else:
 		orb_label.text = "x%d" % orbs
-	sfx_orb.play()
+	Sfx.varied(sfx_orb, 0.92, 1.12)
 	_orb_burst.restart()
 	_orb_flash = 0.45  # le feu follet de Léonie s'illumine : la Flamme grandit
 	_update_heart_hint()

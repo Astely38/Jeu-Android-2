@@ -100,7 +100,7 @@ func die() -> void:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	anim.play("dead")
-	sfx_die.play()
+	Sfx.varied(sfx_die, 0.9, 1.12)
 	anim.modulate = Color(1.8, 1.8, 1.8, 1.0)
 	var tween := create_tween()
 	tween.tween_property(anim, "modulate", _base_tint, 0.1)

@@ -82,7 +82,7 @@ func die() -> void:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	_play("dead")
-	sfx_die.play()
+	Sfx.varied(sfx_die, 0.9, 1.12)
 	# Flash blanc à l'impact, puis fondu spirituel.
 	anim.modulate = Color(1.8, 1.8, 1.8, 1.0)
 	var tween := create_tween()
