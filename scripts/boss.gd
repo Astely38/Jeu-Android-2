@@ -11,12 +11,12 @@ signal phase_changed(new_phase: int)
 
 const GRAVITY := 980.0
 const SHINOBI := "res://assets/enemies/shinobi/"
-const MAX_HEALTH := 14
+const MAX_HEALTH := 10
 ## Trois phases : la 2 s'active aux 2/3 de la vie, la 3 au dernier tiers.
 ## Chaque phase augmente la vitesse de marche et raccourcit le délai entre
 ## deux charges (la phase 1 ne charge jamais) et entre deux écrasements.
-const PHASE2_HEALTH := 10
-const PHASE3_HEALTH := 5
+const PHASE2_HEALTH := 7
+const PHASE3_HEALTH := 3
 const PHASE_SPEED := [85.0, 130.0, 160.0]
 const PHASE_DASH_CD := [0.0, 2.6, 1.6]
 const PHASE_SLAM_CD := [4.5, 3.8, 3.0]
@@ -484,6 +484,11 @@ func _spawn_cracks() -> void:
 
 func _on_hitbox_body_entered(body: Node2D) -> void:
 	if _dying or not active:
+		return
+	# Le simple contact ne blesse QUE pendant une charge (le Gardien fonce sur
+	# Eneko). Rester près du Gardien immobile est désormais sûr : seul son coup
+	# de sabre télégraphié, ses ondes de choc et ses charges touchent.
+	if _dash_timer <= 0.0 and not _slam_air:
 		return
 	if body.has_method("take_damage"):
 		body.take_damage(1, global_position)

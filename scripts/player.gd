@@ -44,6 +44,8 @@ var lock_timer := 0.0
 ## un coup tournant élargi qui inflige un dégât supplémentaire.
 var _heavy := false
 var _dash_strike_window := 0.0
+## Cibles déjà touchées par le coup de sabre en cours (évite les doublons).
+var _hit_bodies: Array = []
 var anim_time := 0.0
 var orbs := 0
 var start_position := Vector2.ZERO
@@ -201,6 +203,12 @@ func _physics_process(delta: float) -> void:
 		_orb_flash -= delta
 
 	_dash_strike_window = maxf(0.0, _dash_strike_window - delta)
+
+	# Le coup de sabre touche aussi les cibles DÉJÀ au contact (pas seulement
+	# celles qui entrent dans la zone) — indispensable face au boss immobile.
+	if attacking:
+		for b in attack_area.get_overlapping_bodies():
+			_try_hit(b)
 
 	# Verrou d'animation (attaque / touché).
 	if lock_timer > 0.0:
@@ -498,6 +506,7 @@ func attack() -> void:
 	attacking = true
 	lock_timer = ATTACK_DURATION
 	attack_area.monitoring = true
+	_hit_bodies.clear()
 	# Frappe en ruée : si l'attaque suit de près une ruée, c'est un coup
 	# tournant ÉLARGI qui inflige 2 dégâts (idéal pour punir le Gardien).
 	_heavy = _dash_strike_window > 0.0
@@ -751,24 +760,35 @@ func _update_hearts() -> void:
 		hearts[i].visible = i < health
 
 func _on_attack_area_body_entered(body: Node2D) -> void:
-	if body.has_method("die"):
-		# call() : les die() des ennemis renvoient true/false (l'armure des
-		# Ombres d'élite encaisse le premier coup) ; les die() void (boss,
-		# anciens ennemis) renvoient null et comptent comme un coup qui tue.
-		var res: Variant = body.call("die")
-		Sfx.varied(_sfx_hit, 0.9, 1.12)  # claquement du sabre sur la cible
-		# Frappe en ruée : une seconde entaille (2 dégâts, brise l'armure).
-		if _heavy and is_instance_valid(body) and body.has_method("die"):
-			body.call("die")
-		if res is bool and bool(res) == false:
-			_shake = 2.0  # le coup a porté, mais l'esprit tient debout
-			SaveManager.vibrate(12)
-			return
-		Challenge.register_kill()
-		_register_combo_kill()
-		_shake = 3.5  # impact ressenti à chaque coup qui porte
-		SaveManager.vibrate(18)
-		_hit_stop()
+	_try_hit(body)
+
+## Applique un coup de sabre à une cible, une seule fois par attaque. Appelé
+## à l'entrée dans la zone MAIS AUSSI en continu sur les corps déjà au contact
+## (voir _physics_process) : sans ça, un boss immobile collé à Eneko ne
+## déclenche jamais body_entered et ne subit aucun dégât.
+func _try_hit(body: Node2D) -> void:
+	if not attacking or not body.has_method("die"):
+		return
+	if body in _hit_bodies:
+		return
+	_hit_bodies.append(body)
+	# call() : les die() des ennemis renvoient true/false (l'armure des
+	# Ombres d'élite encaisse le premier coup) ; les die() void (boss,
+	# anciens ennemis) renvoient null et comptent comme un coup qui tue.
+	var res: Variant = body.call("die")
+	Sfx.varied(_sfx_hit, 0.9, 1.12)  # claquement du sabre sur la cible
+	# Frappe en ruée : une seconde entaille (2 dégâts, brise l'armure).
+	if _heavy and is_instance_valid(body) and body.has_method("die"):
+		body.call("die")
+	if res is bool and bool(res) == false:
+		_shake = 2.0  # le coup a porté, mais l'esprit tient debout
+		SaveManager.vibrate(12)
+		return
+	Challenge.register_kill()
+	_register_combo_kill()
+	_shake = 3.5  # impact ressenti à chaque coup qui porte
+	SaveManager.vibrate(18)
+	_hit_stop()
 
 ## Petit badge rouge sous le chrono pour rappeler que le mode Kensei est actif.
 func _build_kensei_badge() -> void:
