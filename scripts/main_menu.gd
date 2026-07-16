@@ -281,12 +281,12 @@ func _open_options() -> void:
 	sb.set_corner_radius_all(14)
 	sb.set_content_margin_all(24.0)
 	panel.add_theme_stylebox_override("panel", sb)
-	panel.position = Vector2(330, 130)
+	panel.position = Vector2(330, 28)
 	panel.custom_minimum_size = Vector2(300, 0)
 	_options.add_child(panel)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
+	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
 
 	var title := Label.new()
@@ -296,23 +296,14 @@ func _open_options() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 
-	# Contenu défilable : audio + accessibilité (évite tout débordement).
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(300, 300)
-	UiScroll.make_touch_friendly(scroll)
-	box.add_child(scroll)
-	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 12)
-	rows.custom_minimum_size = Vector2(288, 0)
-	scroll.add_child(rows)
-
-	rows.add_child(_setting_row("Musique", "music"))
-	rows.add_child(_setting_row("Effets sonores", "sfx"))
-	rows.add_child(_setting_row("Vibrations", "vibrations"))
-	rows.add_child(_section_label("Accessibilité"))
-	rows.add_child(_setting_row("Secousses d'écran", "shake"))
-	rows.add_child(_setting_row("Flashs lumineux", "flash"))
-	rows.add_child(_setting_row("Mode détente (+2 cœurs)", "assist", false))
+	# Audio + accessibilité : sept réglages qui tiennent sans défilement.
+	box.add_child(_setting_row("Musique", "music"))
+	box.add_child(_setting_row("Effets sonores", "sfx"))
+	box.add_child(_setting_row("Vibrations", "vibrations"))
+	box.add_child(_section_label("Accessibilité"))
+	box.add_child(_setting_row("Secousses d'écran", "shake"))
+	box.add_child(_setting_row("Flashs lumineux", "flash"))
+	box.add_child(_setting_row("Mode détente (+2 cœurs)", "assist", false))
 
 	var close := Button.new()
 	close.text = "Fermer"
