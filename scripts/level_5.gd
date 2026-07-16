@@ -66,6 +66,7 @@ const LEVEL_END := 6000.0
 const BOSS_INTRO_LINES := [
 	{ "name": "???", "text": "Qui ose troubler les cendres de ce sanctuaire ?" },
 	{ "name": "Eneko", "text": "Je viens rallumer la Flamme d'Aube. Et te délivrer, Gardien — Léonie m'a tout dit." },
+	{ "name": "Eneko", "text": "(Ses mots me reviennent : « Lis ses coups. Pare-les au bon moment... ou esquive d'une ruée et frappe juste après — ta lame tranchera deux fois plus fort. »)" },
 	{ "name": "???", "text": "Léonie... ce nom n'éveille plus rien en moi. Il ne reste que l'Ombre. Viens la briser, si tu le peux." },
 ]
 const VICTORY_LINE := "La Flamme d'Aube renaît !"

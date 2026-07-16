@@ -40,6 +40,10 @@ var health := MAX_HEALTH
 var invuln := 0.0
 var knockback := 0.0
 var lock_timer := 0.0
+## Frappe en ruée : fenêtre pendant/juste après une ruée où l'attaque devient
+## un coup tournant élargi qui inflige un dégât supplémentaire.
+var _heavy := false
+var _dash_strike_window := 0.0
 var anim_time := 0.0
 var orbs := 0
 var start_position := Vector2.ZERO
@@ -83,6 +87,7 @@ var _orb_flash := 0.0
 var _combo_label: Label
 
 @onready var attack_area: Area2D = $AttackArea
+@onready var attack_shape: CollisionShape2D = $AttackArea/CollisionShape2D
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var orb_label: Label = $HUD/OrbCount
 @onready var time_label: Label = $HUD/TimeLabel
@@ -199,12 +204,17 @@ func _physics_process(delta: float) -> void:
 	if _orb_flash > 0.0:
 		_orb_flash -= delta
 
+	_dash_strike_window = maxf(0.0, _dash_strike_window - delta)
+
 	# Verrou d'animation (attaque / touché).
 	if lock_timer > 0.0:
 		lock_timer -= delta
 		if lock_timer <= 0.0 and attacking:
 			attacking = false
 			attack_area.monitoring = false
+			# Restaure la portée normale après une frappe en ruée.
+			attack_shape.scale = Vector2.ONE
+			_heavy = false
 
 	# Ruée du sabreur : trajectoire horizontale figée, gravité suspendue,
 	# images rémanentes semées derrière Eneko.
@@ -408,6 +418,8 @@ func dash() -> void:
 	# Pendant la ruée (et la marge de sortie), Eneko TRAVERSE les ennemis
 	# (couche 2) : l'esquive passe au travers des charges du Gardien.
 	set_collision_mask_value(2, false)
+	# Attaquer pendant cette fenêtre déclenche la frappe en ruée (coup lourd).
+	_dash_strike_window = DASH_TIME + 0.3
 	Sfx.varied(sfx_dash, 0.95, 1.08)
 	_spawn_speed_lines()
 
@@ -499,9 +511,21 @@ func attack() -> void:
 	attacking = true
 	lock_timer = ATTACK_DURATION
 	attack_area.monitoring = true
-	Sfx.varied(sfx_slash, 0.9, 1.12)
+	# Frappe en ruée : si l'attaque suit de près une ruée, c'est un coup
+	# tournant ÉLARGI qui inflige 2 dégâts (idéal pour punir le Gardien).
+	_heavy = _dash_strike_window > 0.0
+	_dash_strike_window = 0.0
+	if _heavy:
+		attack_shape.scale = Vector2(2.0, 1.7)
+		Sfx.varied(sfx_slash, 0.68, 0.82)  # coup plus grave et lourd
+		SaveManager.vibrate(30)
+		_shake = maxf(_shake, 3.5)
+		_spawn_heavy_slash()
+	else:
+		attack_shape.scale = Vector2.ONE
+		Sfx.varied(sfx_slash, 0.9, 1.12)
+		_spawn_slash_trail()
 	_play("attack")
-	_spawn_slash_trail()
 
 ## Arc du coup de sabre : un halo doré large et un cœur blanc vif, tracés en
 ## croissant, avec un léger balayage rotatif — la lame semble trancher l'air.
@@ -540,6 +564,29 @@ func _spawn_slash_trail() -> void:
 	t.set_parallel(true)
 	t.tween_property(pivot, "rotation", 0.6, 0.2).set_ease(Tween.EASE_OUT)
 	t.tween_property(pivot, "modulate:a", 0.0, 0.24)
+	t.chain().tween_callback(pivot.queue_free)
+
+## Grand arc tournant de la frappe en ruée : un croissant large et lumineux
+## qui balaie plus loin autour d'Eneko.
+func _spawn_heavy_slash() -> void:
+	var pivot := Node2D.new()
+	pivot.position = Vector2(20.0 * facing, -8.0)
+	pivot.scale = Vector2(facing, 1.0)
+	pivot.rotation = -1.0
+	add_child(pivot)
+	var glow := Polygon2D.new()
+	glow.polygon = _slash_crescent(66.0, 30.0)
+	glow.color = Color(0.7, 0.9, 1.0, 0.45)
+	pivot.add_child(glow)
+	var core := Polygon2D.new()
+	core.polygon = _slash_crescent(56.0, 40.0)
+	core.color = Color(1, 1, 1, 0.85)
+	pivot.add_child(core)
+	var t := pivot.create_tween()
+	t.set_parallel(true)
+	t.tween_property(pivot, "rotation", 1.4, 0.26).set_ease(Tween.EASE_OUT)
+	t.tween_property(pivot, "scale", Vector2(facing * 1.25, 1.25), 0.26)
+	t.tween_property(pivot, "modulate:a", 0.0, 0.3)
 	t.chain().tween_callback(pivot.queue_free)
 
 func take_damage(amount: int, from_position: Vector2) -> void:
@@ -723,6 +770,9 @@ func _on_attack_area_body_entered(body: Node2D) -> void:
 		# anciens ennemis) renvoient null et comptent comme un coup qui tue.
 		var res: Variant = body.call("die")
 		Sfx.varied(_sfx_hit, 0.9, 1.12)  # claquement du sabre sur la cible
+		# Frappe en ruée : une seconde entaille (2 dégâts, brise l'armure).
+		if _heavy and is_instance_valid(body) and body.has_method("die"):
+			body.call("die")
 		if res is bool and bool(res) == false:
 			_shake = 2.0  # le coup a porté, mais l'esprit tient debout
 			SaveManager.vibrate(12)
