@@ -10,6 +10,8 @@ var _t := 0.0
 var _taken := false
 var _glow: Sprite2D
 var _glow_base := 0.34
+## Aura texturée qui tourne lentement derrière l'orbe (scintillement).
+var _aura: Sprite2D
 
 @onready var sprite: Sprite2D = $Sprite
 
@@ -30,9 +32,19 @@ func _ready() -> void:
 		_glow.modulate = Color(0.55, 0.9, 1.0, _glow_base)
 		_glow.scale = Vector2(1.5, 1.5)
 	add_child(_glow)
+	# Aura texturée (voile de bruit) qui tourne derrière le halo : donne un
+	# scintillement de matière à la lueur, teintée comme l'orbe.
+	_aura = Sprite2D.new()
+	_aura.texture = TextureLab.cloud_veil()
+	var au := _glow.modulate
+	_aura.modulate = Color(au.r, au.g, au.b, 0.22)
+	var asc := 0.42 if value > 1 else 0.3
+	_aura.scale = Vector2(asc, asc)
+	add_child(_aura)
 	# Rendu avant le sprite de l'orbe (passe dessous), mais au-dessus des
 	# plateformes puisque l'orbe est instanciée après elles.
-	move_child(_glow, 0)
+	move_child(_aura, 0)
+	move_child(_glow, 1)
 
 func _process(delta: float) -> void:
 	_t += delta
@@ -42,6 +54,11 @@ func _process(delta: float) -> void:
 		_glow.modulate.a = _glow_base * (0.6 + 0.5 * pulse)
 		var s := (2.1 if value > 1 else 1.5) * (0.92 + 0.12 * pulse)
 		_glow.scale = Vector2(s, s)
+	if _aura != null:
+		_aura.rotation += delta * 0.6
+		var abase := 0.42 if value > 1 else 0.3
+		var apulse := abase * (0.85 + 0.18 * sin(_t * 1.7))
+		_aura.scale = Vector2(apulse, apulse)
 
 func _on_body_entered(body: Node2D) -> void:
 	if _taken:
