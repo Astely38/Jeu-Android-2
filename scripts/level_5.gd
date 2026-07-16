@@ -44,7 +44,7 @@ const SHADOW_XS := [1300.0]
 ## Yūrei tireurs : toujours au-dessus d'une plateforme — le passage aux
 ## dalles effondrables reste un défi de plateforme pur, sans tirs.
 const SPIRIT_XS := []
-const TRAP_XS := [700.0, 1950.0, 2800.0, 3450.0]
+const TRAP_XS := [730.0, 1970.0, 2800.0, 3450.0]
 const PILLAR_XS := [3900.0, 4250.0, 5150.0, 5500.0]
 ## Dalles effondrables : x = centre, y = demi-largeur. Les deux premières
 ## sont le seul chemin au-dessus du grand vide — il faut enchaîner les
@@ -381,17 +381,20 @@ func _build_traps() -> void:
 		trap.position = Vector2(x, GROUND_Y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(44, 24)
+		rect.size = Vector2(66, 34)
 		shape.shape = rect
 		trap.add_child(shape)
 		_poly(trap, PackedVector2Array([
-			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+			Vector2(-33, 22), Vector2(33, 22), Vector2(33, 6), Vector2(-33, 6),
 		]), MARBLE_DARK)
-		for k in 3:
-			var ox := -16.0 + k * 16.0
+		for k in 4:
+			var ox := -24.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+				Vector2(ox - 7, 6), Vector2(ox + 7, 6), Vector2(ox, -22),
 			]), Color(0.55, 0.15, 0.15))
+			_poly(trap, PackedVector2Array([
+				Vector2(ox - 3, 2), Vector2(ox + 3, 2), Vector2(ox, -18),
+			]), Color(0.7, 0.24, 0.22))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)
 

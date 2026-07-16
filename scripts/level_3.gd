@@ -54,8 +54,8 @@ const ELITE_XS := [4600.0]
 ## Yūrei tireurs : esprits flottants qui crachent des orbes corrompus.
 ## Toujours au-dessus d'une plateforme (jamais d'un trou) : leur descente
 ## vers Eneko ne doit pas l'attirer dans le vide.
-const SPIRIT_XS := [5000.0]
-const TRAP_XS := [800.0, 2050.0, 3850.0, 4850.0, 6450.0]
+const SPIRIT_XS := []
+const TRAP_XS := [800.0, 2050.0, 3900.0, 4820.0, 6450.0]
 ## Ascenseur spirituel : x = centre, y = dessus de la dalle au point bas
 ## (atteignable d'un saut depuis le bord du trou). Il monte de 175 px et
 ## dessert les trois orbes bonus placées en hauteur.
@@ -675,19 +675,19 @@ func _build_traps() -> void:
 		trap.position = Vector2(x, GROUND_Y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(44, 24)
+		rect.size = Vector2(66, 34)
 		shape.shape = rect
 		trap.add_child(shape)
 		_poly(trap, PackedVector2Array([
-			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+			Vector2(-33, 22), Vector2(33, 22), Vector2(33, 6), Vector2(-33, 6),
 		]), Color(0.3, 0.19, 0.11))
-		for k in 3:
-			var ox := -16.0 + k * 16.0
+		for k in 4:
+			var ox := -24.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+				Vector2(ox - 7, 6), Vector2(ox + 7, 6), Vector2(ox, -22),
 			]), Color(0.44, 0.28, 0.15))
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -12),
+				Vector2(ox - 3, 2), Vector2(ox + 3, 2), Vector2(ox, -18),
 			]), Color(0.54, 0.36, 0.2))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)

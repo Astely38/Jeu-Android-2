@@ -4,8 +4,8 @@ extends CharacterBody2D
 ## petits masques qui s'écartent en jaillissant, bien visibles. Les petits
 ## masques ne se refendent pas et meurent en un coup.
 
-@export var speed := 74.0
-@export var detect_range := 460.0
+@export var speed := 78.0
+@export var detect_range := 640.0
 @export var small := false
 @export var spawn_vel := Vector2.ZERO
 
@@ -19,7 +19,7 @@ var player: Node2D = null
 var _dying := false
 var _t := 0.0
 var _face := 1.0
-var _r := 17.0
+var _r := 23.0
 var _lunge_cd := 1.2
 
 var _mask: Node2D
@@ -35,7 +35,7 @@ func _ready() -> void:
 	if Challenge.kensei:
 		speed *= 1.25
 	if small:
-		_r = 11.0
+		_r = 14.0
 		speed *= 1.4
 		velocity = spawn_vel
 	_build_mask()

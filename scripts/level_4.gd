@@ -49,7 +49,7 @@ const PATROL_XS := [900.0, 1500.0, 3850.0, 5300.0, 6300.0]
 const SHADOW_XS := [1420.0, 4450.0, 6350.0, 6900.0]
 ## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
 const ELITE_XS := [5200.0]
-const TRAP_XS := [700.0, 2000.0, 3150.0, 4400.0, 5650.0, 6850.0]
+const TRAP_XS := [700.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]
 const CAIRN_XS := [800.0, 2500.0, 3920.0, 5160.0, 6420.0, 7150.0]
 ## Ponts de corde praticables : x = centre du trou, y = demi-largeur du
 ## tablier (déborde de ~10 px sur chaque plateforme voisine).
@@ -606,19 +606,19 @@ func _build_traps() -> void:
 		trap.position = Vector2(x, GROUND_Y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(44, 24)
+		rect.size = Vector2(66, 34)
 		shape.shape = rect
 		trap.add_child(shape)
 		_poly(trap, PackedVector2Array([
-			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+			Vector2(-33, 22), Vector2(33, 22), Vector2(33, 6), Vector2(-33, 6),
 		]), Color(0.5, 0.55, 0.62))
-		for k in 3:
-			var ox := -16.0 + k * 16.0
+		for k in 4:
+			var ox := -24.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+				Vector2(ox - 7, 6), Vector2(ox + 7, 6), Vector2(ox, -22),
 			]), Color(0.72, 0.82, 0.92, 0.85))
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -12),
+				Vector2(ox - 3, 2), Vector2(ox + 3, 2), Vector2(ox, -18),
 			]), Color(0.85, 0.92, 0.98, 0.9))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)

@@ -54,7 +54,7 @@ const SHADOW_XS := [2560.0, 6480.0]
 const ELITE_XS := [4100.0]
 ## Pièges à pics : proches d'un bord de plateforme, contournables en marchant
 ## ou en sautant par-dessus (jamais un passage obligé).
-const TRAP_XS := [1930.0, 2680.0, 3900.0, 5220.0, 6520.0]
+const TRAP_XS := [1990.0, 2680.0, 3900.0, 5220.0, 6520.0]
 ## Geysers de flamme spectrale (piège cyclique télégraphié). Placés au large,
 ## à l'écart des autres dangers : on passe pendant la fenêtre dormante.
 const GEYSER_XS := [2050.0, 4520.0, 5400.0]
@@ -417,19 +417,19 @@ func _build_traps() -> void:
 		trap.position = Vector2(x, GROUND_Y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(44, 24)
+		rect.size = Vector2(66, 34)
 		shape.shape = rect
 		trap.add_child(shape)
 		_poly(trap, PackedVector2Array([
-			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+			Vector2(-33, 22), Vector2(33, 22), Vector2(33, 6), Vector2(-33, 6),
 		]), Color(0.38, 0.24, 0.13))
-		for k in 3:
-			var ox := -16.0 + k * 16.0
+		for k in 4:
+			var ox := -24.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+				Vector2(ox - 7, 6), Vector2(ox + 7, 6), Vector2(ox, -22),
 			]), Color(0.52, 0.34, 0.18))
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -12),
+				Vector2(ox - 3, 2), Vector2(ox + 3, 2), Vector2(ox, -18),
 			]), Color(0.6, 0.42, 0.22))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)
