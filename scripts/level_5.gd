@@ -82,6 +82,8 @@ var _shafts: Array = []
 var _banners: Array = []
 ## Taches de vitrail projetées au sol de l'arène (voir _process).
 var _glass: Array = []
+## Poussières dorées qui flottent dans les rais de lumière (voir _process).
+var _dust: Array = []
 var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
@@ -143,6 +145,18 @@ func _process(delta: float) -> void:
 		var gn: Polygon2D = g["node"]
 		var ba: float = g["base_a"]
 		gn.color.a = ba * (0.35 + 0.65 * (0.5 + 0.5 * sin(_t * 0.6 + float(g["phase"]))))
+	for d in _dust:
+		var dnode: Polygon2D = d["node"]
+		var dph: float = float(d["phase"])
+		# Montée lente avec enroulement en haut du rai.
+		var yy: float = float(d["y"]) - float(d["spd"]) * delta
+		if yy < -20.0:
+			yy = 560.0
+		d["y"] = yy
+		var sway := 6.0 * sin(_t * 0.7 + dph)
+		dnode.position = Vector2(float(d["x"]) + sway, yy)
+		# Scintillement doux.
+		dnode.color.a = 0.25 + 0.35 * (0.5 + 0.5 * sin(_t * 1.6 + dph))
 
 # --- Construction du niveau ---------------------------------------------
 
@@ -212,6 +226,19 @@ func _build_decor() -> void:
 		]), Color(1.0, 0.95, 0.75, 0.09), Vector2(sx, -10))
 		# Chaque rai balance doucement et respire à son propre rythme.
 		_shafts.append({"node": beam, "base_x": sx, "phase": float(si) * 1.4})
+		# Poussières en suspension qui flottent lentement dans le rai.
+		var dn := 0
+		while dn < 5:
+			var offx := -sw * 0.4 + float((dn * 53 + si * 37) % int(sw * 1.6))
+			var yy := float((dn * 97 + si * 61) % 540)
+			var dot := _poly(shafts, PackedVector2Array([
+				Vector2(-1.5, 0), Vector2(0, -1.5), Vector2(1.5, 0), Vector2(0, 1.5),
+			]), Color(1.0, 0.95, 0.72, 0.0), Vector2(sx + offx, yy))
+			_dust.append({
+				"node": dot, "x": sx + offx, "y": yy,
+				"spd": 8.0 + float(dn % 3) * 5.0, "phase": float(dn * 90 + si * 40) * 0.01,
+			})
+			dn += 1
 		sx += 520.0 + float(si * 43 % 240)
 		si += 1
 
