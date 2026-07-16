@@ -359,6 +359,7 @@ func _build_checkpoints() -> void:
 ## bord droit de deux plateformes, ils tirent vers la gauche — les dards
 ## viennent à la rencontre d'Eneko qui avance, et s'esquivent d'un saut.
 func _build_hazards() -> void:
+	# Lanceurs de dards sur les plateformes 2 et 4 (tir vers la gauche).
 	for entry in [{"x": 1680.0, "ph": 0.0}, {"x": 3080.0, "ph": 1.2}]:
 		var d := DartLauncher.new()
 		d.position = Vector2(entry["x"], GROUND_Y - 50.0)
@@ -366,6 +367,13 @@ func _build_hazards() -> void:
 		d.phase = entry["ph"]
 		d.tint = Color(0.7, 0.5, 1.0)
 		add_child(d)
+	# Presses spectrales sur les plateformes 1 et 3 (alternent avec les dards
+	# pour un gantelet varié le long de l'approche du sanctuaire).
+	for entry in [{"x": 980.0, "ph": 0.0}, {"x": 2250.0, "ph": 1.5}]:
+		var c := SpectralCrusher.new()
+		c.position = Vector2(entry["x"], GROUND_Y - 50.0)
+		c.phase = entry["ph"]
+		add_child(c)
 
 func _build_traps() -> void:
 	for x in TRAP_XS:
