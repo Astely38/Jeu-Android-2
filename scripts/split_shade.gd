@@ -38,6 +38,7 @@ func _ready() -> void:
 		_r = 14.0
 		speed *= 1.4
 		velocity = spawn_vel
+	z_index = 6  # devant le décor et l'avant-plan, bien visible
 	_build_mask()
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
@@ -46,6 +47,7 @@ func _ready() -> void:
 	sh.max_drop = 520.0
 	add_child(sh)
 	move_child(sh, 0)
+	print("[ONI] spawn small=", small, " pos=", global_position, " enfants_mask=", _mask.get_child_count())
 
 ## Construit le masque d'Oni : lueur, face rouge, cornes, sourcils, yeux
 ## luisants, gueule à crocs.
