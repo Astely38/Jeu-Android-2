@@ -47,7 +47,6 @@ func _ready() -> void:
 	sh.max_drop = 520.0
 	add_child(sh)
 	move_child(sh, 0)
-	print("[ONI] spawn small=", small, " pos=", global_position, " enfants_mask=", _mask.get_child_count())
 
 ## Construit le masque d'Oni : lueur, face rouge, cornes, sourcils, yeux
 ## luisants, gueule à crocs.
@@ -103,9 +102,9 @@ func _build_mask() -> void:
 	_poly(PackedVector2Array([
 		Vector2(-9, 6), Vector2(9, 6), Vector2(6, 13), Vector2(-6, 13),
 	]), Color(0.1, 0.03, 0.04), k)
-	for fx in [-6.0, -2.0, 2.0, 6.0]:
-		var up := fx < 0.0
-		if up:
+	for fi in 4:
+		var fx := -6.0 + float(fi) * 4.0
+		if fi % 2 == 0:
 			_poly(PackedVector2Array([
 				Vector2(fx, 6.5), Vector2(fx + 2.4, 6.5), Vector2(fx + 1.2, 11.5),
 			]), BONE, k)
