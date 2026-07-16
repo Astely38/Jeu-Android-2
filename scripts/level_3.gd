@@ -7,6 +7,7 @@ extends Node2D
 const ORB_SCENE := preload("res://scenes/orb.tscn")
 const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
+const SPLIT_SCENE := preload("res://scenes/split_shade.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 const SPIRIT_SCENE := preload("res://scenes/spirit.tscn")
 const LIFT_SCENE := preload("res://scenes/lift_platform.tscn")
@@ -45,7 +46,9 @@ const CHECKPOINT_XS := [1620.0, 3450.0, 5150.0]
 ## La plateforme 3140-3660 est le sanctuaire de Léonie : aucun ennemi ni
 ## piège n'y est placé.
 const PATROL_XS := [950.0, 1550.0, 2200.0, 2800.0, 4050.0, 4700.0, 5900.0]
-const SHADOW_XS := [1400.0, 2650.0, 2900.0, 5350.0, 6100.0, 6600.0]
+const SHADOW_XS := [1400.0, 2900.0, 6100.0, 6600.0]
+## Ombres scindantes (se dédoublent quand on les tranche).
+const SPLIT_XS := [2650.0, 5350.0]
 ## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
 const ELITE_XS := [4600.0]
 ## Yūrei tireurs : esprits flottants qui crachent des orbes corrompus.
@@ -735,6 +738,10 @@ func _spawn_entities() -> void:
 		el.position = Vector2(x, SPAWN_Y)
 		add_child(el)
 		el.make_elite()
+	for x in SPLIT_XS:
+		var sp := SPLIT_SCENE.instantiate()
+		sp.position = Vector2(x, SPAWN_Y)
+		add_child(sp)
 	for x in SPIRIT_XS:
 		var sp := SPIRIT_SCENE.instantiate()
 		sp.position = Vector2(x, SPAWN_Y - 85.0)
