@@ -186,6 +186,17 @@ func _build_scenery() -> void:
 	petals.color = Color(0.95, 0.74, 0.78)
 	sc.add_child(petals)
 
+	# Grain d'ensemble très discret : voile de matière tuilé sur tout le
+	# tableau, comme un léger papier peint, sous les boutons et le titre.
+	var grain := Polygon2D.new()
+	grain.polygon = PackedVector2Array([
+		Vector2(0, 0), Vector2(960, 0), Vector2(960, 540), Vector2(0, 540),
+	])
+	grain.texture = TextureLab.platform_grain()
+	grain.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	grain.color = Color(1, 1, 1, 0.06)
+	sc.add_child(grain)
+
 func _style_button(b: Button, accent: Color) -> void:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.1, 0.09, 0.17, 0.88)
