@@ -20,7 +20,7 @@ size = Vector2(28, 46)
 size = Vector2(34, 44)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_button"]
-size = Vector2(110, 110)
+size = Vector2(120, 120)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_menu"]
 size = Vector2(74, 54)
@@ -222,7 +222,7 @@ color = Color(1, 1, 1, 0.9)
 polygon = PackedVector2Array(-16, 5, 16, 5, 16, 9, -16, 9)
 
 [node name="LeftButton" type="TouchScreenButton" parent="HUD"]
-position = Vector2(72, 466)
+position = Vector2(80, 474)
 shape = SubResource("RectangleShape2D_button")
 shape_centered = true
 
@@ -235,7 +235,7 @@ color = Color(1, 1, 1, 0.85)
 polygon = PackedVector2Array(-16, 0, 10, -15, 10, 15)
 
 [node name="RightButton" type="TouchScreenButton" parent="HUD"]
-position = Vector2(200, 466)
+position = Vector2(216, 474)
 shape = SubResource("RectangleShape2D_button")
 shape_centered = true
 
@@ -248,7 +248,7 @@ color = Color(1, 1, 1, 0.85)
 polygon = PackedVector2Array(16, 0, -10, -15, -10, 15)
 
 [node name="DashButton" type="TouchScreenButton" parent="HUD"]
-position = Vector2(782, 352)
+position = Vector2(812, 344)
 shape = SubResource("RectangleShape2D_button")
 shape_centered = true
 
@@ -265,7 +265,7 @@ color = Color(0.55, 0.85, 1, 0.9)
 polygon = PackedVector2Array(-2, -12, 8, 0, -2, 12, 4, 12, 14, 0, 4, -12)
 
 [node name="JumpButton" type="TouchScreenButton" parent="HUD"]
-position = Vector2(866, 452)
+position = Vector2(880, 474)
 shape = SubResource("RectangleShape2D_button")
 shape_centered = true
 
@@ -278,7 +278,7 @@ color = Color(0.5, 0.95, 0.6, 0.9)
 polygon = PackedVector2Array(0, -16, -15, 10, 15, 10)
 
 [node name="AttackButton" type="TouchScreenButton" parent="HUD"]
-position = Vector2(736, 478)
+position = Vector2(742, 474)
 shape = SubResource("RectangleShape2D_button")
 shape_centered = true
 
