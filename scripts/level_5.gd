@@ -247,15 +247,19 @@ func _build_decor() -> void:
 	var gate := ParallaxLayer.new()
 	gate.motion_scale = Vector2(0.3, 0.6)
 	bg.add_child(gate)
-	_poly(gate, PackedVector2Array([
+	var col_pts := PackedVector2Array([
 		Vector2(-14, 0), Vector2(14, 0), Vector2(14, -260), Vector2(-14, -260),
-	]), GOLD_TRIM, Vector2(BOSS_SPAWN_X + 180.0, 540))
-	_poly(gate, PackedVector2Array([
-		Vector2(-14, 0), Vector2(14, 0), Vector2(14, -260), Vector2(-14, -260),
-	]), GOLD_TRIM, Vector2(BOSS_SPAWN_X - 180.0, 540))
-	_poly(gate, PackedVector2Array([
+	])
+	_poly(gate, col_pts, GOLD_TRIM, Vector2(BOSS_SPAWN_X + 180.0, 540))
+	_poly(gate, col_pts, GOLD_TRIM, Vector2(BOSS_SPAWN_X - 180.0, 540))
+	# Or patiné : grain sur les montants et le linteau du grand portique.
+	TextureLab.grain_poly(gate, col_pts, 0.12, Vector2(0, 0), Vector2(BOSS_SPAWN_X + 180.0, 540))
+	TextureLab.grain_poly(gate, col_pts, 0.12, Vector2(40, 0), Vector2(BOSS_SPAWN_X - 180.0, 540))
+	var lintel_pts := PackedVector2Array([
 		Vector2(-210, -250), Vector2(210, -250), Vector2(190, -280), Vector2(-190, -280),
-	]), GOLD_TRIM, Vector2(BOSS_SPAWN_X, 540))
+	])
+	_poly(gate, lintel_pts, GOLD_TRIM, Vector2(BOSS_SPAWN_X, 540))
+	TextureLab.grain_poly(gate, lintel_pts, 0.12, Vector2(0, 0), Vector2(BOSS_SPAWN_X, 540))
 	var gate_glow := Sprite2D.new()
 	gate_glow.texture = mist_tex
 	gate_glow.modulate = Color(1.0, 0.9, 0.6, 0.35)
@@ -323,6 +327,8 @@ func _build_pillars() -> void:
 		var pillar := Node2D.new()
 		pillar.position = Vector2(x, GROUND_Y - 50.0)
 		_poly(pillar, _rect_points(16.0, -220.0, 0.0), MARBLE)
+		# Veinage du marbre : fin grain tuilé sur le fût.
+		TextureLab.grain_poly(pillar, _rect_points(16.0, -220.0, 0.0), 0.1, Vector2(float(x), 0.0))
 		_poly(pillar, _rect_points(20.0, -230.0, -216.0), GOLD_TRIM)
 		_poly(pillar, _rect_points(20.0, 0.0, 10.0), GOLD_TRIM)
 		add_child(pillar)
