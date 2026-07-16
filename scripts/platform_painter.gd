@@ -81,6 +81,18 @@ static func build_sanctuary(level: Node2D, x: float, ground_y: float) -> void:
 			Vector2(lx - 9, -32), Vector2(lx + 9, -32), Vector2(lx + 5, -38), Vector2(lx - 5, -38),
 		]), stone_dark)
 
+	# Voile texturé doré qui tourne lentement derrière le halo : la clarté
+	# des aïeux, vivante et matérielle.
+	var aura := Sprite2D.new()
+	aura.texture = TextureLab.cloud_veil()
+	aura.modulate = Color(1.0, 0.86, 0.5, 0.14)
+	aura.scale = Vector2(0.8, 0.8)
+	aura.position = Vector2(0, -56)
+	aura.z_index = -1
+	shrine.add_child(aura)
+	var atw := aura.create_tween().set_loops()
+	atw.tween_property(aura, "rotation", TAU, 16.0)
+
 	# Halo de lumière chaude et pétales dorés qui montent du sanctuaire.
 	var glow := Sprite2D.new()
 	glow.texture = load("res://assets/mist.svg")
