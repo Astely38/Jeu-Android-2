@@ -55,6 +55,9 @@ const ELITE_XS := [4100.0]
 ## Pièges à pics : proches d'un bord de plateforme, contournables en marchant
 ## ou en sautant par-dessus (jamais un passage obligé).
 const TRAP_XS := [1930.0, 2680.0, 3900.0, 5220.0, 6520.0]
+## Geysers de flamme spectrale (piège cyclique télégraphié). Placés au large,
+## à l'écart des autres dangers : on passe pendant la fenêtre dormante.
+const GEYSER_XS := [2050.0, 4520.0, 5400.0]
 ## Ascenseur spirituel : x = centre, y = dessus de la dalle au point bas
 ## (atteignable d'un saut depuis le bord du trou). Il monte de 175 px et
 ## dessert les trois orbes bonus placées en hauteur.
@@ -102,6 +105,7 @@ func _ready() -> void:
 	PlatformPainter.build_sanctuary(self, 890.0, GROUND_Y - 50.0)
 	_build_checkpoints()
 	_build_traps()
+	_build_geysers()
 	_build_lifts()
 	_build_goal()
 	_build_secret_portal()
@@ -433,6 +437,14 @@ func _build_traps() -> void:
 func _on_trap_body_entered(body: Node2D) -> void:
 	if body == player and body.has_method("take_damage"):
 		body.take_damage(1, body.global_position + Vector2(0, 40))
+
+## Geysers de flamme spectrale, désynchronisés par une phase différente.
+func _build_geysers() -> void:
+	for i in GEYSER_XS.size():
+		var g := SpiritGeyser.new()
+		g.position = Vector2(GEYSER_XS[i], GROUND_Y - 50.0)
+		g.phase = float(i) * (SpiritGeyser.PERIOD / float(GEYSER_XS.size())) + 0.4
+		add_child(g)
 
 func _build_goal() -> void:
 	var goal := Area2D.new()
