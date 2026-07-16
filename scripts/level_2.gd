@@ -90,6 +90,8 @@ var _t := 0.0
 ## Ciel : couche presque fixe où filent les étoiles filantes.
 var _sky: ParallaxLayer
 var _meteor_cd := 3.0
+## Lucioles qui errent dans la nuit et pulsent leur lueur (voir _process).
+var _fireflies: Array = []
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -101,6 +103,7 @@ func _ready() -> void:
 	_build_decor()
 	Atmosphere.add_foreground(self, Color(0.07, 0.07, 0.13, 0.32))
 	_build_platforms()
+	_build_fireflies()
 	_build_puddles()
 	_build_braziers()
 	_build_checkpoints()
@@ -134,6 +137,15 @@ func _process(delta: float) -> void:
 	for i in _halos.size():
 		var h: Sprite2D = _halos[i]
 		h.modulate.a = 0.17 + 0.06 * sin(_t * 5.0 + i * 1.3)
+	for ff in _fireflies:
+		var fn: Node2D = ff["node"]
+		var home: Vector2 = ff["home"]
+		var ph: float = float(ff["phase"])
+		var nx := home.x + float(ff["rx"]) * sin(_t * float(ff["sx"]) + ph)
+		var ny := home.y + float(ff["ry"]) * sin(_t * float(ff["sy"]) + ph * 1.7)
+		fn.position = Vector2(nx, ny)
+		var halo: Sprite2D = ff["halo"]
+		halo.modulate.a = 0.25 + 0.4 * (0.5 + 0.5 * sin(_t * 2.4 + ph * 2.3))
 	# Étoiles filantes : de loin en loin, une traînée file dans le ciel.
 	_meteor_cd -= delta
 	if _meteor_cd <= 0.0 and _sky != null:
@@ -359,6 +371,34 @@ func _build_platforms() -> void:
 			Vector2(-hw, -50), Vector2(-hw + 26, -50), Vector2(-hw + 18, -56), Vector2(-hw - 2, -52),
 		]), Color(0.32, 0.44, 0.28, 0.7))
 		add_child(body)
+
+## Lucioles : petites lueurs jaune-vert qui errent au-dessus des terrasses en
+## trajectoire de Lissajous et respirent leur éclat, chacune à son rythme.
+func _build_fireflies() -> void:
+	var glow_tex: Texture2D = load("res://assets/mist.svg")
+	var fi := 0
+	for idx in range(1, PLATFORMS.size(), 2):
+		var p: Vector2 = PLATFORMS[idx]
+		var home := Vector2(p.x + float((fi * 47) % 120) - 60.0, _surface_y(idx) - 60.0 - float(fi % 3) * 24.0)
+		var f := Node2D.new()
+		f.position = home
+		f.z_index = 4
+		add_child(f)
+		var halo := Sprite2D.new()
+		halo.texture = glow_tex
+		halo.modulate = Color(0.8, 1.0, 0.4, 0.5)
+		halo.scale = Vector2(0.55, 0.55)
+		f.add_child(halo)
+		_poly(f, PackedVector2Array([
+			Vector2(-1.5, 0), Vector2(0, -1.5), Vector2(1.5, 0), Vector2(0, 1.5),
+		]), Color(0.95, 1.0, 0.7, 0.95))
+		_fireflies.append({
+			"node": f, "halo": halo, "home": home,
+			"rx": 60.0 + float(fi % 3) * 24.0, "ry": 30.0 + float(fi % 2) * 16.0,
+			"sx": 0.5 + float(fi % 4) * 0.12, "sy": 0.7 + float(fi % 3) * 0.15,
+			"phase": float(fi) * 1.3,
+		})
+		fi += 1
 
 ## Flaques d'eau sur quelques terrasses : elles reflètent la lune d'un
 ## reflet pâle qui scintille (le reflet est un halo pulsant).

@@ -85,6 +85,8 @@ var _flash: ColorRect
 var _bolt_t := 3.0
 var _flames: Array = []
 var _halos: Array = []
+## Papillons de nuit qui tournent autour des braseros (voir _process).
+var _moths: Array = []
 var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
@@ -155,6 +157,19 @@ func _process(delta: float) -> void:
 	for i in _halos.size():
 		var h: Sprite2D = _halos[i]
 		h.modulate.a = 0.18 + 0.06 * sin(_t * 4.6 + i * 1.3)
+	for m in _moths:
+		var mn: Node2D = m["node"]
+		var ph: float = float(m["phase"])
+		var ang := _t * float(m["spd"]) + ph
+		var rad: float = float(m["rad"])
+		mn.position = Vector2(
+			float(m["cx"]) + cos(ang) * rad,
+			float(m["cy"]) + sin(ang) * rad * 0.55,
+		)
+		# Face au sens de vol + battement d'ailes.
+		mn.scale.x = 1.0 if sin(ang) >= 0.0 else -1.0
+		var rw: Polygon2D = m["rwing"]
+		rw.scale.y = 0.5 + 0.5 * sin(_t * 18.0 + ph)
 
 func _physics_process(_delta: float) -> void:
 	if wisps != null and is_instance_valid(player):
@@ -526,6 +541,26 @@ func _build_braziers() -> void:
 		steam.color = Color(0.85, 0.85, 0.9, 0.16)
 		steam.texture = mist_tex
 		b.add_child(steam)
+		# Papillons de nuit attirés par la flamme : ils tournent autour.
+		var mi := 0
+		var nm := 2 + (int(bx) % 2)
+		while mi < nm:
+			var m := Node2D.new()
+			m.position = Vector2(0, -40.0)
+			var mc := Color(0.2, 0.16, 0.14)
+			_poly(m, PackedVector2Array([
+				Vector2(0, 0), Vector2(-6, -4), Vector2(-5, 3),
+			]), mc)
+			var rwing := _poly(m, PackedVector2Array([
+				Vector2(0, 0), Vector2(6, -4), Vector2(5, 3),
+			]), mc)
+			b.add_child(m)
+			_moths.append({
+				"node": m, "rwing": rwing, "cx": 0.0, "cy": -40.0,
+				"rad": 16.0 + float(mi) * 7.0, "spd": 1.6 + float(mi) * 0.5,
+				"phase": float(int(bx) + mi * 90) * 0.05,
+			})
+			mi += 1
 		add_child(b)
 
 ## Points de contrôle : lanternes de pierre (tōrō) dont la flamme
