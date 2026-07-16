@@ -474,10 +474,11 @@ func _build_lantern_string(parent: Node, base: Vector2, mist_tex: Texture2D) -> 
 		li += 1
 
 ## Pièges spectraux du temple : un geyser au sol et une faux pendulaire, sur
-## des zones dégagées (à l'écart des braseros, patrouilles et checkpoints).
+## des zones dégagées — À L'ÉCART du sanctuaire de Léonie (3140-3660), des
+## braseros, patrouilles et checkpoints.
 func _build_hazards() -> void:
 	var gy := SpiritGeyser.new()
-	gy.position = Vector2(3250.0, GROUND_Y - 50.0)
+	gy.position = Vector2(5750.0, GROUND_Y - 50.0)
 	gy.phase = 0.5
 	add_child(gy)
 	var pd := SpectralPendulum.new()

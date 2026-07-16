@@ -491,10 +491,11 @@ func _build_platforms() -> void:
 		add_child(body)
 
 ## Pièges spectraux des sommets : un geyser et une faux teintée de givre, sur
-## des plateformes dégagées (à l'écart des patrouilles, pièges et cairns).
+## des plateformes dégagées — À L'ÉCART du sanctuaire de Léonie (2440-2920),
+## des patrouilles, pièges et cairns.
 func _build_hazards() -> void:
 	var gy := SpiritGeyser.new()
-	gy.position = Vector2(2680.0, GROUND_Y - 50.0)
+	gy.position = Vector2(3450.0, GROUND_Y - 50.0)
 	gy.phase = 0.3
 	add_child(gy)
 	var pd := SpectralPendulum.new()
