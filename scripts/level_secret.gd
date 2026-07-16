@@ -59,6 +59,9 @@ const LEONIE_LINES := [
 
 var sfx_win: AudioStreamPlayer
 var petals: CPUParticles2D
+## Grues qui planent lentement dans le ciel de l'aube (voir _process).
+var _cranes: Array = []
+var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -69,6 +72,7 @@ var petals: CPUParticles2D
 
 func _ready() -> void:
 	_build_decor()
+	_build_cranes()
 	_build_platforms()
 	PlatformPainter.build_sanctuary(self, 3400.0, GROUND_Y - 50.0)
 	_build_checkpoints()
@@ -187,6 +191,70 @@ func _build_decor() -> void:
 	petals.scale_amount_max = 0.8
 	petals.color = Color(1.0, 0.85, 0.5, 0.9)
 	add_child(petals)
+
+## Grues blanches qui planent en travers du ciel, réparties sur toute la
+## largeur : elles dérivent lentement, ondulent en altitude et battent des
+## ailes de temps à autre, puis reparaissent de l'autre côté.
+func _build_cranes() -> void:
+	var body_c := Color(0.98, 0.98, 1.0, 0.92)
+	var tip_c := Color(0.2, 0.2, 0.26, 0.9)
+	var cx := 200.0
+	var ci := 0
+	while cx < LEVEL_END:
+		var c := Node2D.new()
+		c.position = Vector2(cx, 70.0 + float(ci * 53 % 150))
+		c.z_index = 0
+		var sc := 0.8 + float(ci % 3) * 0.25
+		c.scale = Vector2(sc, sc)
+		add_child(c)
+		# Corps effilé et long cou tendu vers l'avant.
+		_poly(c, PackedVector2Array([
+			Vector2(-10, 0), Vector2(12, -2), Vector2(20, 0), Vector2(12, 2),
+		]), body_c)
+		_poly(c, PackedVector2Array([
+			Vector2(-10, 0), Vector2(-18, 1), Vector2(-10, 2),
+		]), body_c)
+		# Ailes déployées (pivotent au battement).
+		var lw := _poly(c, PackedVector2Array([
+			Vector2(2, -1), Vector2(-8, -16), Vector2(6, -2),
+		]), body_c)
+		var rw := _poly(c, PackedVector2Array([
+			Vector2(2, 1), Vector2(-8, 16), Vector2(6, 2),
+		]), body_c)
+		# Bout des ailes sombre.
+		_poly(lw, PackedVector2Array([
+			Vector2(-8, -16), Vector2(-3, -12), Vector2(-2, -15),
+		]), tip_c)
+		_poly(rw, PackedVector2Array([
+			Vector2(-8, 16), Vector2(-3, 12), Vector2(-2, 15),
+		]), tip_c)
+		_cranes.append({
+			"node": c, "lw": lw, "rw": rw,
+			"x": cx, "base_y": c.position.y,
+			"spd": 10.0 + float(ci % 3) * 5.0, "phase": float(ci) * 1.1,
+			"flap": 0.9 + float(ci % 4) * 0.2,
+		})
+		cx += 620.0 + float(ci * 47 % 260)
+		ci += 1
+
+func _process(delta: float) -> void:
+	_t += delta
+	for cr in _cranes:
+		var cn: Node2D = cr["node"]
+		var ph: float = float(cr["phase"])
+		# Dérive lente vers la gauche, réapparition à droite.
+		var x: float = float(cr["x"]) - float(cr["spd"]) * delta
+		if x < -120.0:
+			x = LEVEL_END + 120.0
+		cr["x"] = x
+		var y := float(cr["base_y"]) + 12.0 * sin(_t * 0.4 + ph)
+		cn.position = Vector2(x, y)
+		# Battement d'ailes lent, planant.
+		var fl := 0.35 * sin(_t * float(cr["flap"]) + ph)
+		var lw: Polygon2D = cr["lw"]
+		var rw: Polygon2D = cr["rw"]
+		lw.rotation = fl
+		rw.rotation = -fl
 
 func _build_platforms() -> void:
 	for i in PLATFORMS.size():

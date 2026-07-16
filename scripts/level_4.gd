@@ -101,6 +101,8 @@ var _wind_active := false
 var _step_dist := 0.0
 ## Éclats de neige qui pétillent au soleil sur les congères.
 var _glints: Array = []
+## Rapaces qui planent en cercle très haut (voir _process).
+var _raptors: Array = []
 var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
@@ -166,6 +168,21 @@ func _process(delta: float) -> void:
 		# Scintillement bref et espacé : la plupart du temps invisible.
 		var s := sin(_t * 3.2 + float(gl["phase"]))
 		g.modulate.a = clampf((s - 0.7) / 0.3, 0.0, 1.0) * 0.9
+	for rp in _raptors:
+		var rn: Node2D = rp["node"]
+		var ph: float = float(rp["phase"])
+		var ang := _t * float(rp["spd"]) + ph
+		var rad: float = float(rp["rad"])
+		var nx := float(rp["cx"]) + cos(ang) * rad
+		var ny := float(rp["cy"]) + sin(ang) * rad * 0.4
+		rn.position = Vector2(nx, ny)
+		rn.scale.x = 1.0 if sin(ang) >= 0.0 else -1.0
+		# Battement d'ailes lent et planant.
+		var fl := 0.3 * sin(_t * float(rp["flap"]) + ph)
+		var lw: Polygon2D = rp["lw"]
+		var rw: Polygon2D = rp["rw"]
+		lw.rotation = fl
+		rw.rotation = -fl
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(player):
@@ -285,15 +302,27 @@ func _build_decor() -> void:
 	rays.half_spread = 0.9
 	rays.position = Vector2(680.0, 80.0)
 	sky.add_child(rays)
+	# Rapaces qui planent en larges cercles très haut dans le ciel.
 	var bx := 350.0
 	var bi := 0
 	while bx < LEVEL_END:
 		var by := 60.0 + float(bi * 61 % 100)
-		for w in 2:
-			var off := Vector2(float(w) * 22.0, float(w) * 8.0)
-			_poly(sky, PackedVector2Array([
-				Vector2(-8, 0), Vector2(0, -5), Vector2(8, 0), Vector2(0, -1),
-			]), Color(0.3, 0.32, 0.38, 0.7), Vector2(bx, by) + off)
+		var rap := Node2D.new()
+		rap.position = Vector2(bx, by)
+		var col := Color(0.3, 0.32, 0.38, 0.7)
+		var lw := _poly(rap, PackedVector2Array([
+			Vector2(0, 0), Vector2(-9, -4), Vector2(-2, -1),
+		]), col)
+		var rw := _poly(rap, PackedVector2Array([
+			Vector2(0, 0), Vector2(9, -4), Vector2(2, -1),
+		]), col)
+		sky.add_child(rap)
+		_raptors.append({
+			"node": rap, "lw": lw, "rw": rw,
+			"cx": bx, "cy": by, "rad": 40.0 + float(bi % 3) * 20.0,
+			"spd": 0.35 + float(bi % 3) * 0.12, "flap": 2.2 + float(bi % 3) * 0.6,
+			"phase": float(bi) * 1.7,
+		})
 		bx += 1100.0 + float(bi * 71 % 350)
 		bi += 1
 
