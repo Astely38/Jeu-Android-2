@@ -37,7 +37,7 @@ jobs:
       - name: Smoke test des scènes (headless)
         run: |
           set +e
-          for scene in scenes/main_menu levels/level_1 levels/level_2 levels/level_3 levels/level_4 levels/level_5 levels/level_6 levels/level_secret; do
+          for scene in scenes/main_menu levels/level_1 levels/level_2 levels/level_3 levels/level_4 levels/level_5 levels/level_6 levels/level_7 levels/level_secret; do
             echo "=== SMOKE TEST: $scene ==="
             timeout 12 godot --headless --path . "res://$scene.tscn" > "/tmp/smoke.log" 2>&1
             grep -E "SCRIPT ERROR|Parse Error|Invalid|Nonexistent|Cannot call|null instance|Out of bounds" /tmp/smoke.log \

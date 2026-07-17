@@ -71,7 +71,10 @@ const ORBS := [
 	Vector2(3920, 420), Vector2(4230, 385), Vector2(4540, 420),
 	Vector2(4850, 385), Vector2(5160, 420), Vector2(5470, 385),
 	Vector2(5780, 420), Vector2(6100, 385), Vector2(6420, 420),
-	Vector2(6730, 385), Vector2(7040, 420),
+	# La dernière orbe de l'approche reste EN DEÇÀ de la porte (GOAL_X=7000) :
+	# au-delà, elle serait piégée derrière le torii de sortie et rendrait la
+	# Platine impossible (elle exige de tout ramasser).
+	Vector2(6730, 385), Vector2(6800, 420),
 	# Orbes bonus desservies par l'ascenseur spirituel.
 	Vector2(2925, 258), Vector2(2995, 240), Vector2(3065, 258),
 ]

@@ -66,7 +66,10 @@ const ORBS := [
 	Vector2(3920, 420), Vector2(4230, 385), Vector2(4540, 420),
 	Vector2(4850, 385), Vector2(5160, 420), Vector2(5470, 385),
 	Vector2(5780, 420), Vector2(6100, 385), Vector2(6420, 420),
-	Vector2(6730, 385), Vector2(7040, 420),
+	# La dernière orbe reste EN DEÇÀ de la porte (GOAL_X=6950) : sinon elle
+	# serait piégée derrière le torii de sortie et la Platine deviendrait
+	# impossible (elle exige de tout ramasser).
+	Vector2(6730, 385), Vector2(6800, 420),
 ]
 
 const LEONIE_LINES := [
