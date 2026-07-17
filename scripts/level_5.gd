@@ -663,6 +663,12 @@ func _show_endgame_recap(results: Dictionary) -> void:
 	buttons.add_theme_constant_override("separation", 20)
 	box.add_child(buttons)
 
+	# Si le Chapitre II existe, on propose d'y plonger directement.
+	var chap2_scene: String = SaveManager.LEVEL_SCENES.get("level_6", "")
+	if chap2_scene != "":
+		var chap2 := _recap_button("Chapitre II →", Color(1.0, 0.5, 0.2))
+		chap2.pressed.connect(func(): get_tree().change_scene_to_file(chap2_scene))
+		buttons.add_child(chap2)
 	var replay := _recap_button("Rejouer le niveau", Color(0.92, 0.65, 0.3))
 	replay.pressed.connect(func(): get_tree().reload_current_scene())
 	buttons.add_child(replay)
