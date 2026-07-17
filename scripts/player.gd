@@ -21,6 +21,9 @@ const SAMURAI := "res://assets/character/samurai/"
 const COYOTE_TIME := 0.12
 const JUMP_BUFFER := 0.15
 const JUMP_CUT_VELOCITY := -160.0
+## Double Saut spirituel (bénédiction de Léonie, débloqué après le Ch. I) :
+## un second bond en plein vol, un peu moins puissant, escorté d'un halo.
+const AIR_JUMP_VELOCITY := -430.0
 const ANIM_BASE_SCALE := Vector2(1.0, 1.0)
 ## Ruée du sabreur : élan horizontal éclair avec images rémanentes et
 ## invincibilité, limité par un temps de recharge. La traversée des
@@ -60,6 +63,13 @@ var _orb_burst: CPUParticles2D
 var _coyote := 0.0
 var _jump_buffer := 0.0
 var _touch_jump_held := false
+## Double Saut : nombre de sauts aériens déjà utilisés depuis le dernier
+## contact au sol, et nombre autorisé (1 si le pouvoir est débloqué, 0 sinon).
+var _air_jumps := 0
+var _max_air := 0
+## Front montant de la touche de saut clavier (le double saut ne doit partir
+## que sur une nouvelle pression, pas tant que la touche est maintenue).
+var _kb_jump_prev := false
 var _was_on_floor := false
 var _fall_speed := 0.0
 var _shake := 0.0
@@ -107,6 +117,8 @@ func _ready() -> void:
 	# ralenti ne doit jamais laisser le temps figé.
 	Engine.time_scale = 1.0
 	add_to_group("player")
+	# Double Saut spirituel : autorisé une fois le Chapitre I terminé.
+	_max_air = 1 if SaveManager.double_jump_unlocked() else 0
 	start_position = position
 	attack_area.monitoring = false
 	attack_area.body_entered.connect(_on_attack_area_body_entered)
@@ -269,6 +281,7 @@ func _physics_process(delta: float) -> void:
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
 	if is_on_floor():
 		_coyote = COYOTE_TIME
+		_air_jumps = 0  # le contact au sol rend le double saut
 		if not _was_on_floor:
 			_on_landed()
 		if _jump_buffer > 0.0:
@@ -289,8 +302,12 @@ func _physics_process(delta: float) -> void:
 	elif camera.offset != Vector2.ZERO:
 		camera.offset = Vector2.ZERO
 
-	if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_SPACE):
+	# Saut clavier sur FRONT MONTANT : indispensable pour le double saut, qui
+	# ne doit pas s'enchaîner tant que la touche reste enfoncée.
+	var kb_jump := Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_SPACE)
+	if kb_jump and not _kb_jump_prev:
 		jump()
+	_kb_jump_prev = kb_jump
 	if Input.is_physical_key_pressed(KEY_X):
 		attack()
 	if Input.is_physical_key_pressed(KEY_SHIFT) or Input.is_physical_key_pressed(KEY_C):
@@ -337,6 +354,10 @@ func _set_facing(dir: float) -> void:
 func jump() -> void:
 	if is_on_floor() or _coyote > 0.0:
 		_do_jump()
+	elif _air_jumps < _max_air:
+		# Double Saut spirituel : un second bond en plein vol.
+		_air_jumps += 1
+		_do_air_jump()
 	else:
 		# Trop tôt : on retient la demande, le saut partira à l'atterrissage.
 		_jump_buffer = JUMP_BUFFER
@@ -349,6 +370,41 @@ func _do_jump() -> void:
 	anim.scale = Vector2(0.82, 1.18)
 	var t := create_tween()
 	t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.18)
+
+## Double Saut : relance verticale un peu plus douce, son plus aigu, et un
+## halo doré (la lumière de Léonie) qui s'évase sous les pieds d'Eneko.
+func _do_air_jump() -> void:
+	velocity.y = AIR_JUMP_VELOCITY
+	Sfx.varied(sfx_jump, 1.18, 1.32)
+	anim.scale = Vector2(0.8, 1.22)
+	var t := create_tween()
+	t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.18)
+	_spiritual_burst()
+	SaveManager.vibrate(10)
+
+## Halo d'envol : un anneau de lumière qui s'agrandit et s'efface, plus un
+## éclat d'étincelles dorées. Rattaché au parent (survit au mouvement d'Eneko).
+func _spiritual_burst() -> void:
+	var host := get_parent()
+	if host == null:
+		return
+	var ring := Line2D.new()
+	ring.width = 3.0
+	ring.default_color = Color(1.0, 0.88, 0.55, 0.85)
+	var pts := PackedVector2Array()
+	for i in 21:
+		var a := i * TAU / 20.0
+		pts.append(Vector2(cos(a) * 20.0, sin(a) * 7.0))
+	ring.points = pts
+	ring.global_position = global_position + Vector2(0, 22)
+	ring.z_index = 4
+	host.add_child(ring)
+	var tw := ring.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ring, "scale", Vector2(2.8, 2.8), 0.35)
+	tw.tween_property(ring, "modulate:a", 0.0, 0.35)
+	tw.chain().tween_callback(ring.queue_free)
+	Atmosphere.spark_burst(host, global_position + Vector2(0, 8), Color(1.0, 0.85, 0.5))
 
 ## Crée un lecteur de bruitage en code (routé vers le bus « Sons » par le
 ## gestionnaire de musique) et le rattache à Eneko.

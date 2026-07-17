@@ -143,6 +143,12 @@ func mark_kensei_done(level_id: String) -> void:
 func kensei_unlocked() -> bool:
 	return is_completed("level_5")
 
+## Le Double Saut spirituel (bénédiction de Léonie) se débloque à la fin du
+## Chapitre I — en battant le Gardien. Disponible ensuite dans tous les
+## niveaux, y compris en rejouant le Chapitre I.
+func double_jump_unlocked() -> bool:
+	return is_completed("level_5")
+
 ## Prologue d'introduction : affiché une seule fois, au premier lancement.
 func prologue_seen() -> bool:
 	return bool(data.get("prologue_seen", false))

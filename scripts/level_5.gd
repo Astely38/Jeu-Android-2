@@ -624,7 +624,7 @@ func _show_endgame_recap(results: Dictionary) -> void:
 	box.add_child(epilogue)
 
 	var farewell := Label.new()
-	farewell.text = "Léonie : « Merci, Eneko. Ma lumière peut enfin se reposer... mais garde ta lame près de toi. »"
+	farewell.text = "Léonie : « Merci, Eneko. Et reçois ceci : ma lumière t'accompagne — d'un souffle, tu peux désormais bondir une seconde fois en plein vol. »  (Double Saut débloqué : appuie à nouveau sur Sauter en l'air.)"
 	farewell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	farewell.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	farewell.custom_minimum_size = Vector2(640, 0)
