@@ -63,6 +63,7 @@ var _tendrils: Array = []
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
 @onready var sfx_die: AudioStreamPlayer = $SfxDie
 @onready var sfx_hurt: AudioStreamPlayer = $SfxHurt
+@onready var sfx_clink: AudioStreamPlayer = $SfxClink
 
 func _ready() -> void:
 	collision_mask = 0  # flotte : position pilotée à la main
@@ -342,8 +343,9 @@ func die() -> bool:
 	if _dying:
 		return false
 	if _state != "stunned" and _state != "dive":
+		# Bouclier : le sabre ricoche dans un éclat métallique.
 		_shield_flash = 0.2
-		Sfx.varied(sfx_hurt, 1.3, 1.5)
+		Sfx.varied(sfx_clink, 0.9, 1.12)
 		return false
 	health -= 1
 	health_changed.emit(health, MAX_HEALTH)

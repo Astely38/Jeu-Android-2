@@ -85,7 +85,7 @@ func _ready() -> void:
 	player.set_land_dust_color(Color(0.66, 0.42, 0.9, 0.8))
 	win_label.visible = false
 	boss_ui.visible = false
-	Music.play_world()
+	Music.play_world(2)
 	SaveManager.set_last_level(LEVEL_ID)
 	Challenge.start_level(LEVEL_ID, ORBS.size())
 	dialogue.finished.connect(_on_dialogue_finished)
@@ -359,7 +359,7 @@ func _on_miniboss_health_changed(current: int, max_health: int) -> void:
 func _on_miniboss_defeated() -> void:
 	player.set_physics_process(false)
 	boss_ui.visible = false
-	Music.play_world()
+	Music.play_world(2)
 	_drop_barriers()
 	sfx_win.play()
 	SaveManager.complete_level(LEVEL_ID, player.orbs)

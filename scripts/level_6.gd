@@ -113,7 +113,7 @@ func _ready() -> void:
 	# Sur le sable noir, Eneko soulève une poussière de cendre grise.
 	player.set_land_dust_color(Color(0.5, 0.46, 0.44, 0.8))
 	win_label.visible = false
-	Music.play_world()
+	Music.play_world(2)
 	SaveManager.set_last_level(LEVEL_ID)
 	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
 	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_XS.size())
