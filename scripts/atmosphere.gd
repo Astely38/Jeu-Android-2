@@ -73,6 +73,20 @@ static func spark_burst(host: Node, at: Vector2, tint: Color) -> void:
 	b.global_position = at
 	b.finished.connect(b.queue_free)
 
+## Fait « respirer » un nœud (halo de portail, aura…) : une boucle douce de
+## son alpha et de son échelle autour de leurs valeurs actuelles. Purement
+## visuel — n'affecte pas le jeu. À appeler une fois le nœud DANS l'arbre.
+static func breathe(node: Node2D, amount := 0.14, period := 2.4) -> void:
+	if node == null or not is_instance_valid(node) or not node.is_inside_tree():
+		return
+	var base_a: float = node.modulate.a
+	var base_s: Vector2 = node.scale
+	var tw := node.create_tween().set_loops()
+	tw.tween_property(node, "modulate:a", minf(1.0, base_a * 1.4), period * 0.5).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(node, "scale", base_s * (1.0 + amount), period * 0.5).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(node, "modulate:a", base_a, period * 0.5).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(node, "scale", base_s, period * 0.5).set_trans(Tween.TRANS_SINE)
+
 ## Ajoute un plan de silhouettes sombres en avant-plan (feuillages suspendus
 ## en haut, herbes en bas), défilant plus vite que le décor pour créer de la
 ## profondeur. Basé sur Parallax2D (Node2D) : il respecte le z-index, donc il

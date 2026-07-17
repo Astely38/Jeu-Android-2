@@ -7,6 +7,17 @@ const GOLD := Color(0.92, 0.65, 0.3)
 const GREEN := Color(0.45, 0.75, 0.4)
 const CREAM := Color(0.97, 0.93, 0.85)
 
+## Regroupement des niveaux par chapitre dans la liste. Un niveau absent de
+## cette table n'affiche pas d'en-tête (il suit le chapitre courant).
+const CHAPTER_OF := {
+	"level_1": 1, "level_2": 1, "level_3": 1, "level_4": 1, "level_5": 1,
+	"level_6": 2, "level_7": 2, "level_8": 2,
+}
+const CHAPTER_NAMES := {
+	1: "Chapitre I — La Voie du Sabre",
+	2: "Chapitre II — La Source de l'Ombre",
+}
+
 func _ready() -> void:
 	_style_button($BackButton, Color(0.6, 0.5, 0.45))
 	$BackButton.pressed.connect(_on_back_pressed)
@@ -15,12 +26,34 @@ func _ready() -> void:
 
 func _build_list() -> void:
 	var list: VBoxContainer = $Scroll/List
+	# Les niveaux sont groupés par chapitre : un en-tête s'insère à chaque
+	# changement de chapitre le long de LEVEL_ORDER.
+	var cur_chapter := 0
 	for level_id in SaveManager.LEVEL_ORDER:
+		var ch: int = CHAPTER_OF.get(level_id, cur_chapter)
+		if ch != cur_chapter:
+			cur_chapter = ch
+			list.add_child(_chapter_header(CHAPTER_NAMES.get(ch, "")))
 		list.add_child(_build_row(level_id))
 	# Le Jardin Céleste n'apparaît qu'une fois découvert en jeu — pas
 	# de ligne « Verrouillé » qui vendrait la mèche.
 	if SaveManager.is_unlocked("level_secret"):
+		list.add_child(_chapter_header("Détour"))
 		list.add_child(_build_row("level_secret"))
+
+## En-tête de chapitre : un titre doré discret qui sépare les groupes de
+## niveaux dans la liste.
+func _chapter_header(text: String) -> Control:
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_top", 12)
+	m.add_theme_constant_override("margin_bottom", 2)
+	m.add_theme_constant_override("margin_left", 4)
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 20)
+	l.add_theme_color_override("font_color", GOLD)
+	m.add_child(l)
+	return m
 
 func _build_row(level_id: String) -> Control:
 	var has_scene: bool = SaveManager.LEVEL_SCENES.has(level_id)

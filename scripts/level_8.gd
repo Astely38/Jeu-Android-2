@@ -483,6 +483,7 @@ func _build_goal() -> void:
 	var rift := _poly(goal, PackedVector2Array([Vector2(-7, -54), Vector2(7, -54), Vector2(4, 66), Vector2(-4, 66)]), Color(0.75, 0.35, 0.95, 0.5))
 	_pulses.append({"node": rift, "phase": 0.0})
 	add_child(goal)
+	Atmosphere.breathe(glow)
 	goal.body_entered.connect(_on_goal_body_entered)
 
 func _build_kill_zone() -> void:

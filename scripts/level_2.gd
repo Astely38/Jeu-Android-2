@@ -619,6 +619,7 @@ func _build_goal() -> void:
 	_poly(goal, PackedVector2Array([Vector2(-42, -70), Vector2(42, -70), Vector2(38, -58), Vector2(-38, -58)]), Color(0.42, 0.11, 0.08))
 	_poly(goal, PackedVector2Array([Vector2(-32, -46), Vector2(32, -46), Vector2(32, -38), Vector2(-32, -38)]), CLOTH)
 	add_child(goal)
+	Atmosphere.breathe(glow)
 	goal.body_entered.connect(_on_goal_body_entered)
 
 ## Zone mortelle : large bande sous toutes les terrasses (chute = 1 cœur).

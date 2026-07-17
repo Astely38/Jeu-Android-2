@@ -459,6 +459,7 @@ func _build_goal() -> void:
 	_poly(goal, PackedVector2Array([Vector2(-44, -70), Vector2(44, -70), Vector2(38, -56), Vector2(-38, -56)]), Color(0.14, 0.1, 0.14))
 	_poly(goal, PackedVector2Array([Vector2(-6, -52), Vector2(6, -52), Vector2(4, 64), Vector2(-4, 64)]), Color(0.8, 0.25, 0.55, 0.4))
 	add_child(goal)
+	Atmosphere.breathe(glow)
 	goal.body_entered.connect(_on_goal_body_entered)
 
 func _build_kill_zone() -> void:
