@@ -20,7 +20,7 @@ const TITLE_HOLD := 1.5
 const CHAPTER_OF := {
 	"level_1": 1, "level_2": 1, "level_3": 1, "level_4": 1, "level_5": 1,
 	"level_6": 2, "level_7": 2, "level_8": 2, "level_9": 2, "level_10": 2,
-	"level_11": 3, "level_12": 3, "level_13": 3, "level_14": 3,
+	"level_11": 3, "level_12": 3, "level_13": 3, "level_14": 3, "level_15": 3,
 	"level_secret": 0,
 }
 const CHAPTER_LABEL := {
@@ -28,13 +28,15 @@ const CHAPTER_LABEL := {
 	1: "Chapitre Premier",
 	2: "Chapitre Deuxième",
 	3: "Chapitre Troisième",
+	4: "Chapitre Quatrième",
 }
-## Teinte d'accent par chapitre (émeraude · or · braise · argent-bleu).
+## Teinte d'accent par chapitre (émeraude · or · braise · argent-bleu · violet-miroir).
 const CHAPTER_TINT := {
 	0: Color(0.55, 0.9, 0.7),
 	1: Color(0.96, 0.8, 0.42),
 	2: Color(0.9, 0.45, 0.3),
 	3: Color(0.6, 0.82, 0.95),
+	4: Color(0.78, 0.62, 0.95),
 }
 
 var _fade: ColorRect

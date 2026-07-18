@@ -34,7 +34,8 @@ const DEFS := [
 	{"id": "galerie_reflets", "name": "Danse des reflets", "desc": "Franchir les Reflets Brisés sans jamais s'attarder."},
 	{"id": "distance_reflet", "name": "Plus vite que son ombre", "desc": "Distancer le Reflet et atteindre la porte d'argent."},
 	{"id": "funambule", "name": "Funambule du vide", "desc": "Franchir le Gouffre aux Anneaux au bout du Fil Spirituel."},
-	{"id": "chercheur_reliques", "name": "Chercheur de reliques", "desc": "Dénicher les quatorze reliques cachées, une par niveau.", "secret": true},
+	{"id": "briseur_reflet", "name": "Le vrai d'entre deux", "desc": "Vaincre le Reflet et clore le Chapitre III."},
+	{"id": "chercheur_reliques", "name": "Chercheur de reliques", "desc": "Dénicher les quinze reliques cachées, une par niveau.", "secret": true},
 ]
 
 var _queue: Array = []
@@ -117,6 +118,8 @@ func on_level_finished(results: Dictionary) -> void:
 		unlock("distance_reflet")
 	if lvl == "level_14":
 		unlock("funambule")
+	if lvl == "level_15":
+		unlock("briseur_reflet")
 	if int(results["damage"]) == 0:
 		unlock("intouchable")
 	if int(results["orbs"]) >= int(results["total_orbs"]):
