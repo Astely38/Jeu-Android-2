@@ -22,6 +22,10 @@ func _ready() -> void:
 		queue_free()
 		return
 	_base_y = position.y
+	# Les reliques sont instanciées tôt dans le _ready des niveaux (avant les
+	# plateformes et le décor) : sans z_index, une plateforme construite ensuite
+	# les recouvrirait. On les pose au-dessus du sol, comme les orbes.
+	z_index = 3
 	var shape := CollisionShape2D.new()
 	var circ := CircleShape2D.new()
 	circ.radius = 26.0
