@@ -12,7 +12,7 @@ const CREAM := Color(0.97, 0.93, 0.85)
 const CHAPTER_OF := {
 	"level_1": 1, "level_2": 1, "level_3": 1, "level_4": 1, "level_5": 1,
 	"level_6": 2, "level_7": 2, "level_8": 2, "level_9": 2, "level_10": 2,
-	"level_11": 3, "level_12": 3,
+	"level_11": 3, "level_12": 3, "level_13": 3,
 }
 const CHAPTER_NAMES := {
 	1: "Chapitre I — La Voie du Sabre",
