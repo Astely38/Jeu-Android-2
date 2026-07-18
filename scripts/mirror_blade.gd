@@ -4,9 +4,11 @@ class_name MirrorBlade
 ## sabre à bonne portée, elle est RENVOYÉE vers le Reflet et brise son bouclier
 ## (c'est le seul moyen de l'exposer). Non renvoyée, elle inflige un dégât.
 
-const SPEED := 300.0
+const SPEED := 270.0
 const REFLECT_SPEED := 600.0
-const REFLECT_RANGE := 70.0
+## Fenêtre de renvoi généreuse : frapper au sabre près de la lame (même sans
+## la viser parfaitement) la renvoie.
+const REFLECT_RANGE := 96.0
 
 var _dir := Vector2.RIGHT
 var _reflected := false

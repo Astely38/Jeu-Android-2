@@ -26,7 +26,7 @@ const EXPOSED_Y := 476.0    # s'effondre au sol, à portée
 const MIRROR_LERP := [2.6, 3.6, 4.8]
 const THROW_CD := [1.9, 1.4, 1.05]
 const WIND_TIME := 0.45
-const EXPOSE_TIME := 2.4
+const EXPOSE_TIME := 2.8
 const BLADE_COUNT := [1, 2, 3]
 
 var health := MAX_HEALTH
@@ -85,7 +85,12 @@ func _physics_process(delta: float) -> void:
 
 	if _exposed:
 		_expose_t -= delta
+		# Brisé, le Reflet est ATTIRÉ vers Eneko et s'effondre à sa portée.
+		# Sans ça, miroité à l'autre bout de l'arène, il resterait injoignable
+		# le temps de l'exposition (le joueur ne pourrait jamais le frapper).
+		global_position.x = lerpf(global_position.x, _player.global_position.x, minf(1.0, delta * 3.2))
 		global_position.y = lerpf(global_position.y, EXPOSED_Y, minf(1.0, delta * 6.0))
+		_face_player()
 		if _expose_t <= 0.0:
 			_exposed = false
 		return
