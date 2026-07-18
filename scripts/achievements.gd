@@ -24,7 +24,6 @@ const DEFS := [
 	{"id": "or_partout", "name": "La Voie dorée", "desc": "Obtenir au moins l'Or sur les cinq niveaux."},
 	{"id": "platine_partout", "name": "Perfection", "desc": "Obtenir le Platine sur les cinq niveaux."},
 	{"id": "la_chute", "name": "La chute enseigne", "desc": "Recommencer un niveau 10 fois. Ça arrive aux meilleurs."},
-	{"id": "kensei", "name": "Kensei", "desc": "Terminer les cinq niveaux en mode Kensei (2 cœurs, sans bénédiction)."},
 	{"id": "chasseur", "name": "Chasseur d'élites", "desc": "Vaincre une Ombre d'élite et cueillir son orbe dorée."},
 	# Chapitre II — La Source de l'Ombre.
 	{"id": "gardien_puits", "name": "Gardien du Puits", "desc": "Vaincre le Grand Masque, l'émissaire du Cœur."},
@@ -120,14 +119,6 @@ func on_level_finished(results: Dictionary) -> void:
 	var pl := get_tree().get_first_node_in_group("player")
 	if pl != null and int(pl.get("health")) == 1:
 		unlock("survivant")
-	if bool(results.get("kensei", false)) and lvl in ["level_1", "level_2", "level_3", "level_4", "level_5"]:
-		SaveManager.mark_kensei_done(lvl)
-		var all_done := true
-		for id in ["level_1", "level_2", "level_3", "level_4", "level_5"]:
-			if not SaveManager.is_kensei_done(String(id)):
-				all_done = false
-		if all_done:
-			unlock("kensei")
 	_check_grades()
 
 func _check_grades() -> void:
