@@ -26,6 +26,13 @@ const DEFS := [
 	{"id": "la_chute", "name": "La chute enseigne", "desc": "Recommencer un niveau 10 fois. Ça arrive aux meilleurs."},
 	{"id": "kensei", "name": "Kensei", "desc": "Terminer les cinq niveaux en mode Kensei (2 cœurs, sans bénédiction)."},
 	{"id": "chasseur", "name": "Chasseur d'élites", "desc": "Vaincre une Ombre d'élite et cueillir son orbe dorée."},
+	# Chapitre II — La Source de l'Ombre.
+	{"id": "gardien_puits", "name": "Gardien du Puits", "desc": "Vaincre le Grand Masque, l'émissaire du Cœur."},
+	{"id": "source_tarie", "name": "La Source tarie", "desc": "Vaincre le Cœur de l'Ombre et clore le Chapitre II."},
+	{"id": "platine_ombre", "name": "Ombre immaculée", "desc": "Obtenir le Platine sur les cinq niveaux du Chapitre II."},
+	# Chapitre III — L'Écho dans le Noir.
+	{"id": "dans_le_miroir", "name": "De l'autre côté", "desc": "Franchir le seuil du royaume-miroir (Chapitre III)."},
+	{"id": "galerie_reflets", "name": "Danse des reflets", "desc": "Traverser la Galerie des Reflets."},
 ]
 
 var _queue: Array = []
@@ -96,6 +103,14 @@ func on_level_finished(results: Dictionary) -> void:
 		unlock("premiers_pas")
 	if lvl == "level_5":
 		unlock("voie_accomplie")
+	if lvl == "level_9":
+		unlock("gardien_puits")
+	if lvl == "level_10":
+		unlock("source_tarie")
+	if lvl == "level_11":
+		unlock("dans_le_miroir")
+	if lvl == "level_12":
+		unlock("galerie_reflets")
 	if int(results["damage"]) == 0:
 		unlock("intouchable")
 	if int(results["orbs"]) >= int(results["total_orbs"]):
@@ -128,6 +143,13 @@ func _check_grades() -> void:
 		unlock("or_partout")
 	if all_plat:
 		unlock("platine_partout")
+	# Chapitre II : Platine sur les cinq niveaux (6 à 10).
+	var all_plat2 := true
+	for id in ["level_6", "level_7", "level_8", "level_9", "level_10"]:
+		if SaveManager.best_grade(String(id)) != "PLATINUM":
+			all_plat2 = false
+	if all_plat2:
+		unlock("platine_ombre")
 
 # --- Notification dorée ----------------------------------------------------
 
