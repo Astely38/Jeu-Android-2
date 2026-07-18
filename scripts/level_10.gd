@@ -381,11 +381,15 @@ func _play_victory_cinematic() -> void:
 ## Épilogue du Chapitre II : l'Ombre est vaincue à sa source, avec le récap
 ## du périple et l'amorce du Chapitre III.
 func _show_chapter_recap(results: Dictionary) -> void:
+	# On masque le HUD de jeu (cœurs, orbes, boutons) pendant l'épilogue.
+	var hud := player.get_node_or_null("HUD")
+	if hud != null:
+		hud.visible = false
 	var layer := CanvasLayer.new()
 	layer.layer = 3
 	add_child(layer)
 	var bg := ColorRect.new()
-	bg.color = Color(0.06, 0.05, 0.1, 0.94)
+	bg.color = Color(0.06, 0.05, 0.1, 1.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(bg)
 
@@ -395,6 +399,9 @@ func _show_chapter_recap(results: Dictionary) -> void:
 	scroll.offset_right = -60.0
 	scroll.offset_top = 22.0
 	scroll.offset_bottom = -22.0
+	# Défilement VERTICAL seulement : sinon les textes s'étirent hors écran
+	# au lieu de se replier.
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	layer.add_child(scroll)
 
 	var box := VBoxContainer.new()
@@ -429,6 +436,8 @@ func _show_chapter_recap(results: Dictionary) -> void:
 	if int(results["combo"]) >= 2:
 		run.text += " — Meilleur combo : ×%d" % int(results["combo"])
 	run.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	run.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	run.custom_minimum_size = Vector2(640, 0)
 	run.add_theme_font_size_override("font_size", 18)
 	box.add_child(run)
 

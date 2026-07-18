@@ -582,23 +582,28 @@ func _play_victory_cinematic() -> void:
 ## récapitulatif complet du périple — grade et meilleur temps de chacun
 ## des cinq niveaux — avec la performance du combat final en tête.
 func _show_endgame_recap(results: Dictionary) -> void:
+	# On masque le HUD de jeu (cœurs, orbes, boutons) pendant l'épilogue.
+	var hud := player.get_node_or_null("HUD")
+	if hud != null:
+		hud.visible = false
 	var layer := CanvasLayer.new()
 	layer.layer = 3
 	add_child(layer)
 
 	var bg := ColorRect.new()
-	bg.color = Color(0.07, 0.06, 0.11, 0.92)
+	bg.color = Color(0.07, 0.06, 0.11, 1.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(bg)
 
-	# Récap dans un conteneur défilant : l'histoire finale et le teaser
-	# peuvent s'étendre sans jamais être tronqués.
+	# Récap dans un conteneur défilant VERTICAL : l'histoire finale et le
+	# teaser se replient au lieu de s'étirer hors écran.
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
 	scroll.offset_left = 60.0
 	scroll.offset_right = -60.0
 	scroll.offset_top = 22.0
 	scroll.offset_bottom = -22.0
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	layer.add_child(scroll)
 
 	var box := VBoxContainer.new()
@@ -642,6 +647,8 @@ func _show_endgame_recap(results: Dictionary) -> void:
 	if int(results["combo"]) >= 2:
 		run.text += " — Meilleur combo : ×%d" % int(results["combo"])
 	run.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	run.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	run.custom_minimum_size = Vector2(640, 0)
 	run.add_theme_font_size_override("font_size", 18)
 	box.add_child(run)
 
