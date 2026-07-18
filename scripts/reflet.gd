@@ -93,6 +93,9 @@ func _physics_process(delta: float) -> void:
 		_face_player()
 		if _expose_t <= 0.0:
 			_exposed = false
+			# Le bouclier se reforme : il redevient solide (et miroite au loin).
+			set_collision_layer_value(3, false)
+			set_collision_layer_value(2, true)
 		return
 
 	# Bouclier levé : miroir d'Eneko, hors de portée, et jette ses lames.
@@ -134,6 +137,10 @@ func on_blade_reflected() -> void:
 	_wind = 0.0
 	_throw_t = float(THROW_CD[phase - 1])
 	_hurt_flash = 0.3
+	# Déphasé le temps de l'exposition : il ne BLOQUE plus Eneko (il ne le
+	# pousse plus) mais reste tranchable (le sabre touche la couche 3).
+	set_collision_layer_value(2, false)
+	set_collision_layer_value(3, true)
 	Sfx.varied(sfx_clink, 0.8, 1.0)
 	Atmosphere.spark_burst(get_parent(), global_position, Color(0.7, 0.9, 1.0))
 

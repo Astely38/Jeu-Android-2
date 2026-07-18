@@ -140,6 +140,9 @@ func _ready() -> void:
 	_max_air = 1 if SaveManager.double_jump_unlocked() else 0
 	start_position = position
 	attack_area.monitoring = false
+	# Le sabre touche aussi la couche 3 : les ennemis « déphasés » (un boss
+	# exposé qui ne bloque plus Eneko physiquement mais reste tranchable).
+	attack_area.set_collision_mask_value(3, true)
 	attack_area.body_entered.connect(_on_attack_area_body_entered)
 	attack_area.area_entered.connect(_on_attack_area_area_entered)
 	_build_combo_label()
@@ -158,6 +161,7 @@ func _ready() -> void:
 		{"name": "jump", "path": SAMURAI + "Jump.png", "frames": 12, "fps": 14.0, "loop": false},
 		{"name": "attack", "path": SAMURAI + "Attack_1.png", "frames": 6, "fps": 14.0, "loop": false},
 		{"name": "hurt", "path": SAMURAI + "Hurt.png", "frames": 2, "fps": 9.0, "loop": false},
+		{"name": "dead", "path": SAMURAI + "Dead.png", "frames": 3, "fps": 6.0, "loop": false},
 	])
 	_play("idle")
 	orb_label.text = "x0"
@@ -923,10 +927,25 @@ func _die_and_restart() -> void:
 	Achievements.add_death()
 	health = 0
 	_update_hearts()
-	Sfx.varied(sfx_hurt, 0.92, 1.08)
-	_flash_game_over()
+	Sfx.varied(sfx_hurt, 0.85, 0.95)
 	set_physics_process(false)
-	await get_tree().create_timer(1.1).timeout
+	attacking = false
+	attack_area.monitoring = false
+	# Eneko s'effondre : il joue l'animation de mort, bascule légèrement et
+	# s'affaisse au sol.
+	anim.rotation = 0.0
+	anim.play("dead")
+	SaveManager.vibrate(60)
+	var base_y := anim.position.y
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(anim, "rotation", deg_to_rad(26.0) * facing, 0.45) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(anim, "position:y", base_y + 5.0, 0.45) \
+		.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	_flash_game_over()
+	await get_tree().create_timer(1.8).timeout
+	anim.rotation = 0.0
 	get_tree().reload_current_scene()
 
 ## Message temporaire "vous avez perdu" affiché quand les 3 cœurs tombent à
