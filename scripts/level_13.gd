@@ -10,6 +10,7 @@ extends Node2D
 const ORB_SCENE := preload("res://scenes/orb.tscn")
 const MASK_SCENE := preload("res://scenes/split_shade.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
+const SAMURAI := "res://assets/character/samurai/"
 
 const GROUND_Y := 550.0
 const SPAWN_Y := 477.0
@@ -85,8 +86,10 @@ var _wall: Node2D
 var _wall_x := WALL_START_X
 var _prev_px := 0.0
 var _armed := false
-var _reflet_fig: Node2D
+var _reflet_fig: AnimatedSprite2D
 var _ink: CPUParticles2D
+## Reflet lumineux qui balaie la surface du miroir (voir _process).
+var _sheen: Polygon2D
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -135,8 +138,11 @@ func _process(delta: float) -> void:
 		var node: Polygon2D = sh["node"]
 		node.modulate.a = 0.3 + 0.5 * (0.5 + 0.5 * sin(_t * 1.8 + float(sh["phase"])))
 	if _reflet_fig != null:
-		_reflet_fig.position.y = -70.0 + sin(_t * 3.0) * 6.0
-		_reflet_fig.scale.x = 1.0 + 0.05 * sin(_t * 5.0)
+		_reflet_fig.position.y = -60.0 + sin(_t * 3.0) * 5.0
+	# Le reflet lumineux balaie la surface de la glace, en boucle.
+	if _sheen != null:
+		_sheen.position.x = -240.0 + fmod(_t * 120.0, 240.0)
+		_sheen.modulate.a = 0.5 + 0.5 * sin(_t * 6.0)
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(player):
@@ -333,61 +339,79 @@ func _build_kill_zone() -> void:
 	add_child(kz)
 	kz.body_entered.connect(_on_kill_zone_body_entered)
 
-## Le mur-Reflet : un pan de nuit qui déferle, hérissé d'éclats de verre, avec
-## la silhouette d'Eneko à sa crête. Rendu par-dessus le décor.
+## Le mur-Miroir : un pan de verre argenté qui déferle, la crête brisée en
+## éclats de miroir, ton propre reflet courant à sa surface. Bord droit à x=0.
 func _build_wall() -> void:
 	_wall = Node2D.new()
 	_wall.z_index = 30
 	_wall.position = Vector2(_wall_x, GROUND_Y)
 	add_child(_wall)
-	# Masse de nuit (bord droit à x = 0 local).
+	# Tain sombre et froid derrière la glace (ardoise bleutée, pas de violet).
 	_poly(_wall, PackedVector2Array([
 		Vector2(-3200, -900), Vector2(0, -900), Vector2(0, 420), Vector2(-3200, 420),
-	]), Color(0.04, 0.03, 0.07, 0.97))
-	# Bandes de lueur violette près de la crête.
+	]), Color(0.07, 0.1, 0.15, 0.96))
+	# Surface-miroir : bandes de verre de plus en plus claires vers la crête,
+	# pour un fondu argent-cyan réfléchissant.
 	_poly(_wall, PackedVector2Array([
-		Vector2(-150, -900), Vector2(0, -900), Vector2(0, 420), Vector2(-150, 420),
-	]), Color(0.35, 0.12, 0.5, 0.5))
+		Vector2(-260, -900), Vector2(0, -900), Vector2(0, 420), Vector2(-260, 420),
+	]), Color(0.28, 0.42, 0.52, 0.34))
 	_poly(_wall, PackedVector2Array([
-		Vector2(-60, -900), Vector2(0, -900), Vector2(0, 420), Vector2(-60, 420),
-	]), Color(0.6, 0.25, 0.85, 0.4))
-	# Dents de verre le long de la crête.
+		Vector2(-120, -900), Vector2(0, -900), Vector2(0, 420), Vector2(-120, 420),
+	]), Color(0.55, 0.78, 0.9, 0.34))
+	# Arête polie qui capte la lumière (liseré argent vif au bord droit).
+	_poly(_wall, PackedVector2Array([
+		Vector2(-14, -900), Vector2(0, -900), Vector2(0, 420), Vector2(-14, 420),
+	]), Color(0.92, 0.98, 1.0, 0.75))
+	# Stries verticales de reflet qui scintillent le long de la glace.
+	for k in 7:
+		var sx := -230.0 + k * 34.0
+		var streak := _poly(_wall, PackedVector2Array([
+			Vector2(sx - 2, -880), Vector2(sx + 2, -880), Vector2(sx + 5, 400), Vector2(sx + 1, 400),
+		]), Color(0.85, 0.95, 1.0, 0.0))
+		_shimmers.append({"node": streak, "phase": float(k) * 0.7})
+	# Reflet lumineux qui balaie la surface (voir _process).
+	_sheen = _poly(_wall, PackedVector2Array([
+		Vector2(-16, -880), Vector2(-4, -880), Vector2(2, 400), Vector2(-10, 400),
+	]), Color(1.0, 1.0, 1.0, 0.18))
+	# Crête brisée : éclats de miroir hérissés (argent + reflets cyan).
 	for j in 16:
 		var yy := -820.0 + j * 78.0
+		var w := 30.0 + float((j * 37) % 40)
 		_poly(_wall, PackedVector2Array([
-			Vector2(0, yy), Vector2(44, yy + 30), Vector2(0, yy + 60),
-		]), Color(0.5, 0.25, 0.75, 0.85))
-	# Silhouette d'Eneko, à la crête, qui frémit (voir _process).
-	_reflet_fig = Node2D.new()
-	_reflet_fig.position = Vector2(-8, -70)
+			Vector2(0, yy), Vector2(w, yy + 24), Vector2(w * 0.5, yy + 34), Vector2(0, yy + 58),
+		]), Color(0.82, 0.92, 1.0, 0.9))
+		_poly(_wall, PackedVector2Array([
+			Vector2(0, yy + 12), Vector2(w * 0.6, yy + 26), Vector2(0, yy + 40),
+		]), Color(0.5, 0.85, 0.95, 0.6))
+	# TON reflet, courant à la surface du miroir, tourné vers toi (le vrai
+	# sprite d'Eneko, teinté verre froid) — c'est bien ta propre image qui te
+	# poursuit.
+	_reflet_fig = AnimatedSprite2D.new()
+	_reflet_fig.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_reflet_fig.sprite_frames = SpriteSheet.build([
+		{"name": "run", "path": SAMURAI + "Run.png", "frames": 8, "fps": 13.0, "loop": true},
+	])
+	_reflet_fig.play("run")
+	_reflet_fig.modulate = Color(0.62, 0.84, 1.0, 0.9)
+	_reflet_fig.scale = Vector2(1.15, 1.15)
+	_reflet_fig.position = Vector2(-18, -60)
 	_wall.add_child(_reflet_fig)
-	_poly(_reflet_fig, PackedVector2Array([
-		Vector2(-12, 46), Vector2(12, 46), Vector2(9, -22), Vector2(0, -40), Vector2(-9, -22),
-	]), Color(0.32, 0.12, 0.45))
-	_poly(_reflet_fig, PackedVector2Array([
-		Vector2(9, -20), Vector2(14, -20), Vector2(34, -82), Vector2(29, -84),
-	]), Color(0.7, 0.4, 0.95))
-	for s in [-1.0, 1.0]:
-		var eye := _poly(_reflet_fig, PackedVector2Array([
-			Vector2(s * 3 - 2, -14), Vector2(s * 3 + 2, -14), Vector2(s * 3 + 2, -8), Vector2(s * 3 - 2, -8),
-		]), Color(0.95, 0.5, 1.0))
-		_shimmers.append({"node": eye, "phase": float(s) + 2.0})
-	# Volutes d'encre qui montent le long de la crête.
+	# Éclats de verre qui montent le long de la glace (poussière argentée).
 	_ink = CPUParticles2D.new()
 	_ink.amount = 30
 	_ink.lifetime = 2.2
 	_ink.preprocess = 2.0
 	_ink.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	_ink.emission_rect_extents = Vector2(20, 460)
-	_ink.position = Vector2(-10, -240)
+	_ink.emission_rect_extents = Vector2(24, 460)
+	_ink.position = Vector2(-16, -240)
 	_ink.direction = Vector2(0.3, -1.0)
 	_ink.spread = 25.0
-	_ink.gravity = Vector2(6, -30)
-	_ink.initial_velocity_min = 20.0
-	_ink.initial_velocity_max = 55.0
-	_ink.scale_amount_min = 2.0
-	_ink.scale_amount_max = 5.0
-	_ink.color = Color(0.5, 0.25, 0.7, 0.5)
+	_ink.gravity = Vector2(6, -26)
+	_ink.initial_velocity_min = 18.0
+	_ink.initial_velocity_max = 50.0
+	_ink.scale_amount_min = 1.6
+	_ink.scale_amount_max = 4.0
+	_ink.color = Color(0.75, 0.9, 1.0, 0.55)
 	_wall.add_child(_ink)
 
 func _spawn_entities() -> void:
