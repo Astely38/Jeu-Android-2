@@ -20,7 +20,7 @@ const LEVEL_NAMES := {
 	"level_9": "II · Le Gardien du Puits",
 	"level_10": "II · Le Cœur de l'Ombre",
 	"level_11": "III · Le Miroir des Âmes",
-	"level_12": "III · La Galerie des Reflets",
+	"level_12": "III · Les Reflets Brisés",
 	"level_secret": "✦ Le Jardin Céleste",
 }
 

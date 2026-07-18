@@ -1,21 +1,22 @@
 extends Node2D
-## Chapitre III — Niveau 12 : « La Galerie des Reflets ».
-## Plus profond dans le royaume-miroir : une galerie où les reflets se
-## multiplient et où le Reflet d'Eneko, plus proche, imite désormais ses
-## coups. Le défi monte — deux Ombres d'élite, des Masques en nombre — et le
-## Double Saut n'est plus un bonus mais une nécessité pour cueillir les
-## orbes-reflet suspendues et dominer la galerie.
+## Chapitre III — Niveau 12 : « Les Reflets Brisés ».
+## Ici, les reflets ne tiennent pas : dès qu'Eneko y pose le pied, les dalles
+## de verre TREMBLENT puis S'EFFONDRENT. Le niveau n'est plus un couloir à
+## parcourir mais une suite de GANTELETS de plateformes effondrables qu'il
+## faut franchir sans s'arrêter, entre des îlots de repos, portés parfois par
+## des dalles-miroir mouvantes. Le Double Saut y est vital.
 
 const ORB_SCENE := preload("res://scenes/orb.tscn")
-const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const MASK_SCENE := preload("res://scenes/split_shade.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
+const CRUMBLE_SCENE := preload("res://scenes/crumble_platform.tscn")
+const LIFT_SCENE := preload("res://scenes/lift_platform.tscn")
 
 const GROUND_Y := 550.0
 const SPAWN_Y := 477.0
-const LEVEL_END := 7300.0
-const GOAL_X := 6950.0
+const LEVEL_END := 7100.0
+const GOAL_X := 6720.0
 const LEVEL_ID := "level_12"
 
 const GLASS := Color(0.1, 0.12, 0.17)
@@ -33,44 +34,59 @@ const PLATFORM_THEME := {
 	"cut": true,
 }
 
-const PLATFORMS := [
-	Vector2(230, 230), Vector2(850, 250), Vector2(1470, 230),
-	Vector2(2080, 200), Vector2(2680, 240), Vector2(3300, 230),
-	Vector2(3920, 210), Vector2(4540, 200), Vector2(5160, 250),
-	Vector2(5780, 200), Vector2(6420, 240), Vector2(7040, 280),
+## Îlots de repos SOLIDES : x = centre, y = demi-largeur. Un point de contrôle
+## ou le refuge sur chacun ; ce sont les seuls sols sûrs.
+const REST := [
+	Vector2(230, 190), Vector2(1500, 150), Vector2(2680, 200),
+	Vector2(3900, 150), Vector2(5300, 150), Vector2(6720, 260),
 ]
-const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
-## La plateforme 2440-2920 est le refuge (la lueur de Léonie y veille).
-const PATROL_XS := [900.0, 4600.0, 6300.0]
-const SHADOW_XS := [1470.0, 3300.0, 5780.0]
-## Deux Ombres d'élite ici : le défi monte (deux orbes dorées).
-const ELITE_XS := [3920.0, 6420.0]
-const MASK_XS := [2080.0, 4540.0, 5160.0]
-const TRAP_XS := [700.0, 2000.0, 3160.0, 4430.0, 5670.0]
-const STELE_XS := [500.0, 2500.0, 3920.0, 5160.0, 6600.0]
-const BRIDGES := [Vector2(1775, 100), Vector2(6100, 110)]
-const ORBS := [
-	Vector2(320, 420), Vector2(540, 385), Vector2(850, 420),
-	Vector2(1150, 385), Vector2(1470, 420), Vector2(1780, 385),
-	Vector2(2080, 420), Vector2(2380, 385), Vector2(2680, 420),
-	Vector2(3000, 385), Vector2(3300, 420), Vector2(3610, 385),
-	Vector2(3920, 420), Vector2(4230, 385), Vector2(4540, 420),
-	Vector2(4850, 385), Vector2(5160, 420), Vector2(5470, 385),
-	Vector2(5780, 420), Vector2(6100, 385), Vector2(6420, 420),
-	Vector2(6730, 385), Vector2(6800, 420),
-]
-## Orbes-reflet suspendues (Double Saut) : au-dessus d'une plateforme, le
-## joueur les traverse au sommet de son second bond. Plus nombreuses ici.
-const HIGH_ORBS := [
-	Vector2(850, 300), Vector2(2080, 300), Vector2(3300, 300),
-	Vector2(4540, 300), Vector2(5780, 300), Vector2(6420, 300),
+## Refuge de Léonie (soin/point de contrôle) sur l'îlot central.
+const REFUGE_X := 2680.0
+## Points de contrôle sur les autres îlots.
+const CHECKPOINT_XS := [1500.0, 3900.0, 5300.0]
+
+## Dalles EFFONDRABLES : x, y (centre), demi-largeur. Regroupées en gantelets
+## entre les îlots ; certaines montent en escalier (petites collines).
+const CRUMBLES := [
+	# Gantelet 1 (plat).
+	Vector3(520, 506, 46), Vector3(690, 506, 46), Vector3(860, 506, 46),
+	Vector3(1030, 506, 46), Vector3(1200, 506, 46), Vector3(1350, 506, 46),
+	# Gantelet 2 (colline).
+	Vector3(1720, 506, 48), Vector3(1885, 430, 48), Vector3(2050, 360, 48),
+	Vector3(2215, 430, 48), Vector3(2380, 506, 48),
+	# Gantelet 3 (plat).
+	Vector3(2960, 506, 46), Vector3(3125, 506, 46), Vector3(3290, 506, 46),
+	Vector3(3455, 506, 46), Vector3(3620, 506, 46), Vector3(3770, 506, 46),
+	# Gantelet 4 (long, léger relief).
+	Vector3(4120, 506, 46), Vector3(4285, 470, 46), Vector3(4450, 506, 46),
+	Vector3(4615, 470, 46), Vector3(4780, 506, 46), Vector3(4945, 506, 46),
+	Vector3(5110, 506, 46),
+	# Gantelet 5 (final).
+	Vector3(5520, 506, 46), Vector3(5685, 506, 46), Vector3(5850, 506, 46),
+	Vector3(6015, 470, 46), Vector3(6180, 506, 46), Vector3(6345, 506, 46),
 ]
 
+## Dalles-miroir mouvantes (ascenseurs) : x, y du point bas. Montent chercher
+## une orbe-reflet en hauteur, au-dessus d'un îlot sûr.
+const LIFTS := [Vector2(1500, 500), Vector2(5300, 500)]
+
+## Orbes-reflet en hauteur (Double Saut) au-dessus des îlots sûrs.
+const HIGH_ORBS := [
+	Vector2(2680, 300), Vector2(3900, 320), Vector2(1500, 300), Vector2(5300, 300),
+]
+
+## Masques d'Oni : fauteurs de trouble sur les îlots de repos (jamais au
+## milieu d'un gantelet). Ombre : une seule, gardienne d'un îlot.
+const MASK_XS := [3900.0, 5300.0]
+const SHADOW_XS := [1500.0]
+## Stèles-miroir décoratives.
+const STELE_XS := [500.0, 2680.0, 3900.0, 6600.0]
+
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "Vois comme les reflets se multiplient, Eneko. Cette galerie garde la mémoire de chaque geste — et le Reflet, là-bas, apprend les tiens." },
-	{ "name": "Léonie", "text": "Il te copie déjà : ta ruée, ta frappe. Quand tu l'affronteras, il te renverra ta propre danse. Sois imprévisible." },
-	{ "name": "Léonie", "text": "Élève-toi. Les lueurs les plus pures flottent hors de portée d'un simple bond : c'est le second souffle que je t'ai donné qui les cueille." },
-	{ "name": "Eneko", "text": "Alors je frapperai autrement qu'il ne l'attend. Montre-moi le chemin, Léonie — jusqu'à mon propre Reflet." },
+	{ "name": "Léonie", "text": "Prends garde, Eneko : ici, rien ne tient. Chaque reflet se brise sous ton poids dès que tu t'attardes." },
+	{ "name": "Léonie", "text": "Ne t'arrête jamais sur une dalle qui tremble. Enchaîne les bonds, sers-toi de ton second souffle, et vise l'îlot solide suivant." },
+	{ "name": "Léonie", "text": "Les Masques ne rôdent que sur les îlots sûrs — c'est là qu'il faut les défaire, jamais au-dessus du vide." },
+	{ "name": "Eneko", "text": "Alors je danserai plus vite que le verre ne se brise. En avant." },
 ]
 
 var sfx_win: AudioStreamPlayer
@@ -88,12 +104,11 @@ var _t := 0.0
 func _ready() -> void:
 	_build_decor()
 	Atmosphere.add_foreground(self, Color(0.06, 0.08, 0.12, 0.32))
-	_build_platforms()
+	_build_rest_platforms()
 	_build_steles()
-	_build_bridges()
-	_build_hazards()
+	_build_crumbles()
+	_build_lifts()
 	_build_checkpoints()
-	_build_traps()
 	_build_goal()
 	_build_kill_zone()
 	_spawn_entities()
@@ -103,7 +118,7 @@ func _ready() -> void:
 	win_label.visible = false
 	Music.play_world(2)
 	SaveManager.set_last_level(LEVEL_ID)
-	Challenge.start_level(LEVEL_ID, ORBS.size() + HIGH_ORBS.size() + 3 * ELITE_XS.size())
+	Challenge.start_level(LEVEL_ID, CRUMBLES.size() + HIGH_ORBS.size())
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_13", "")
@@ -117,8 +132,6 @@ func _process(delta: float) -> void:
 	for sh in _shimmers:
 		var node: Polygon2D = sh["node"]
 		node.modulate.a = 0.3 + 0.5 * (0.5 + 0.5 * sin(_t * 1.8 + float(sh["phase"])))
-	# Le Reflet, plus proche, imite Eneko : il glisse vers la position miroir
-	# du joueur et lève sa lame quand celui-ci avance.
 	if _reflet != null and is_instance_valid(player):
 		var target_x: float = clampf(player.global_position.x, 400.0, LEVEL_END - 200.0)
 		_reflet.position.x = lerpf(_reflet.position.x, target_x, 0.02)
@@ -167,8 +180,7 @@ func _build_decor() -> void:
 	sky.add_child(rays)
 	TextureLab.add_clouds(sky, 5, 70.0, 210.0, LEVEL_END, Color(0.6, 0.7, 0.85, 0.14))
 
-	# Colonnades-miroir de la galerie : hautes lames de verre alignées, qui
-	# renvoient une lueur froide (fond, sans collision).
+	# Colonnades-miroir de fond.
 	var gallery := ParallaxLayer.new()
 	gallery.motion_scale = Vector2(0.2, 0.45)
 	bg.add_child(gallery)
@@ -176,7 +188,7 @@ func _build_decor() -> void:
 	var gi0 := 0
 	while gx0 < LEVEL_END + 400.0:
 		var gh := 240.0 + float(gi0 * 53 % 120)
-		var col := _poly(gallery, PackedVector2Array([
+		_poly(gallery, PackedVector2Array([
 			Vector2(-16, 0), Vector2(-12, -gh), Vector2(12, -gh), Vector2(16, 0),
 		]), Color(0.14, 0.18, 0.26, 0.7), Vector2(gx0, 560))
 		var edge := _poly(gallery, PackedVector2Array([
@@ -186,8 +198,7 @@ func _build_decor() -> void:
 		gx0 += 360.0 + float(gi0 * 47 % 160)
 		gi0 += 1
 
-	# Le Reflet d'Eneko : silhouette de verre, plus grande et plus proche que
-	# dans la galerie précédente — il suit et imite le joueur.
+	# Le Reflet d'Eneko, qui l'imite.
 	var deep := ParallaxLayer.new()
 	deep.motion_scale = Vector2(0.35, 0.55)
 	bg.add_child(deep)
@@ -222,9 +233,9 @@ func _build_decor() -> void:
 	glass_motes.color = Color(0.75, 0.88, 1.0, 0.7)
 	add_child(glass_motes)
 
-func _build_platforms() -> void:
-	for pi in PLATFORMS.size():
-		var p: Vector2 = PLATFORMS[pi]
+## Îlots de repos solides (les seuls sols sûrs).
+func _build_rest_platforms() -> void:
+	for p in REST:
 		var body := StaticBody2D.new()
 		body.position = Vector2(p.x, GROUND_Y)
 		var shape := CollisionShape2D.new()
@@ -233,19 +244,11 @@ func _build_platforms() -> void:
 		shape.shape = rect
 		body.add_child(shape)
 		PlatformPainter.paint(body, p.y, PLATFORM_THEME)
-		var vein_count: int = maxi(1, int(p.y / 130.0))
-		for v in vein_count:
-			var vx2: float = -p.y + 70.0 + v * ((p.y * 2.0 - 140.0) / maxf(1.0, float(vein_count)))
-			var e := _poly(body, PackedVector2Array([
-				Vector2(vx2 - 2, 30), Vector2(vx2 + 3, 30),
-				Vector2(vx2 + 5, 96), Vector2(vx2 - 1, 104), Vector2(vx2 - 4, 66),
-			]), Color(0.5, 0.85, 0.95, 0.0))
-			_shimmers.append({"node": e, "phase": float((v * 53 + pi * 71) % 628) * 0.01})
+		var e := _poly(body, PackedVector2Array([
+			Vector2(-8, 30), Vector2(-4, 30), Vector2(-1, 100), Vector2(-6, 104), Vector2(-11, 60),
+		]), Color(0.5, 0.85, 0.95, 0.0))
+		_shimmers.append({"node": e, "phase": float(int(p.x) % 628) * 0.01})
 		add_child(body)
-		var refl := _poly(self, PackedVector2Array([
-			Vector2(-p.y, 50), Vector2(p.y, 50), Vector2(p.y * 0.7, 150), Vector2(-p.y * 0.7, 150),
-		]), Color(0.5, 0.62, 0.78, 0.12), Vector2(p.x, GROUND_Y))
-		refl.z_index = -1
 
 func _build_steles() -> void:
 	for sx in STELE_XS:
@@ -254,63 +257,33 @@ func _build_steles() -> void:
 		_poly(st, PackedVector2Array([
 			Vector2(-16, 0), Vector2(-12, -110), Vector2(0, -126), Vector2(12, -110), Vector2(16, 0),
 		]), Color(0.1, 0.13, 0.18))
-		_poly(st, PackedVector2Array([
-			Vector2(-8, -6), Vector2(-5, -100), Vector2(0, -110), Vector2(3, -100), Vector2(6, -6),
-		]), Color(0.4, 0.6, 0.75, 0.5))
 		var glint := _poly(st, PackedVector2Array([
 			Vector2(-2, -20), Vector2(2, -20), Vector2(4, -96), Vector2(-1, -104), Vector2(-4, -60),
 		]), Color(0.8, 0.95, 1.0, 0.0))
 		_shimmers.append({"node": glint, "phase": float(int(sx) % 628) * 0.012})
 		add_child(st)
 
-func _build_bridges() -> void:
-	for b in BRIDGES:
-		var half: float = b.y
-		var body := StaticBody2D.new()
-		body.position = Vector2(b.x, GROUND_Y)
-		var shape := CollisionShape2D.new()
-		var rect := RectangleShape2D.new()
-		rect.size = Vector2(half * 2.0, 12.0)
-		shape.shape = rect
-		shape.position = Vector2(0, -44.0)
-		body.add_child(shape)
-		var px := -half
-		var pi := 0
-		while px < half:
-			var pw := minf(24.0, half - px)
-			var c := Color(0.14, 0.17, 0.23) if pi % 2 == 0 else Color(0.1, 0.12, 0.17)
-			_poly(body, PackedVector2Array([
-				Vector2(px, -50), Vector2(px + pw, -50),
-				Vector2(px + pw, -38), Vector2(px, -38),
-			]), c)
-			if pi % 2 == 1:
-				_poly(body, PackedVector2Array([
-					Vector2(px - 1, -49), Vector2(px + 1, -49), Vector2(px + 1, -39), Vector2(px - 1, -39),
-				]), Color(0.5, 0.85, 0.95, 0.5))
-			px += 26.0
-			pi += 1
-		for side in [-1.0, 1.0]:
-			_poly(body, PackedVector2Array([
-				Vector2(side * half - 5, -50), Vector2(side * half + 5, -50),
-				Vector2(side * half + 3, 30), Vector2(side * half - 3, 30),
-			]), Color(0.12, 0.14, 0.2))
-		add_child(body)
+## Dalles effondrables : cœur du niveau. Teintées de verre (le composant peint
+## en pierre pâle par défaut, on ajoute un liseré cyan pour l'ambiance).
+func _build_crumbles() -> void:
+	for c in CRUMBLES:
+		var pad := CRUMBLE_SCENE.instantiate()
+		pad.half_width = c.z
+		pad.position = Vector2(c.x, c.y)
+		add_child(pad)
+		# Liseré cyan translucide posé au-dessus (repère « reflet »).
+		var glint := _poly(self, PackedVector2Array([
+			Vector2(-c.z, -8), Vector2(c.z, -8), Vector2(c.z, -5), Vector2(-c.z, -5),
+		]), Color(0.5, 0.85, 0.95, 0.35), Vector2(c.x, c.y))
+		glint.z_index = 1
 
-## Dangers de la galerie : deux dards spectraux (entrée et sortie) et une
-## presse de verre au centre, à l'écart du refuge (2440-2920) et espacés.
-func _build_hazards() -> void:
-	for entry in [{"x": 1560.0, "ph": 0.5}, {"x": 5350.0, "ph": 1.1}]:
-		var dart := DartLauncher.new()
-		dart.position = Vector2(entry["x"], GROUND_Y - 50.0)
-		dart.dir = -1.0
-		dart.phase = entry["ph"]
-		dart.tint = Color(0.55, 0.85, 1.0)
-		add_child(dart)
-	var crush := SpectralCrusher.new()
-	crush.position = Vector2(3950.0, GROUND_Y - 50.0)
-	crush.phase = 0.4
-	crush.tint = Color(0.6, 0.85, 1.0)
-	add_child(crush)
+func _build_lifts() -> void:
+	for v in LIFTS:
+		var lift := LIFT_SCENE.instantiate()
+		lift.position = v
+		lift.travel = Vector2(0, -150)
+		lift.period = 5.0
+		add_child(lift)
 
 func _build_checkpoints() -> void:
 	for x in CHECKPOINT_XS:
@@ -329,34 +302,6 @@ func _build_checkpoints() -> void:
 		]), Color(0.5, 0.85, 0.95))
 		add_child(cp)
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
-
-func _build_traps() -> void:
-	for i in TRAP_XS.size():
-		var x: float = TRAP_XS[i]
-		var trap := Area2D.new()
-		trap.position = Vector2(x, GROUND_Y - 54.0)
-		var shape := CollisionShape2D.new()
-		var rect := RectangleShape2D.new()
-		rect.size = Vector2(66, 34)
-		shape.shape = rect
-		trap.add_child(shape)
-		_poly(trap, PackedVector2Array([
-			Vector2(-33, 22), Vector2(33, 22), Vector2(33, 6), Vector2(-33, 6),
-		]), Color(0.12, 0.15, 0.2))
-		for k in 4:
-			var ox := -24.0 + k * 16.0
-			_poly(trap, PackedVector2Array([
-				Vector2(ox - 7, 6), Vector2(ox + 7, 6), Vector2(ox, -22),
-			]), Color(0.2, 0.3, 0.4, 0.9))
-			_poly(trap, PackedVector2Array([
-				Vector2(ox - 3, 2), Vector2(ox + 3, 2), Vector2(ox, -16),
-			]), Color(0.75, 0.92, 1.0, 0.9))
-		add_child(trap)
-		trap.body_entered.connect(_on_trap_body_entered)
-
-func _on_trap_body_entered(body: Node2D) -> void:
-	if body == player and body.has_method("take_damage"):
-		body.take_damage(1, body.global_position + Vector2(0, 40))
 
 func _build_goal() -> void:
 	var goal := Area2D.new()
@@ -380,7 +325,7 @@ func _build_goal() -> void:
 
 func _build_kill_zone() -> void:
 	var kz := Area2D.new()
-	kz.position = Vector2(LEVEL_END / 2.0, 700.0)
+	kz.position = Vector2(LEVEL_END / 2.0, 720.0)
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
 	rect.size = Vector2(LEVEL_END + 800.0, 100.0)
@@ -390,31 +335,24 @@ func _build_kill_zone() -> void:
 	kz.body_entered.connect(_on_kill_zone_body_entered)
 
 func _spawn_entities() -> void:
-	for x in PATROL_XS:
-		var e := PATROL_SCENE.instantiate()
-		e.position = Vector2(x, SPAWN_Y)
-		add_child(e)
 	for x in SHADOW_XS:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = Vector2(x, SPAWN_Y)
 		add_child(s)
-	for x in ELITE_XS:
-		var el := SHADOW_SCENE.instantiate()
-		el.position = Vector2(x, SPAWN_Y)
-		add_child(el)
-		el.make_elite()
 	for x in MASK_XS:
 		var m := MASK_SCENE.instantiate()
 		m.position = Vector2(x, SPAWN_Y - 70.0)
 		add_child(m)
-	PlatformPainter.build_sanctuary(self, 2680.0, GROUND_Y - 50.0)
+	# Refuge de Léonie sur l'îlot central.
+	PlatformPainter.build_sanctuary(self, REFUGE_X, GROUND_Y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()
-	leonie.position = Vector2(2680.0, SPAWN_Y)
+	leonie.position = Vector2(REFUGE_X, SPAWN_Y)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
-	for o in ORBS:
+	# Une orbe au-dessus de chaque dalle effondrable (récompense le rythme).
+	for c in CRUMBLES:
 		var orb := ORB_SCENE.instantiate()
-		orb.position = o
+		orb.position = Vector2(c.x, c.y - 40.0)
 		add_child(orb)
 	for o in HIGH_ORBS:
 		var orb := ORB_SCENE.instantiate()
@@ -424,9 +362,9 @@ func _spawn_entities() -> void:
 func _setup_ambient() -> void:
 	var amb := AmbientDialogue.new()
 	add_child(amb)
-	amb.add_line(self, 850.0, "Eneko", "Mille versions de moi, dans ce verre. Laquelle est le Reflet ?")
-	amb.add_line(self, 3900.0, "Eneko", "Il ralentit quand je ralentis, frappe quand je frappe. Il faut que je le prenne à contre-temps.")
-	amb.add_line(self, 6300.0, "Eneko", "La porte d'argent, encore. Le Reflet m'attend derrière, j'en suis sûr.")
+	amb.add_line(self, 700.0, "Eneko", "Le sol se brise à peine posé. Je ne dois pas m'arrêter.")
+	amb.add_line(self, 3300.0, "Eneko", "Chaque dalle est un reflet qui refuse de me porter. Plus vite !")
+	amb.add_line(self, 6200.0, "Eneko", "L'îlot du bout. La porte d'argent m'y attend enfin.")
 
 func _setup_audio() -> void:
 	var wind := AudioStreamPlayer.new()

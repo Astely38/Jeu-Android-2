@@ -31,7 +31,7 @@ const DEFS := [
 	{"id": "platine_ombre", "name": "Ombre immaculée", "desc": "Obtenir le Platine sur les cinq niveaux du Chapitre II."},
 	# Chapitre III — L'Écho dans le Noir.
 	{"id": "dans_le_miroir", "name": "De l'autre côté", "desc": "Franchir le seuil du royaume-miroir (Chapitre III)."},
-	{"id": "galerie_reflets", "name": "Danse des reflets", "desc": "Traverser la Galerie des Reflets."},
+	{"id": "galerie_reflets", "name": "Danse des reflets", "desc": "Franchir les Reflets Brisés sans jamais s'attarder."},
 ]
 
 var _queue: Array = []
