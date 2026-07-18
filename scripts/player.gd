@@ -627,12 +627,73 @@ func _spawn_ghost() -> void:
 
 ## Micro-arrêt du temps à l'impact d'un coup qui porte (le "crunch" des
 ## jeux d'action). Durée mesurée en temps réel, insensible au time_scale.
-func _hit_stop() -> void:
+func _hit_stop(dur := 0.06) -> void:
 	if Engine.time_scale < 1.0:
 		return
 	Engine.time_scale = 0.15
-	await get_tree().create_timer(0.06, true, false, true).timeout
+	await get_tree().create_timer(dur, true, false, true).timeout
 	Engine.time_scale = 1.0
+
+## Éclat d'impact au point de contact du sabre : étoile blanche, éclats
+## radiaux, et une onde de choc sur les coups qui tuent. Rendu dans le niveau
+## (au monde), pour rester sur place quand Eneko poursuit son mouvement.
+func _spawn_impact(at: Vector2, strong: bool) -> void:
+	var host := get_parent()
+	if host == null:
+		return
+	var tint := Color(1.0, 0.9, 0.55) if strong else Color(0.82, 0.94, 1.0)
+	var star := Polygon2D.new()
+	var pts := PackedVector2Array()
+	for i in 12:
+		var a := i * PI / 6.0
+		var r := (16.0 if strong else 10.0) if i % 2 == 0 else (6.0 if strong else 3.5)
+		pts.append(Vector2(cos(a) * r, sin(a) * r))
+	star.polygon = pts
+	star.color = Color(1, 1, 1, 0.95)
+	star.position = at
+	star.z_index = 25
+	host.add_child(star)
+	var t := star.create_tween()
+	t.set_parallel(true)
+	t.tween_property(star, "scale", Vector2(2.1, 2.1) if strong else Vector2(1.4, 1.4), 0.15)
+	t.tween_property(star, "modulate:a", 0.0, 0.15)
+	t.chain().tween_callback(star.queue_free)
+	var n := 6 if strong else 4
+	for i in n:
+		var ang := TAU * float(i) / float(n) + randf() * 0.5
+		var ln := 16.0 if strong else 11.0
+		var ray := Polygon2D.new()
+		ray.polygon = PackedVector2Array([
+			Vector2(0, -2), Vector2(ln, -1), Vector2(ln + 6.0, 0), Vector2(ln, 1), Vector2(0, 2),
+		])
+		ray.color = tint
+		ray.position = at
+		ray.rotation = ang
+		ray.z_index = 25
+		host.add_child(ray)
+		var rt := ray.create_tween()
+		rt.set_parallel(true)
+		rt.tween_property(ray, "position", at + Vector2(cos(ang), sin(ang)) * (34.0 if strong else 22.0), 0.18)
+		rt.tween_property(ray, "modulate:a", 0.0, 0.18)
+		rt.chain().tween_callback(ray.queue_free)
+	if strong:
+		var ring := Line2D.new()
+		ring.width = 3.0
+		ring.default_color = Color(1.0, 0.92, 0.6, 0.85)
+		ring.closed = true
+		var rp := PackedVector2Array()
+		for i in 18:
+			var a := i * TAU / 18.0
+			rp.append(Vector2(cos(a) * 10.0, sin(a) * 10.0))
+		ring.points = rp
+		ring.position = at
+		ring.z_index = 25
+		host.add_child(ring)
+		var gt := ring.create_tween()
+		gt.set_parallel(true)
+		gt.tween_property(ring, "scale", Vector2(3.4, 3.4), 0.22)
+		gt.tween_property(ring, "modulate:a", 0.0, 0.22)
+		gt.chain().tween_callback(ring.queue_free)
 
 ## Panoramique d'introduction : la caméra part d'un point fort du niveau
 ## (torii, sommet, arène du boss...) et glisse jusqu'à Eneko. Le niveau
@@ -988,14 +1049,16 @@ func _try_hit(body: Node2D) -> void:
 	if _heavy and is_instance_valid(body) and body.has_method("die"):
 		body.call("die")
 	if res is bool and bool(res) == false:
-		_shake = 2.0  # le coup a porté, mais l'esprit tient debout
+		_shake = maxf(_shake, 2.2)  # le coup a porté, mais l'esprit tient debout
+		_spawn_impact(body.global_position, false)
 		SaveManager.vibrate(12)
 		return
 	Challenge.register_kill()
 	_register_combo_kill()
-	_shake = 3.5  # impact ressenti à chaque coup qui porte
-	SaveManager.vibrate(18)
-	_hit_stop()
+	_spawn_impact(body.global_position, true)
+	_shake = maxf(_shake, 5.0 if _heavy else 3.6)  # impact ressenti à chaque coup
+	SaveManager.vibrate(26 if _heavy else 18)
+	_hit_stop(0.09 if _heavy else 0.06)
 
 ## Petit badge rouge sous le chrono pour rappeler que le mode Kensei est actif.
 func _build_kensei_badge() -> void:
@@ -1060,8 +1123,10 @@ func _end_combo() -> void:
 ## Le sabre dissipe aussi les projectiles (orbes corrompus des Yūrei).
 func _on_attack_area_area_entered(area: Area2D) -> void:
 	if area.has_method("die"):
+		var p := area.global_position
 		area.die()
-		_shake = 2.0
+		_shake = maxf(_shake, 2.0)
+		_spawn_impact(p, false)
 
 func _on_left_pressed() -> void:
 	moving_left = true
