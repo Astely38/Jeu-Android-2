@@ -33,7 +33,8 @@ const DEFS := [
 	{"id": "dans_le_miroir", "name": "De l'autre côté", "desc": "Franchir le seuil du royaume-miroir (Chapitre III)."},
 	{"id": "galerie_reflets", "name": "Danse des reflets", "desc": "Franchir les Reflets Brisés sans jamais s'attarder."},
 	{"id": "distance_reflet", "name": "Plus vite que son ombre", "desc": "Distancer le Reflet et atteindre la porte d'argent."},
-	{"id": "chercheur_reliques", "name": "Chercheur de reliques", "desc": "Dénicher les treize reliques cachées, une par niveau.", "secret": true},
+	{"id": "funambule", "name": "Funambule du vide", "desc": "Franchir le Gouffre aux Anneaux au bout du Fil Spirituel."},
+	{"id": "chercheur_reliques", "name": "Chercheur de reliques", "desc": "Dénicher les quatorze reliques cachées, une par niveau.", "secret": true},
 ]
 
 var _queue: Array = []
@@ -114,6 +115,8 @@ func on_level_finished(results: Dictionary) -> void:
 		unlock("galerie_reflets")
 	if lvl == "level_13":
 		unlock("distance_reflet")
+	if lvl == "level_14":
+		unlock("funambule")
 	if int(results["damage"]) == 0:
 		unlock("intouchable")
 	if int(results["orbs"]) >= int(results["total_orbs"]):

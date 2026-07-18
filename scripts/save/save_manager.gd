@@ -6,7 +6,7 @@ extends Node
 const SAVE_PATH := "user://save.json"
 
 ## Ordre de progression des niveaux.
-const LEVEL_ORDER := ["level_1", "level_2", "level_3", "level_4", "level_5", "level_6", "level_7", "level_8", "level_9", "level_10", "level_11", "level_12", "level_13"]
+const LEVEL_ORDER := ["level_1", "level_2", "level_3", "level_4", "level_5", "level_6", "level_7", "level_8", "level_9", "level_10", "level_11", "level_12", "level_13", "level_14"]
 
 const LEVEL_NAMES := {
 	"level_1": "La Clairière des Bambous",
@@ -22,6 +22,7 @@ const LEVEL_NAMES := {
 	"level_11": "III · Le Miroir des Âmes",
 	"level_12": "III · Les Reflets Brisés",
 	"level_13": "III · La Poursuite du Reflet",
+	"level_14": "III · Le Gouffre aux Anneaux",
 	"level_secret": "✦ Le Jardin Céleste",
 }
 
@@ -41,6 +42,7 @@ const LEVEL_SCENES := {
 	"level_11": "res://levels/level_11.tscn",
 	"level_12": "res://levels/level_12.tscn",
 	"level_13": "res://levels/level_13.tscn",
+	"level_14": "res://levels/level_14.tscn",
 	"level_secret": "res://levels/level_secret.tscn",
 }
 
@@ -128,7 +130,7 @@ func complete_level(level_id: String, orbs: int) -> void:
 
 ## Reliques cachées : une par niveau (level_1 à level_12), facultatives et
 ## sans effet sur le grade. TOTAL_RELICS sert au succès « Chercheur de reliques ».
-const TOTAL_RELICS := 13
+const TOTAL_RELICS := 14
 
 func has_relic(level_id: String) -> bool:
 	return data.get("relics", []).has(level_id)
