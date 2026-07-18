@@ -19,6 +19,7 @@ const P2_HEALTH := 8
 const P3_HEALTH := 4
 
 const BLADE_SCRIPT := preload("res://scripts/mirror_blade.gd")
+const SAMURAI := "res://assets/character/samurai/"
 
 const SHIELD_Y := 430.0     # vol protégé, hors de portée du sabre
 const EXPOSED_Y := 476.0    # s'effondre au sol, à portée
@@ -45,10 +46,9 @@ var _t := 0.0
 var _hurt_flash := 0.0
 var _shield_flash := 0.0
 
-var _sil: Node2D
+var _anim: AnimatedSprite2D
 var _shield_ring: Line2D
-var _sword: Polygon2D
-var _eyes: Array = []
+var _prev_x := 0.0
 
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
 @onready var hitbox: Area2D = $Hitbox
@@ -173,8 +173,8 @@ func _die_for_real() -> void:
 	defeated.emit()
 	var t := create_tween()
 	t.set_parallel(true)
-	t.tween_property(_sil, "modulate:a", 0.0, 1.1)
-	t.tween_property(_sil, "scale", Vector2(0.4, 1.6), 1.1)
+	t.tween_property(_anim, "modulate:a", 0.0, 1.1)
+	t.tween_property(_anim, "scale", Vector2(0.4, 1.6), 1.1)
 	if _shield_ring != null:
 		t.tween_property(_shield_ring, "modulate:a", 0.0, 0.5)
 	t.chain().tween_callback(queue_free)
@@ -182,59 +182,54 @@ func _die_for_real() -> void:
 # --- Visuel ---------------------------------------------------------------
 
 func _face_player() -> void:
-	if _player != null and is_instance_valid(_player):
-		var s := -1.0 if _player.global_position.x < global_position.x else 1.0
-		_sil.scale.x = s
+	if _anim != null and _player != null and is_instance_valid(_player):
+		_anim.flip_h = _player.global_position.x < global_position.x
 
 func _animate(_delta: float) -> void:
-	# Bouclier visible tant qu'il n'est pas exposé ; pulsation + éclat au ricochet.
+	# Anneau-bouclier : visible tant qu'il n'est pas exposé ; éclat au ricochet.
 	if _shield_ring != null:
 		_shield_ring.visible = not _exposed and not _dying
 		var base := 0.5 + 0.35 * (0.5 + 0.5 * sin(_t * 3.0))
 		_shield_ring.modulate.a = minf(1.0, base + _shield_flash * 2.0)
-	# Épée levée qui s'illumine pendant la mise en garde (télégraphe).
-	if _sword != null:
-		var warn := clampf(1.0 - _wind / WIND_TIME, 0.0, 1.0) if _wind > 0.0 else 0.0
-		_sword.color = Color(0.7, 0.9, 1.0).lerp(Color(1.0, 0.95, 0.6), warn)
-	# Corps : plus clair quand exposé (vulnérable), éclat rouge quand touché.
-	var tint := Color(0.4, 0.3, 0.6)
+	if _anim == null or _dying:
+		return
+	_face_player()
+	# Choix de l'animation d'Eneko selon l'état.
+	var want := "idle"
+	if not _exposed:
+		if _wind > 0.0:
+			want = "attack"
+		elif absf(global_position.x - _prev_x) > 0.5:
+			want = "run"
+	else:
+		want = "hurt"
+	if _anim.animation != want:
+		_anim.play(want)
+	_prev_x = global_position.x
+	# Teinte miroir : bleu froid ; plus clair quand exposé (vulnérable),
+	# éclat rouge quand il encaisse un coup.
+	var tint := Color(0.55, 0.74, 1.0)
 	if _exposed:
-		tint = Color(0.7, 0.6, 0.9)
-	tint = tint.lerp(Color(1.0, 0.6, 0.6), _hurt_flash)
-	if _sil != null and _sil.get_child_count() > 0:
-		var torso := _sil.get_child(0) as Polygon2D
-		if torso != null:
-			torso.color = tint
-
-func _poly(parent: Node, pts: PackedVector2Array, c: Color, pos := Vector2.ZERO) -> Polygon2D:
-	var p := Polygon2D.new()
-	p.polygon = pts
-	p.color = c
-	p.position = pos
-	parent.add_child(p)
-	return p
+		tint = Color(0.86, 0.93, 1.0)
+	tint = tint.lerp(Color(1.0, 0.5, 0.5), _hurt_flash)
+	_anim.modulate = tint
 
 func _build_visual() -> void:
-	_sil = Node2D.new()
-	add_child(_sil)
-	# Torse + jambes (index 0 : teinté dynamiquement).
-	_poly(_sil, PackedVector2Array([
-		Vector2(-16, 52), Vector2(16, 52), Vector2(13, -18), Vector2(0, -34), Vector2(-13, -18),
-	]), Color(0.4, 0.3, 0.6))
-	# Tête.
-	_poly(_sil, PackedVector2Array([
-		Vector2(-9, -34), Vector2(9, -34), Vector2(7, -52), Vector2(-7, -52),
-	]), Color(0.32, 0.24, 0.5))
-	# Yeux luisants.
-	for sx in [-4.0, 4.0]:
-		var e := _poly(_sil, PackedVector2Array([
-			Vector2(sx - 2, -46), Vector2(sx + 2, -46), Vector2(sx + 2, -41), Vector2(sx - 2, -41),
-		]), Color(0.7, 0.95, 1.0))
-		_eyes.append(e)
-	# Épée levée (renvoie la lumière) — index gardé dans _sword.
-	_sword = _poly(_sil, PackedVector2Array([
-		Vector2(14, -22), Vector2(19, -22), Vector2(40, -92), Vector2(34, -95),
-	]), Color(0.7, 0.9, 1.0))
+	# Le Reflet EST Eneko : on réutilise le sprite du samouraï, teinté en
+	# miroir spectral (bleu froid), un peu plus grand pour la prestance du boss.
+	_anim = AnimatedSprite2D.new()
+	_anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_anim.position = Vector2(0, -18)
+	_anim.scale = Vector2(1.2, 1.2)
+	_anim.sprite_frames = SpriteSheet.build([
+		{"name": "idle", "path": SAMURAI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
+		{"name": "run", "path": SAMURAI + "Run.png", "frames": 8, "fps": 13.0, "loop": true},
+		{"name": "attack", "path": SAMURAI + "Attack_1.png", "frames": 6, "fps": 14.0, "loop": false},
+		{"name": "hurt", "path": SAMURAI + "Hurt.png", "frames": 2, "fps": 9.0, "loop": false},
+	])
+	_anim.play("idle")
+	add_child(_anim)
+	_prev_x = global_position.x
 	# Bouclier-miroir : anneau de lumière autour du Reflet.
 	_shield_ring = Line2D.new()
 	_shield_ring.width = 3.0
@@ -243,7 +238,7 @@ func _build_visual() -> void:
 	var rpts := PackedVector2Array()
 	for i in 26:
 		var a := i * TAU / 26.0
-		rpts.append(Vector2(cos(a) * 46.0, sin(a) * 58.0))
+		rpts.append(Vector2(cos(a) * 40.0, sin(a) * 62.0))
 	_shield_ring.points = rpts
-	_shield_ring.position = Vector2(0, 2)
+	_shield_ring.position = Vector2(0, -16)
 	add_child(_shield_ring)
