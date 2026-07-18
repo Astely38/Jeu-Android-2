@@ -94,6 +94,10 @@ var _combo_timer := 0.0
 ## Bref éclat du feu follet quand un éclat de lumière est ramassé.
 var _orb_flash := 0.0
 var _combo_label: Label
+## Vignette rouge de lisibilité : éclat bref quand Eneko est touché, et
+## pulsation douce et continue quand il ne reste qu'un seul cœur (danger).
+var _vignette: TextureRect
+var _vignette_flash := 0.0
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var attack_shape: CollisionShape2D = $AttackArea/CollisionShape2D
@@ -142,6 +146,7 @@ func _ready() -> void:
 	])
 	_play("idle")
 	orb_label.text = "x0"
+	_build_vignette()
 	_update_hearts()
 	_update_heart_hint()
 
@@ -213,6 +218,7 @@ func _physics_process(delta: float) -> void:
 			_end_combo()
 	if _orb_flash > 0.0:
 		_orb_flash -= delta
+	_update_vignette(delta)
 
 	_dash_strike_window = maxf(0.0, _dash_strike_window - delta)
 
@@ -659,6 +665,7 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 	_end_combo()
 	health -= amount
 	_update_hearts()
+	_vignette_flash = 0.85
 	Sfx.varied(sfx_hurt, 0.92, 1.08)
 	_shake = 7.0
 	SaveManager.vibrate(45)
@@ -684,6 +691,7 @@ func fall_damage() -> void:
 	_end_combo()
 	health -= 1
 	_update_hearts()
+	_vignette_flash = 0.85
 	Sfx.varied(sfx_hurt, 0.92, 1.08)
 	_shake = 7.0
 	SaveManager.vibrate(45)
@@ -814,6 +822,43 @@ func _update_heart_hint() -> void:
 func _update_hearts() -> void:
 	for i in hearts.size():
 		hearts[i].visible = i < health
+
+## Vignette rouge en bord d'écran, tissée d'un dégradé radial (centre limpide,
+## coins teintés). Sous le reste du HUD et transparente aux touches.
+func _build_vignette() -> void:
+	var grad := Gradient.new()
+	grad.offsets = PackedFloat32Array([0.5, 1.0])
+	grad.colors = PackedColorArray([Color(0.75, 0.05, 0.08, 0.0), Color(0.75, 0.05, 0.08, 0.85)])
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 480
+	tex.height = 270
+	_vignette = TextureRect.new()
+	_vignette.texture = tex
+	_vignette.anchor_right = 1.0
+	_vignette.anchor_bottom = 1.0
+	_vignette.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_vignette.stretch_mode = TextureRect.STRETCH_SCALE
+	_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_vignette.modulate = Color(1, 1, 1, 0)
+	$HUD.add_child(_vignette)
+	$HUD.move_child(_vignette, 0)
+
+func _update_vignette(delta: float) -> void:
+	if _vignette == null:
+		return
+	_vignette_flash = maxf(0.0, _vignette_flash - delta * 2.2)
+	# L'éclat vif à l'impact respecte le réglage « flash » (accessibilité) ;
+	# la pulsation lente de danger critique reste, elle, toujours visible.
+	var flash := _vignette_flash if SaveManager.setting_on("flash") else 0.0
+	var low := 0.0
+	if health <= 1 and not _dead:
+		var phase := Time.get_ticks_msec() / 1000.0
+		low = 0.24 + 0.12 * (0.5 + 0.5 * sin(phase * 5.0))
+	_vignette.modulate.a = maxf(flash, low)
 
 func _on_attack_area_body_entered(body: Node2D) -> void:
 	_try_hit(body)
