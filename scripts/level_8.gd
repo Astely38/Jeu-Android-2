@@ -51,7 +51,7 @@ const SHADOW_XS := [850.0, 3300.0, 5780.0]
 const ELITE_XS := [3920.0, 6420.0]
 ## Masques d'Oni : au-dessus de plateformes dégagées (jamais d'un trou).
 const MASK_XS := [2080.0, 4540.0, 5160.0]
-const TRAP_XS := [2000.0, 3160.0, 4430.0, 5670.0]
+const TRAP_XS := [700.0, 1350.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]
 ## Monolithes de vide dressés qui bordent le puits (décor, sans collision).
 const MONOLITH_XS := [500.0, 2500.0, 3920.0, 5160.0, 6600.0]
 ## Ponts de vide solidifié PRATICABLES au-dessus des deux brèches larges :

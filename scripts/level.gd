@@ -54,10 +54,12 @@ const SHADOW_XS := [2560.0, 6480.0]
 const ELITE_XS := [4100.0]
 ## Pièges à pics : proches d'un bord de plateforme, contournables en marchant
 ## ou en sautant par-dessus (jamais un passage obligé).
-const TRAP_XS := [1990.0, 2680.0, 3900.0, 5220.0, 6520.0]
+## Opener volontairement aéré : trois pieux bien espacés (jamais collés à un
+## geyser), pour enseigner l'esquive sans saturer le tout premier niveau.
+const TRAP_XS := [2680.0, 3900.0, 6520.0]
 ## Geysers de flamme spectrale (piège cyclique télégraphié). Placés au large,
 ## à l'écart des autres dangers : on passe pendant la fenêtre dormante.
-const GEYSER_XS := [2050.0, 4520.0, 5400.0]
+const GEYSER_XS := [2050.0, 4520.0]
 ## Ascenseur spirituel : x = centre, y = dessus de la dalle au point bas
 ## (atteignable d'un saut depuis le bord du trou). Il monte de 175 px et
 ## dessert les trois orbes bonus placées en hauteur.

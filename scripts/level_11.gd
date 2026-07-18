@@ -47,7 +47,7 @@ const PATROL_XS := [900.0, 3850.0, 6300.0]
 const SHADOW_XS := [1470.0, 3300.0, 5780.0]
 const ELITE_XS := [5160.0]
 const MASK_XS := [2080.0, 4540.0, 6420.0]
-const TRAP_XS := [700.0, 2000.0, 3160.0, 4430.0, 5670.0]
+const TRAP_XS := [700.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]
 ## Stèles-miroir dressées qui bordent le royaume (décor, sans collision).
 const STELE_XS := [500.0, 2500.0, 3920.0, 5160.0, 6600.0]
 const BRIDGES := [Vector2(1775, 100), Vector2(6100, 110)]
