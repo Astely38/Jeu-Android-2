@@ -225,10 +225,10 @@ func _style_button(b: Button, accent: Color) -> void:
 			Sfx.varied(_sfx_click, 0.96, 1.06))
 
 func _on_continue_pressed() -> void:
-	get_tree().change_scene_to_file(SaveManager.get_last_level_scene())
+	Transition.goto(SaveManager.get_last_level_scene())
 
 func _on_levels_pressed() -> void:
-	get_tree().change_scene_to_file(LEVEL_SELECT)
+	Transition.goto(LEVEL_SELECT)
 
 ## Affiche la version de l'application en bas à gauche du menu (remplie
 ## automatiquement par le CI : "0.NN" = numéro de build).

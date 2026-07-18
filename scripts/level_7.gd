@@ -122,7 +122,7 @@ func _ready() -> void:
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_8", "")
 	next_button.visible = next_scene != ""
 	if next_scene != "":
-		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+		next_button.pressed.connect(func(): Transition.goto(next_scene))
 	# Survol d'introduction : de la porte du fond jusqu'à Eneko.
 	player.intro_pan(Vector2(GOAL_X, 340.0))
 
@@ -588,4 +588,4 @@ func _on_dialogue_finished() -> void:
 	player.set_physics_process(true)
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

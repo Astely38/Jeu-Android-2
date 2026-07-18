@@ -130,7 +130,7 @@ func _ready() -> void:
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_2", "")
 	next_button.visible = next_scene != ""
 	if next_scene != "":
-		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+		next_button.pressed.connect(func(): Transition.goto(next_scene))
 	# Survol d'introduction : du torii jusqu'à Eneko.
 	player.intro_pan(Vector2(GOAL_X, 380.0))
 
@@ -535,7 +535,7 @@ func _on_secret_portal_body_entered(body: Node2D) -> void:
 		return
 	_portal_used = true
 	SaveManager.discover_secret()
-	get_tree().change_scene_to_file.call_deferred("res://levels/level_secret.tscn")
+	Transition.goto("res://levels/level_secret.tscn")
 
 ## Panneaux d'apprentissage en bois plantés au long de la première clairière :
 ## ils enseignent les commandes au bon moment, sans bloquer le jeu.
@@ -865,4 +865,4 @@ func _on_dialogue_finished() -> void:
 	player.set_physics_process(true)
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

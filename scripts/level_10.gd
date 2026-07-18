@@ -541,4 +541,4 @@ func _format_time(seconds: float) -> String:
 	return "%d:%02d" % [mins, secs]
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

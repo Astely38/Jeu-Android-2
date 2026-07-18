@@ -127,7 +127,7 @@ func _ready() -> void:
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_4", "")
 	next_button.visible = next_scene != ""
 	if next_scene != "":
-		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+		next_button.pressed.connect(func(): Transition.goto(next_scene))
 	_build_lightning()
 	# Survol d'introduction : du torii, à travers le village, jusqu'à Eneko.
 	player.intro_pan(Vector2(GOAL_X, 380.0))
@@ -855,4 +855,4 @@ func _on_dialogue_finished() -> void:
 	player.set_physics_process(true)
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

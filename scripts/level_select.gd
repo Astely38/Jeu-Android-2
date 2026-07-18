@@ -149,7 +149,7 @@ func _style_button(b: Button, accent: Color) -> void:
 func _on_play_pressed(level_id: String) -> void:
 	Challenge.kensei = false
 	SaveManager.set_last_level(level_id)
-	get_tree().change_scene_to_file(SaveManager.LEVEL_SCENES[level_id])
+	Transition.goto(SaveManager.LEVEL_SCENES[level_id])
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

@@ -996,7 +996,7 @@ func _open_pause() -> void:
 	var menu := _pause_button("Retour au menu", Color(0.6, 0.5, 0.45))
 	menu.pressed.connect(func():
 		get_tree().paused = false
-		get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+		Transition.goto("res://scenes/main_menu.tscn")
 	)
 	box.add_child(menu)
 

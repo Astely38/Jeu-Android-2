@@ -93,7 +93,7 @@ func _ready() -> void:
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_10", "")
 	next_button.visible = next_scene != ""
 	if next_scene != "":
-		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+		next_button.pressed.connect(func(): Transition.goto(next_scene))
 	# Survol d'introduction : du Grand Masque jusqu'à Eneko.
 	player.intro_pan(Vector2(BOSS_SPAWN_X, 340.0), 2.0)
 
@@ -403,4 +403,4 @@ func _format_time(seconds: float) -> String:
 	return "%d:%02d" % [mins, secs]
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")
