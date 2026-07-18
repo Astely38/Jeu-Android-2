@@ -30,6 +30,10 @@ func _build_list() -> void:
 	var list: VBoxContainer = $Scroll/List
 	# Les niveaux sont groupés par chapitre : un en-tête s'insère à chaque
 	# changement de chapitre le long de LEVEL_ORDER.
+	# Compteur de reliques : n'apparaît qu'une fois la première dénichée
+	# (sinon on vendrait l'existence du secret).
+	if SaveManager.relics_found() > 0:
+		list.add_child(_relic_counter())
 	var cur_chapter := 0
 	for level_id in SaveManager.LEVEL_ORDER:
 		var ch: int = CHAPTER_OF.get(level_id, cur_chapter)
@@ -42,6 +46,19 @@ func _build_list() -> void:
 	if SaveManager.is_unlocked("level_secret"):
 		list.add_child(_chapter_header("Détour"))
 		list.add_child(_build_row("level_secret"))
+
+## Bandeau du nombre de reliques déjà réunies (sur douze).
+func _relic_counter() -> Control:
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_top", 4)
+	m.add_theme_constant_override("margin_bottom", 6)
+	m.add_theme_constant_override("margin_left", 4)
+	var l := Label.new()
+	l.text = "✦ Reliques   %d / %d" % [SaveManager.relics_found(), SaveManager.TOTAL_RELICS]
+	l.add_theme_font_size_override("font_size", 18)
+	l.add_theme_color_override("font_color", Color(1.0, 0.82, 0.4))
+	m.add_child(l)
+	return m
 
 ## En-tête de chapitre : un titre doré discret qui sépare les groupes de
 ## niveaux dans la liste.
@@ -86,11 +103,21 @@ func _build_row(level_id: String) -> Control:
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(vbox)
 
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(title_row)
 	var title := Label.new()
 	title.text = SaveManager.LEVEL_NAMES.get(level_id, level_id)
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", CREAM if playable else Color(0.55, 0.53, 0.5))
-	vbox.add_child(title)
+	title_row.add_child(title)
+	# Sceau doré : le niveau a livré sa relique cachée.
+	if SaveManager.has_relic(level_id):
+		var seal := Label.new()
+		seal.text = "✦"
+		seal.add_theme_font_size_override("font_size", 22)
+		seal.add_theme_color_override("font_color", Color(1.0, 0.82, 0.4))
+		title_row.add_child(seal)
 
 	var sub := Label.new()
 	if not has_scene:

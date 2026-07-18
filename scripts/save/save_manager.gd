@@ -59,6 +59,7 @@ func load_data() -> void:
 		"achievements": {},
 		"stats": {},
 		"kensei_done": [],
+		"relics": [],
 		"prologue_seen": false,
 	}
 	if not FileAccess.file_exists(SAVE_PATH):
@@ -122,6 +123,23 @@ func complete_level(level_id: String, orbs: int) -> void:
 		if not data["unlocked_levels"].has(next_id):
 			data["unlocked_levels"].append(next_id)
 	save_data()
+
+## Reliques cachées : une par niveau (level_1 à level_12), facultatives et
+## sans effet sur le grade. TOTAL_RELICS sert au succès « Chercheur de reliques ».
+const TOTAL_RELICS := 12
+
+func has_relic(level_id: String) -> bool:
+	return data.get("relics", []).has(level_id)
+
+func mark_relic(level_id: String) -> void:
+	if not data.has("relics"):
+		data["relics"] = []
+	if not data["relics"].has(level_id):
+		data["relics"].append(level_id)
+		save_data()
+
+func relics_found() -> int:
+	return data.get("relics", []).size()
 
 ## Le Jardin Céleste vient d'être découvert (vieux torii moussu du
 ## niveau 1) : il apparaît désormais dans la sélection de niveaux.

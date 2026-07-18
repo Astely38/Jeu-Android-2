@@ -87,6 +87,11 @@ func _ready() -> void:
 	boss_ui.visible = false
 	Music.play_world(2)
 	SaveManager.set_last_level(LEVEL_ID)
+	# Relique cachée, tapie à gauche de l'apparition.
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(60, 466)
+	add_child(relic)
 	Challenge.start_level(LEVEL_ID, ORBS.size())
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)

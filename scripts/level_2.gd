@@ -119,6 +119,11 @@ func _ready() -> void:
 	_setup_ambient()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
+	# Relique cachée, en surplomb juste au-dessus de l'apparition.
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(280, 398)
+	add_child(relic)
 	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
 	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_IDX.size())
 	_attach_player_glow()

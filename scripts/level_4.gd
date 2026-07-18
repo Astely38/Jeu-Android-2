@@ -136,6 +136,11 @@ func _ready() -> void:
 	player.set_land_dust_color(Color(0.92, 0.95, 1.0, 0.75))
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
+	# Relique cachée, tapie à gauche de l'apparition.
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(60, 466)
+	add_child(relic)
 	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
 	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_XS.size())
 	dialogue.finished.connect(_on_dialogue_finished)

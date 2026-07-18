@@ -107,6 +107,11 @@ func _ready() -> void:
 	win_label.visible = false
 	Music.play_world(2)
 	SaveManager.set_last_level(LEVEL_ID)
+	# Relique cachée, en hauteur (Double Saut).
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(6420, 292)
+	add_child(relic)
 	# Les orbes-reflet en hauteur comptent aussi dans le total.
 	Challenge.start_level(LEVEL_ID, ORBS.size() + HIGH_ORBS.size() + 3 * ELITE_XS.size())
 	dialogue.finished.connect(_on_dialogue_finished)

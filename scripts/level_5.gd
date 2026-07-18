@@ -119,6 +119,11 @@ func _ready() -> void:
 	# revient au thème du monde jusqu'à la prochaine entrée dans l'arène.
 	Music.play_world()
 	SaveManager.set_last_level(LEVEL_ID)
+	# Relique cachée, tapie à gauche de l'apparition.
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(60, 466)
+	add_child(relic)
 	Challenge.start_level(LEVEL_ID, ORBS.size())
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)

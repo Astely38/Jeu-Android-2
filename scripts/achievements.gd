@@ -32,6 +32,7 @@ const DEFS := [
 	# Chapitre III — L'Écho dans le Noir.
 	{"id": "dans_le_miroir", "name": "De l'autre côté", "desc": "Franchir le seuil du royaume-miroir (Chapitre III)."},
 	{"id": "galerie_reflets", "name": "Danse des reflets", "desc": "Franchir les Reflets Brisés sans jamais s'attarder."},
+	{"id": "chercheur_reliques", "name": "Chercheur de reliques", "desc": "Dénicher les douze reliques cachées, une par niveau.", "secret": true},
 ]
 
 var _queue: Array = []
@@ -120,6 +121,12 @@ func on_level_finished(results: Dictionary) -> void:
 	if pl != null and int(pl.get("health")) == 1:
 		unlock("survivant")
 	_check_grades()
+
+## Appelé par une Relique quand elle est ramassée : les douze réunies débloquent
+## le succès du chercheur.
+func on_relic_found() -> void:
+	if SaveManager.relics_found() >= SaveManager.TOTAL_RELICS:
+		unlock("chercheur_reliques")
 
 func _check_grades() -> void:
 	var all_gold := true

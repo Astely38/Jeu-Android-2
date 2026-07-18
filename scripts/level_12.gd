@@ -118,6 +118,11 @@ func _ready() -> void:
 	win_label.visible = false
 	Music.play_world(2)
 	SaveManager.set_last_level(LEVEL_ID)
+	# Relique cachée, au-dessus de l'îlot de départ (Double Saut).
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(230, 300)
+	add_child(relic)
 	Challenge.start_level(LEVEL_ID, CRUMBLES.size() + HIGH_ORBS.size())
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
