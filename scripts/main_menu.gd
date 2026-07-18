@@ -398,7 +398,7 @@ func _close_prologue() -> void:
 
 func _build_achievements_button() -> void:
 	var b := Button.new()
-	b.text = "🏆 Succès"
+	b.text = "🏆 Galerie"
 	b.add_theme_font_size_override("font_size", 16)
 	b.position = Vector2(642, 498)
 	b.size = Vector2(146, 36)
@@ -436,7 +436,7 @@ func _open_achievements() -> void:
 	panel.add_child(box)
 
 	var title := Label.new()
-	title.text = "Succès — %d/%d" % [Achievements.unlocked_count(), Achievements.DEFS.size()]
+	title.text = "Galerie"
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", CREAM)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -450,8 +450,14 @@ func _open_achievements() -> void:
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.add_theme_constant_override("separation", 8)
 	scroll.add_child(list)
+	# Section Succès.
+	list.add_child(_section_label("🏆 Succès — %d/%d" % [Achievements.unlocked_count(), Achievements.DEFS.size()]))
 	for d in Achievements.DEFS:
 		list.add_child(_achievement_row(d))
+	# Section Reliques : une par niveau, à débusquer.
+	list.add_child(_section_label("✦ Reliques — %d/%d" % [SaveManager.relics_found(), SaveManager.TOTAL_RELICS]))
+	for level_id in SaveManager.LEVEL_ORDER:
+		list.add_child(_relic_row(String(level_id)))
 	UiScroll.make_touch_friendly(scroll)
 
 	var close := Button.new()
@@ -488,6 +494,47 @@ func _achievement_row(d: Dictionary) -> Control:
 	desc_l.add_theme_color_override("font_color",
 		Color(0.85, 0.83, 0.8, 0.85) if unlocked else Color(0.6, 0.58, 0.56, 0.85))
 	desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(desc_l)
+	return row
+
+## Ligne de relique dans la galerie : sceau doré si trouvée, contour terne
+## et invite à fouiller sinon. Le nom du niveau aide à savoir où chercher.
+func _relic_row(level_id: String) -> Control:
+	var found := SaveManager.has_relic(level_id)
+	var lvl_name := String(SaveManager.LEVEL_NAMES.get(level_id, level_id))
+	var row := PanelContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.16, 0.13, 0.22, 0.9) if found else Color(1, 1, 1, 0.04)
+	sb.set_corner_radius_all(8)
+	sb.set_content_margin_all(8.0)
+	if found:
+		sb.border_width_left = 4
+		sb.border_color = Color(1.0, 0.82, 0.4)
+	row.add_theme_stylebox_override("panel", sb)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 10)
+	row.add_child(h)
+	var seal := Label.new()
+	seal.text = "✦" if found else "✧"
+	seal.add_theme_font_size_override("font_size", 22)
+	seal.add_theme_color_override("font_color",
+		Color(1.0, 0.82, 0.4) if found else Color(0.5, 0.48, 0.46))
+	h.add_child(seal)
+	var v := VBoxContainer.new()
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(v)
+	var name_l := Label.new()
+	name_l.text = lvl_name
+	name_l.add_theme_font_size_override("font_size", 18)
+	name_l.add_theme_color_override("font_color",
+		Color(1.0, 0.88, 0.55) if found else Color(0.65, 0.62, 0.6))
+	v.add_child(name_l)
+	var desc_l := Label.new()
+	desc_l.text = "Relique récupérée" if found else "Relique à débusquer…"
+	desc_l.add_theme_font_size_override("font_size", 14)
+	desc_l.add_theme_color_override("font_color",
+		Color(0.85, 0.83, 0.8, 0.85) if found else Color(0.6, 0.58, 0.56, 0.85))
 	v.add_child(desc_l)
 	return row
 
