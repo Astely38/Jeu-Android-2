@@ -35,6 +35,15 @@ const DASH_TIME := 0.2
 const DASH_GHOST_EXTRA := 0.18
 const DASH_COOLDOWN := 0.9
 
+## Fil Spirituel : Eneko lance un fil vers un ancrage lumineux (nœuds du
+## groupe « spirit_anchor ») et s'y hisse d'un trait. Portée, vitesse de
+## traction, petit rebond à l'arrivée et délai avant de relancer.
+const GRAPPLE_RANGE := 360.0
+const GRAPPLE_SPEED := 780.0
+const GRAPPLE_MAX_TIME := 0.6
+const GRAPPLE_POP := -260.0
+const GRAPPLE_COOLDOWN := 0.35
+
 var moving_left := false
 var moving_right := false
 var attacking := false
@@ -78,6 +87,12 @@ var _sfx_land: AudioStreamPlayer
 var _sfx_hit: AudioStreamPlayer
 var _dash_timer := 0.0
 var _dash_cd := 0.0
+## Fil Spirituel : état de la traction en cours.
+var _grappling := false
+var _grapple_timer := 0.0
+var _grapple_cd := 0.0
+var _grapple_target := Vector2.ZERO
+var _thread: Line2D
 var _ghost_timer := 0.0
 ## Fenêtre de traversée des ennemis (couvre l'élan + une marge de sortie).
 var _ghost_through := 0.0
@@ -147,6 +162,7 @@ func _ready() -> void:
 	_play("idle")
 	orb_label.text = "x0"
 	_build_vignette()
+	_build_thread()
 	_update_hearts()
 	_update_heart_hint()
 
@@ -247,6 +263,24 @@ func _physics_process(delta: float) -> void:
 		_ghost_through -= delta
 		if _ghost_through <= 0.0:
 			set_collision_mask_value(2, true)
+	_grapple_cd = maxf(0.0, _grapple_cd - delta)
+	# Fil Spirituel : traction vers l'ancrage, prioritaire sur tout le reste.
+	if _grappling:
+		_grapple_timer += delta
+		var to: Vector2 = _grapple_target - global_position
+		if to.length() <= 28.0 or _grapple_timer > GRAPPLE_MAX_TIME:
+			_end_grapple()
+		else:
+			velocity = to.normalized() * GRAPPLE_SPEED
+			move_and_slide()
+			_update_thread()
+			_play("jump")
+			# Bloqué par un mur en route : on coupe le fil.
+			if get_slide_collision_count() > 0 and to.length() > 44.0:
+				_end_grapple()
+			return
+		return
+
 	if _dash_timer > 0.0:
 		_dash_timer -= delta
 		velocity = Vector2(facing * DASH_SPEED, 0)
@@ -318,6 +352,8 @@ func _physics_process(delta: float) -> void:
 		attack()
 	if Input.is_physical_key_pressed(KEY_SHIFT) or Input.is_physical_key_pressed(KEY_C):
 		dash()
+	if Input.is_physical_key_pressed(KEY_E) or Input.is_physical_key_pressed(KEY_F):
+		grapple()
 
 	_update_animation()
 	_animate(delta)
@@ -479,6 +515,76 @@ func dash() -> void:
 	_dash_strike_window = DASH_TIME + 0.3
 	Sfx.varied(sfx_dash, 0.95, 1.08)
 	_spawn_speed_lines()
+
+## Fil Spirituel : file d'un trait vers l'ancrage lumineux le mieux placé
+## (devant/au-dessus, dans la portée). Sans cible, ne fait rien.
+func grapple() -> void:
+	if _grappling or _grapple_cd > 0.0 or _dead or lock_timer > 0.0 or _dash_timer > 0.0:
+		return
+	var anchor := _find_anchor()
+	if anchor == null:
+		return
+	_grappling = true
+	_grapple_timer = 0.0
+	_grapple_cd = GRAPPLE_COOLDOWN
+	_grapple_target = anchor.global_position
+	# Pendant la traction, on traverse les ennemis et on ignore la gravité.
+	set_collision_mask_value(2, false)
+	invuln = maxf(invuln, 0.12)
+	_thread.visible = true
+	_update_thread()
+	if anchor.has_method("ping"):
+		anchor.ping()
+	Sfx.varied(sfx_dash, 1.12, 1.22)
+
+## Meilleur ancrage à portée : privilégie ce qui est devant et en hauteur, à
+## distance décroissante.
+func _find_anchor() -> Node2D:
+	var best: Node2D = null
+	var best_score := -999.0
+	for a in get_tree().get_nodes_in_group("spirit_anchor"):
+		if not (a is Node2D) or not is_instance_valid(a):
+			continue
+		var to: Vector2 = (a as Node2D).global_position - global_position
+		var d := to.length()
+		if d > GRAPPLE_RANGE or d < 14.0:
+			continue
+		var dir := to / d
+		# Biais : devant (selon le regard) + vers le haut, moins la distance.
+		var score := dir.x * facing * 0.4 + (-dir.y) * 0.7 + (1.0 - d / GRAPPLE_RANGE)
+		if score > best_score:
+			best_score = score
+			best = a
+	return best
+
+func _end_grapple() -> void:
+	if not _grappling:
+		return
+	_grappling = false
+	_thread.visible = false
+	set_collision_mask_value(2, true)
+	# Petit rebond à l'arrivée + élan conservé, et le double saut se recharge.
+	velocity.y = GRAPPLE_POP
+	velocity.x = facing * SPEED * 0.5
+	_air_jumps = 0
+	Atmosphere.spark_burst(self, _grapple_target, Color(0.6, 0.92, 1.0))
+
+## Fil visible entre Eneko et l'ancrage (coordonnées locales, se met à jour
+## chaque frame de traction).
+func _build_thread() -> void:
+	_thread = Line2D.new()
+	_thread.width = 2.6
+	_thread.default_color = Color(0.7, 0.95, 1.0, 0.9)
+	_thread.z_index = 2
+	_thread.visible = false
+	add_child(_thread)
+
+func _update_thread() -> void:
+	if _thread == null:
+		return
+	_thread.points = PackedVector2Array([
+		Vector2(0, -8), to_local(_grapple_target),
+	])
 
 ## Lignes de vitesse : traits horizontaux qui fusent derrière Eneko au
 ## départ de la Ruée, glissent vers l'arrière et s'effacent — sensation
@@ -978,6 +1084,9 @@ func _on_jump_released() -> void:
 
 func _on_dash_pressed() -> void:
 	dash()
+
+func _on_grapple_pressed() -> void:
+	grapple()
 
 func _on_attack_pressed() -> void:
 	attack()

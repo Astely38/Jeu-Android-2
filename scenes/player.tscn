@@ -264,6 +264,19 @@ polygon = PackedVector2Array(-16, -12, -6, 0, -16, 12, -10, 12, 0, 0, -10, -12)
 color = Color(0.55, 0.85, 1, 0.9)
 polygon = PackedVector2Array(-2, -12, 8, 0, -2, 12, 4, 12, 14, 0, 4, -12)
 
+[node name="GrappleButton" type="TouchScreenButton" parent="HUD"]
+position = Vector2(676, 344)
+shape = SubResource("RectangleShape2D_button")
+shape_centered = true
+
+[node name="Bg" type="Sprite2D" parent="HUD/GrappleButton"]
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("6")
+
+[node name="Icon" type="Polygon2D" parent="HUD/GrappleButton"]
+color = Color(0.7, 0.95, 1, 0.9)
+polygon = PackedVector2Array(0, -15, 13, 1, 5, 1, 5, 13, -5, 13, -5, 1, -13, 1)
+
 [node name="JumpButton" type="TouchScreenButton" parent="HUD"]
 position = Vector2(880, 474)
 shape = SubResource("RectangleShape2D_button")
@@ -295,6 +308,7 @@ polygon = PackedVector2Array(-12, 12, -4, 15, 15, -12, 7, -15)
 [connection signal="pressed" from="HUD/RightButton" to="." method="_on_right_pressed"]
 [connection signal="released" from="HUD/RightButton" to="." method="_on_right_released"]
 [connection signal="pressed" from="HUD/DashButton" to="." method="_on_dash_pressed"]
+[connection signal="pressed" from="HUD/GrappleButton" to="." method="_on_grapple_pressed"]
 [connection signal="pressed" from="HUD/JumpButton" to="." method="_on_jump_pressed"]
 [connection signal="released" from="HUD/JumpButton" to="." method="_on_jump_released"]
 [connection signal="pressed" from="HUD/AttackButton" to="." method="_on_attack_pressed"]

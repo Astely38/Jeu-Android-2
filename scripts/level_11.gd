@@ -67,6 +67,13 @@ const ORBS := [
 const HIGH_ORBS := [
 	Vector2(850, 300), Vector2(3300, 300), Vector2(5780, 300),
 ]
+## Ancrages du Fil Spirituel : anneaux de lumière vers lesquels s'élancer.
+## Placés au-dessus des orbes-reflet (on les cueille en se hissant) et
+## au-dessus des deux brèches (on les franchit d'un trait).
+const ANCHOR_POS := [
+	Vector2(850, 246), Vector2(1775, 300), Vector2(3300, 236),
+	Vector2(5780, 246), Vector2(6100, 316),
+]
 
 const LEONIE_LINES := [
 	{ "name": "Léonie", "text": "Nous avons tari la source, Eneko... et pourtant nous voici. Ce lieu est un miroir : il répète, il renvoie, il n'oublie rien." },
@@ -95,6 +102,7 @@ func _ready() -> void:
 	_build_platforms()
 	_build_steles()
 	_build_bridges()
+	_build_anchors()
 	_build_hazards()
 	_build_checkpoints()
 	_build_traps()
@@ -256,6 +264,13 @@ func _build_platforms() -> void:
 		refl.z_index = -1
 
 ## Stèles-miroir dressées : lames de verre poli qui renvoient une lueur.
+## Ancrages du Fil Spirituel, suspendus dans le royaume-miroir.
+func _build_anchors() -> void:
+	for p in ANCHOR_POS:
+		var a := SpiritAnchor.new()
+		a.position = p
+		add_child(a)
+
 func _build_steles() -> void:
 	for sx in STELE_XS:
 		var st := Node2D.new()
@@ -436,7 +451,8 @@ func _spawn_entities() -> void:
 func _setup_ambient() -> void:
 	var amb := AmbientDialogue.new()
 	add_child(amb)
-	amb.add_line(self, 850.0, "Eneko", "Le sol me renvoie mon propre visage. Ce monde ne fait que répéter.")
+	amb.add_line(self, 620.0, "Léonie", "Ces anneaux de lumière, Eneko : lance ton fil spirituel, ils te hisseront vers les hauteurs.")
+	amb.add_line(self, 900.0, "Eneko", "Le sol me renvoie mon propre visage. Ce monde ne fait que répéter.")
 	amb.add_line(self, 3900.0, "Eneko", "Ce Reflet, là-bas... il lève sa lame quand je lève la mienne. Qui est-il ?")
 	amb.add_line(self, 6300.0, "Eneko", "La porte d'argent. C'est par là que l'écho m'appelle.")
 
