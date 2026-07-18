@@ -27,7 +27,7 @@ const _R := 110.0
 ## Cadences par phase (1,2,3).
 const VOLLEY_CD := [2.2, 1.6, 1.1]
 const SLAM_CD := [4.8, 3.8, 3.0]
-const STUN_TIME := [1.8, 1.5, 1.2]
+const STUN_TIME := [2.2, 1.9, 1.5]
 const CHARGE_TIME := [0.75, 0.62, 0.5]
 
 var health := MAX_HEALTH

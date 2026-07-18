@@ -6,7 +6,7 @@
 [ext_resource type="AudioStream" path="res://assets/sfx/clink.wav" id="4"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
-size = Vector2(120, 108)
+size = Vector2(190, 160)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
 size = Vector2(150, 138)
