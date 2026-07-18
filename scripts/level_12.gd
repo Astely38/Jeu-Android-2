@@ -48,19 +48,19 @@ const CHECKPOINT_XS := [1500.0, 3900.0, 5300.0]
 ## Dalles EFFONDRABLES : x, y (centre), demi-largeur. Regroupées en gantelets
 ## entre les îlots ; certaines montent en escalier (petites collines).
 const CRUMBLES := [
-	# Gantelet 1 (plat).
+	# Gantelet 1 (plat). Dernière dalle retirée : l'îlot (1500) est le sol
+	# d'arrivée, la dalle qui s'y enfonçait faussait le repère.
 	Vector3(520, 506, 46), Vector3(690, 506, 46), Vector3(860, 506, 46),
-	Vector3(1030, 506, 46), Vector3(1200, 506, 46), Vector3(1350, 506, 46),
+	Vector3(1030, 506, 46), Vector3(1200, 506, 46),
 	# Gantelet 2 (colline).
 	Vector3(1720, 506, 48), Vector3(1885, 430, 48), Vector3(2050, 360, 48),
 	Vector3(2215, 430, 48), Vector3(2380, 506, 48),
-	# Gantelet 3 (plat).
+	# Gantelet 3 (plat). Dernière dalle retirée (elle mordait sur l'îlot 3900).
 	Vector3(2960, 506, 46), Vector3(3125, 506, 46), Vector3(3290, 506, 46),
-	Vector3(3455, 506, 46), Vector3(3620, 506, 46), Vector3(3770, 506, 46),
-	# Gantelet 4 (long, léger relief).
+	Vector3(3455, 506, 46), Vector3(3620, 506, 46),
+	# Gantelet 4 (long, léger relief). Dernière dalle retirée (îlot 5300).
 	Vector3(4120, 506, 46), Vector3(4285, 470, 46), Vector3(4450, 506, 46),
 	Vector3(4615, 470, 46), Vector3(4780, 506, 46), Vector3(4945, 506, 46),
-	Vector3(5110, 506, 46),
 	# Gantelet 5 (final).
 	Vector3(5520, 506, 46), Vector3(5685, 506, 46), Vector3(5850, 506, 46),
 	Vector3(6015, 470, 46), Vector3(6180, 506, 46), Vector3(6345, 506, 46),
