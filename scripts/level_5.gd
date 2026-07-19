@@ -583,192 +583,26 @@ func _play_victory_cinematic() -> void:
 	t2.tween_property(flash, "color:a", 0.0, 0.7)
 	t2.finished.connect(layer.queue_free)
 
-## Écran de fin de jeu : à la place du simple écran de victoire, le
-## récapitulatif complet du périple — grade et meilleur temps de chacun
-## des cinq niveaux — avec la performance du combat final en tête.
+## Écran de fin de chapitre, épuré et paginé (ChapterRecap) : d'abord
+## l'épilogue qui apparaît en fondu comme un écran-titre, puis au tap le bilan
+## du combat, puis l'amorce du chapitre suivant avec les boutons.
 func _show_endgame_recap(results: Dictionary) -> void:
 	# On masque le HUD de jeu (cœurs, orbes, boutons) pendant l'épilogue.
 	var hud := player.get_node_or_null("HUD")
 	if hud != null:
 		hud.visible = false
-	var layer := CanvasLayer.new()
-	layer.layer = 3
-	add_child(layer)
-
-	var bg := ColorRect.new()
-	bg.color = Color(0.07, 0.06, 0.11, 1.0)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(bg)
-
-	# Récap dans un conteneur défilant VERTICAL : l'histoire finale et le
-	# teaser se replient au lieu de s'étirer hors écran.
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.offset_left = 60.0
-	scroll.offset_right = -60.0
-	scroll.offset_top = 22.0
-	scroll.offset_bottom = -22.0
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	layer.add_child(scroll)
-
-	var box := VBoxContainer.new()
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_theme_constant_override("separation", 8)
-	scroll.add_child(box)
-	UiScroll.make_touch_friendly(scroll)
-
-	var title := Label.new()
-	title.text = "La Flamme d'Aube renaît !"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
-	box.add_child(title)
-
-	var epilogue := Label.new()
-	epilogue.text = "Libéré de l'Ombre, le Gardien s'incline une dernière fois, puis s'éteint en paix. La Flamme d'Aube s'élève à nouveau au cœur du Sanctuaire ; sa clarté redescend sur la montagne, le village, le temple, la clairière. Les âmes en peine trouvent enfin le repos, et Léonie, dernier éclat, peut rejoindre la lumière. La contrée est sauvée — par la Voie du Sabre d'Eneko."
-	epilogue.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	epilogue.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	epilogue.custom_minimum_size = Vector2(640, 0)
-	epilogue.add_theme_font_size_override("font_size", 16)
-	epilogue.add_theme_color_override("font_color", Color(0.94, 0.9, 0.82))
-	box.add_child(epilogue)
-
-	var farewell := Label.new()
-	farewell.text = "Léonie : « Merci, Eneko. Et reçois ceci : ma lumière t'accompagne — d'un souffle, tu peux désormais bondir une seconde fois en plein vol. »  (Double Saut débloqué : appuie à nouveau sur Sauter en l'air.)"
-	farewell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	farewell.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	farewell.custom_minimum_size = Vector2(640, 0)
-	farewell.add_theme_font_size_override("font_size", 16)
-	farewell.add_theme_color_override("font_color", Color(1.0, 0.86, 0.5))
-	box.add_child(farewell)
-
-	box.add_child(_spacer(6.0))
-
-	var run := Label.new()
-	run.text = "Gardien vaincu — Grade : %s — %s — Orbes : %d/%d — Esprits vaincus : %d" % [
-		Challenge.grade_name(results["grade"]), _format_time(results["time"]),
-		results["orbs"], results["total_orbs"], results["kills"],
-	]
-	if int(results["combo"]) >= 2:
-		run.text += " — Meilleur combo : ×%d" % int(results["combo"])
-	run.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	run.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	run.custom_minimum_size = Vector2(640, 0)
-	run.add_theme_font_size_override("font_size", 18)
-	box.add_child(run)
-
-	box.add_child(_spacer(10.0))
-
-	var header := Label.new()
-	header.text = "Ton périple :"
-	header.add_theme_font_size_override("font_size", 20)
-	box.add_child(header)
-
-	for id in SaveManager.LEVEL_ORDER:
-		var lid: String = id
-		box.add_child(_recap_row(lid))
-
-	box.add_child(_spacer(12.0))
-
-	var buttons := HBoxContainer.new()
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons.add_theme_constant_override("separation", 20)
-	box.add_child(buttons)
-
-	# Si le Chapitre II existe, on propose d'y plonger directement.
-	var chap2_scene: String = SaveManager.LEVEL_SCENES.get("level_6", "")
-	if chap2_scene != "":
-		var chap2 := _recap_button("Chapitre II →", Color(1.0, 0.5, 0.2))
-		chap2.pressed.connect(func(): Transition.goto(chap2_scene))
-		buttons.add_child(chap2)
-	var replay := _recap_button("Rejouer le niveau", Color(0.92, 0.65, 0.3))
-	replay.pressed.connect(func(): get_tree().reload_current_scene())
-	buttons.add_child(replay)
-	var menu_b := _recap_button("Retour au menu", Color(0.6, 0.5, 0.45))
-	menu_b.pressed.connect(_on_menu_pressed)
-	buttons.add_child(menu_b)
-
-	# --- Amorce du chapitre suivant : la vraie source de l'Ombre s'éveille.
-	box.add_child(_spacer(18.0))
-	var suite := Label.new()
-	suite.text = "À suivre…"
-	suite.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	suite.add_theme_font_size_override("font_size", 22)
-	suite.add_theme_color_override("font_color", Color(1.0, 0.82, 0.4))
-	box.add_child(suite)
-
-	var chap := Label.new()
-	chap.text = "Chapitre II — Les Rivages de Cendre"
-	chap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	chap.add_theme_font_size_override("font_size", 18)
-	chap.add_theme_color_override("font_color", Color(0.85, 0.8, 0.9))
-	box.add_child(chap)
-
-	var hook := Label.new()
-	hook.text = "Dans son dernier souffle, le Gardien a murmuré : « Je n'étais que le premier à tomber... L'Ombre a une source, par-delà la mer de brume. Et elle s'éveille. » La Voie du Sabre ne fait que commencer."
-	hook.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hook.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hook.custom_minimum_size = Vector2(640, 0)
-	hook.add_theme_font_size_override("font_size", 15)
-	hook.add_theme_color_override("font_color", Color(0.82, 0.8, 0.86))
-	box.add_child(hook)
-	box.add_child(_spacer(10.0))
-
-## Une ligne du récapitulatif : nom du niveau, meilleur grade (coloré) et
-## meilleur temps.
-func _recap_row(row_level_id: String) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	var name_l := Label.new()
-	name_l.text = str(SaveManager.LEVEL_NAMES.get(row_level_id, row_level_id))
-	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_l.add_theme_font_size_override("font_size", 18)
-	row.add_child(name_l)
-	var grade := SaveManager.best_grade(row_level_id)
-	var grade_l := Label.new()
-	grade_l.text = Challenge.grade_name(grade) if grade != "" else "—"
-	if grade != "":
-		grade_l.add_theme_color_override("font_color", Challenge.grade_color(grade))
-	grade_l.add_theme_font_size_override("font_size", 18)
-	row.add_child(grade_l)
-	var bt := SaveManager.best_time(row_level_id)
-	var time_l := Label.new()
-	time_l.text = _format_time(bt) if bt > 0.0 else "—"
-	time_l.custom_minimum_size = Vector2(70, 0)
-	time_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	time_l.add_theme_font_size_override("font_size", 18)
-	row.add_child(time_l)
-	return row
-
-func _spacer(h: float) -> Control:
-	var c := Control.new()
-	c.custom_minimum_size = Vector2(0, h)
-	return c
-
-func _recap_button(label_text: String, accent: Color) -> Button:
-	var b := Button.new()
-	b.text = label_text
-	b.custom_minimum_size = Vector2(220, 52)
-	b.add_theme_font_size_override("font_size", 22)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.1, 0.09, 0.17, 0.92)
-	sb.border_color = accent
-	sb.set_border_width_all(2)
-	sb.set_corner_radius_all(10)
-	sb.set_content_margin_all(8.0)
-	var hov: StyleBoxFlat = sb.duplicate()
-	hov.bg_color = Color(0.2, 0.15, 0.22, 0.95)
-	var prs: StyleBoxFlat = sb.duplicate()
-	prs.bg_color = Color(0.34, 0.2, 0.18, 0.95)
-	b.add_theme_stylebox_override("normal", sb)
-	b.add_theme_stylebox_override("hover", hov)
-	b.add_theme_stylebox_override("pressed", prs)
-	return b
-
-func _format_time(seconds: float) -> String:
-	var mins: int = int(seconds) / 60
-	var secs: int = int(seconds) % 60
-	return "%d:%02d" % [mins, secs]
+	var recap := ChapterRecap.new()
+	add_child(recap)
+	recap.show_recap({
+		"title": "La Flamme d'Aube renaît !",
+		"accent": Color(1.0, 0.85, 0.4),
+		"epilogue": "Libéré de l'Ombre, le Gardien s'incline une dernière fois, puis s'éteint en paix. La Flamme d'Aube s'élève à nouveau au cœur du Sanctuaire ; sa clarté redescend sur la montagne, le village, le temple, la clairière. Les âmes en peine trouvent enfin le repos, et Léonie, dernier éclat, peut rejoindre la lumière. La contrée est sauvée — par la Voie du Sabre d'Eneko.",
+		"special": "Léonie : « Merci, Eneko. Et reçois ceci : ma lumière t'accompagne — d'un souffle, tu peux désormais bondir une seconde fois en plein vol. »  (Double Saut débloqué : appuie à nouveau sur Sauter en l'air.)",
+		"results": results,
+		"next_title": "Chapitre II — Les Rivages de Cendre",
+		"hook": "Dans son dernier souffle, le Gardien a murmuré : « Je n'étais que le premier à tomber... L'Ombre a une source, par-delà la mer de brume. Et elle s'éveille. » La Voie du Sabre ne fait que commencer.",
+		"next_scene": SaveManager.LEVEL_SCENES.get("level_6", ""),
+	})
 
 func _on_menu_pressed() -> void:
 	Transition.goto("res://scenes/main_menu.tscn")

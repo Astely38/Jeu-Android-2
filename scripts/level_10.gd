@@ -383,167 +383,25 @@ func _play_victory_cinematic() -> void:
 	t2.tween_property(flash, "color:a", 0.0, 0.8)
 	t2.finished.connect(layer.queue_free)
 
-## Épilogue du Chapitre II : l'Ombre est vaincue à sa source, avec le récap
-## du périple et l'amorce du Chapitre III.
+## Épilogue du Chapitre II (ChapterRecap épuré) : l'épilogue apparaît en fondu
+## comme un écran-titre, puis au tap le bilan du combat, puis l'amorce du
+## Chapitre III avec les boutons.
 func _show_chapter_recap(results: Dictionary) -> void:
 	# On masque le HUD de jeu (cœurs, orbes, boutons) pendant l'épilogue.
 	var hud := player.get_node_or_null("HUD")
 	if hud != null:
 		hud.visible = false
-	var layer := CanvasLayer.new()
-	layer.layer = 3
-	add_child(layer)
-	var bg := ColorRect.new()
-	bg.color = Color(0.06, 0.05, 0.1, 1.0)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(bg)
-
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.offset_left = 60.0
-	scroll.offset_right = -60.0
-	scroll.offset_top = 22.0
-	scroll.offset_bottom = -22.0
-	# Défilement VERTICAL seulement : sinon les textes s'étirent hors écran
-	# au lieu de se replier.
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	layer.add_child(scroll)
-
-	var box := VBoxContainer.new()
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_theme_constant_override("separation", 8)
-	scroll.add_child(box)
-	UiScroll.make_touch_friendly(scroll)
-
-	var title := Label.new()
-	title.text = "L'Ombre est vaincue à sa source !"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 30)
-	title.add_theme_color_override("font_color", Color(0.8, 0.6, 1.0))
-	box.add_child(title)
-
-	var epilogue := Label.new()
-	epilogue.text = "Le Cœur se replie sur lui-même et implose dans un éclat de lumière. Par-delà la mer de brume, la source de l'Ombre est tarie : les Rivages de Cendre s'apaisent, le volcan mort se tait, et le Puits se referme lentement. Eneko ressort à l'air libre, la lame encore fumante. Léonie, à ses côtés, brille un peu plus fort — le mal qui la retenait s'est enfin dissipé."
-	epilogue.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	epilogue.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	epilogue.custom_minimum_size = Vector2(640, 0)
-	epilogue.add_theme_font_size_override("font_size", 16)
-	epilogue.add_theme_color_override("font_color", Color(0.92, 0.88, 0.96))
-	box.add_child(epilogue)
-
-	box.add_child(_spacer(6.0))
-
-	var run := Label.new()
-	run.text = "Cœur de l'Ombre vaincu — Grade : %s — %s — Orbes : %d/%d — Esprits vaincus : %d" % [
-		Challenge.grade_name(results["grade"]), _format_time(results["time"]),
-		results["orbs"], results["total_orbs"], results["kills"],
-	]
-	if int(results["combo"]) >= 2:
-		run.text += " — Meilleur combo : ×%d" % int(results["combo"])
-	run.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	run.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	run.custom_minimum_size = Vector2(640, 0)
-	run.add_theme_font_size_override("font_size", 18)
-	box.add_child(run)
-
-	box.add_child(_spacer(10.0))
-
-	var header := Label.new()
-	header.text = "Ton périple, Chapitres I & II :"
-	header.add_theme_font_size_override("font_size", 20)
-	box.add_child(header)
-	for id in SaveManager.LEVEL_ORDER:
-		box.add_child(_recap_row(String(id)))
-
-	box.add_child(_spacer(12.0))
-
-	var buttons := HBoxContainer.new()
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons.add_theme_constant_override("separation", 20)
-	box.add_child(buttons)
-	var replay := _recap_button("Rejouer le combat", Color(0.7, 0.4, 0.95))
-	replay.pressed.connect(func(): get_tree().reload_current_scene())
-	buttons.add_child(replay)
-	var menu_b := _recap_button("Retour au menu", Color(0.6, 0.5, 0.6))
-	menu_b.pressed.connect(_on_menu_pressed)
-	buttons.add_child(menu_b)
-
-	box.add_child(_spacer(18.0))
-	var suite := Label.new()
-	suite.text = "À suivre…"
-	suite.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	suite.add_theme_font_size_override("font_size", 22)
-	suite.add_theme_color_override("font_color", Color(0.8, 0.6, 1.0))
-	box.add_child(suite)
-	var chap := Label.new()
-	chap.text = "Chapitre III — L'Écho dans le Noir"
-	chap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	chap.add_theme_font_size_override("font_size", 18)
-	chap.add_theme_color_override("font_color", Color(0.85, 0.8, 0.9))
-	box.add_child(chap)
-	var hook := Label.new()
-	hook.text = "La source est tarie... et pourtant, très loin dans le noir, un dernier écho a répondu à l'implosion du Cœur. Léonie l'a entendu, elle aussi. L'Ombre n'était-elle qu'un reflet ? La Voie du Sabre continue."
-	hook.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hook.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hook.custom_minimum_size = Vector2(640, 0)
-	hook.add_theme_font_size_override("font_size", 15)
-	hook.add_theme_color_override("font_color", Color(0.82, 0.8, 0.86))
-	box.add_child(hook)
-	box.add_child(_spacer(10.0))
-
-func _recap_row(row_level_id: String) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	var name_l := Label.new()
-	name_l.text = str(SaveManager.LEVEL_NAMES.get(row_level_id, row_level_id))
-	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_l.add_theme_font_size_override("font_size", 17)
-	row.add_child(name_l)
-	var grade := SaveManager.best_grade(row_level_id)
-	var grade_l := Label.new()
-	grade_l.text = Challenge.grade_name(grade) if grade != "" else "—"
-	if grade != "":
-		grade_l.add_theme_color_override("font_color", Challenge.grade_color(grade))
-	grade_l.add_theme_font_size_override("font_size", 17)
-	row.add_child(grade_l)
-	var bt := SaveManager.best_time(row_level_id)
-	var time_l := Label.new()
-	time_l.text = _format_time(bt) if bt > 0.0 else "—"
-	time_l.custom_minimum_size = Vector2(70, 0)
-	time_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	time_l.add_theme_font_size_override("font_size", 17)
-	row.add_child(time_l)
-	return row
-
-func _spacer(h: float) -> Control:
-	var c := Control.new()
-	c.custom_minimum_size = Vector2(0, h)
-	return c
-
-func _recap_button(label_text: String, accent: Color) -> Button:
-	var b := Button.new()
-	b.text = label_text
-	b.custom_minimum_size = Vector2(220, 52)
-	b.add_theme_font_size_override("font_size", 22)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.1, 0.09, 0.17, 0.92)
-	sb.border_color = accent
-	sb.set_border_width_all(2)
-	sb.set_corner_radius_all(10)
-	sb.set_content_margin_all(8.0)
-	var hov: StyleBoxFlat = sb.duplicate()
-	hov.bg_color = Color(0.2, 0.15, 0.22, 0.95)
-	var prs: StyleBoxFlat = sb.duplicate()
-	prs.bg_color = Color(0.34, 0.2, 0.18, 0.95)
-	b.add_theme_stylebox_override("normal", sb)
-	b.add_theme_stylebox_override("hover", hov)
-	b.add_theme_stylebox_override("pressed", prs)
-	return b
-
-func _format_time(seconds: float) -> String:
-	var mins: int = int(seconds) / 60
-	var secs: int = int(seconds) % 60
-	return "%d:%02d" % [mins, secs]
+	var recap := ChapterRecap.new()
+	add_child(recap)
+	recap.show_recap({
+		"title": "L'Ombre est vaincue à sa source !",
+		"accent": Color(0.8, 0.6, 1.0),
+		"epilogue": "Le Cœur se replie sur lui-même et implose dans un éclat de lumière. Par-delà la mer de brume, la source de l'Ombre est tarie : les Rivages de Cendre s'apaisent, le volcan mort se tait, et le Puits se referme lentement. Eneko ressort à l'air libre, la lame encore fumante. Léonie, à ses côtés, brille un peu plus fort — le mal qui la retenait s'est enfin dissipé.",
+		"results": results,
+		"next_title": "Chapitre III — L'Écho dans le Noir",
+		"hook": "La source est tarie... et pourtant, très loin dans le noir, un dernier écho a répondu à l'implosion du Cœur. Léonie l'a entendu, elle aussi. L'Ombre n'était-elle qu'un reflet ? La Voie du Sabre continue.",
+		"next_scene": SaveManager.LEVEL_SCENES.get("level_11", ""),
+	})
 
 func _on_menu_pressed() -> void:
 	Transition.goto("res://scenes/main_menu.tscn")
