@@ -21,8 +21,8 @@ const P3_HEALTH := 4
 const BLADE_SCRIPT := preload("res://scripts/mirror_blade.gd")
 const SAMURAI := "res://assets/character/samurai/"
 
-const SHIELD_Y := 430.0     # vol protégé, hors de portée du sabre
-const EXPOSED_Y := 476.0    # s'effondre au sol, à portée
+const SHIELD_Y := 392.0     # vol protégé, au-dessus d'Eneko (ne le bouscule pas)
+const EXPOSED_Y := 477.0    # s'effondre au sol, à portée (hauteur d'Eneko)
 const MIRROR_LERP := [2.6, 3.6, 4.8]
 const THROW_CD := [1.9, 1.4, 1.05]
 const WIND_TIME := 0.45
@@ -223,16 +223,19 @@ func _animate(_delta: float) -> void:
 	var tint := Color(0.55, 0.74, 1.0)
 	if _exposed:
 		tint = Color(0.86, 0.93, 1.0)
+	# Télégraphe : il s'illumine pendant la mise en garde, juste avant de lancer.
+	if _wind > 0.0:
+		tint = tint.lerp(Color(1.0, 1.0, 1.0), 0.7 * (1.0 - _wind / WIND_TIME))
 	tint = tint.lerp(Color(1.0, 0.5, 0.5), _hurt_flash)
 	_anim.modulate = tint
 
 func _build_visual() -> void:
-	# Le Reflet EST Eneko : on réutilise le sprite du samouraï, teinté en
-	# miroir spectral (bleu froid), un peu plus grand pour la prestance du boss.
+	# Le Reflet EST Eneko : même sprite, même taille, même calage au sol
+	# (offset -40) que le héros — un vrai jumeau-miroir, teinté verre froid.
 	_anim = AnimatedSprite2D.new()
 	_anim.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_anim.position = Vector2(0, -18)
-	_anim.scale = Vector2(1.2, 1.2)
+	_anim.position = Vector2(0, -40)
+	_anim.scale = Vector2(1.0, 1.0)
 	_anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SAMURAI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
 		{"name": "run", "path": SAMURAI + "Run.png", "frames": 8, "fps": 13.0, "loop": true},
@@ -252,5 +255,5 @@ func _build_visual() -> void:
 		var a := i * TAU / 26.0
 		rpts.append(Vector2(cos(a) * 40.0, sin(a) * 62.0))
 	_shield_ring.points = rpts
-	_shield_ring.position = Vector2(0, -16)
+	_shield_ring.position = Vector2(0, -40)
 	add_child(_shield_ring)
