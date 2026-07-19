@@ -4,16 +4,16 @@ class_name MirrorBlade
 ## sabre à bonne portée, elle est RENVOYÉE vers le Reflet et brise son bouclier
 ## (c'est le seul moyen de l'exposer). Non renvoyée, elle inflige un dégât.
 
-const SPEED := 255.0
-const REFLECT_SPEED := 760.0
+const SPEED := 300.0
+const REFLECT_SPEED := 780.0
 ## Fenêtre de renvoi généreuse : frapper au sabre près de la lame (même sans
 ## la viser parfaitement) la renvoie.
 const REFLECT_RANGE := 100.0
 ## La lame INFLÉCHIT sa course vers Eneko un court instant (pour qu'elle vienne
 ## bien à lui — on doit l'esquiver ou la renvoyer), puis file tout droit
 ## (esquivable d'une ruée). Virage doux pour rester lisible.
-const HOME_TURN := 1.9
-const HOME_TIME := 1.0
+const HOME_TURN := 2.3
+const HOME_TIME := 1.25
 
 var _dir := Vector2.RIGHT
 var _reflected := false

@@ -14,19 +14,19 @@ signal defeated
 signal health_changed(current: int, max_health: int)
 signal phase_changed(new_phase: int)
 
-const MAX_HEALTH := 12
-const P2_HEALTH := 8
-const P3_HEALTH := 4
+const MAX_HEALTH := 15
+const P2_HEALTH := 10
+const P3_HEALTH := 5
 
 const BLADE_SCRIPT := preload("res://scripts/mirror_blade.gd")
 const SAMURAI := "res://assets/character/samurai/"
 
 const SHIELD_Y := 392.0     # vol protégé, au-dessus d'Eneko (ne le bouscule pas)
 const EXPOSED_Y := 477.0    # s'effondre au sol, à portée (hauteur d'Eneko)
-const MIRROR_LERP := [2.6, 3.6, 4.8]
-const THROW_CD := [1.9, 1.4, 1.05]
-const WIND_TIME := 0.45
-const EXPOSE_TIME := 2.8
+const MIRROR_LERP := [3.2, 4.4, 5.6]
+const THROW_CD := [1.5, 1.1, 0.8]
+const WIND_TIME := 0.4
+const EXPOSE_TIME := 2.3
 const BLADE_COUNT := [1, 2, 3]
 
 var health := MAX_HEALTH
@@ -88,8 +88,8 @@ func _physics_process(delta: float) -> void:
 		# Brisé, le Reflet est ATTIRÉ vers Eneko et s'effondre à sa portée.
 		# Sans ça, miroité à l'autre bout de l'arène, il resterait injoignable
 		# le temps de l'exposition (le joueur ne pourrait jamais le frapper).
-		global_position.x = lerpf(global_position.x, _player.global_position.x, minf(1.0, delta * 3.2))
-		global_position.y = lerpf(global_position.y, EXPOSED_Y, minf(1.0, delta * 6.0))
+		global_position.x = lerpf(global_position.x, _player.global_position.x, minf(1.0, delta * 4.6))
+		global_position.y = lerpf(global_position.y, EXPOSED_Y, minf(1.0, delta * 7.0))
 		_face_player()
 		if _expose_t <= 0.0:
 			_exposed = false
