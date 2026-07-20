@@ -26,6 +26,14 @@ const GRADE_COLORS := {
 ## au retour au menu principal ; survit aux morts et aux « niveau suivant ».
 var kensei := false
 
+## Escalade de difficulté au combat : la vitesse des ennemis réguliers monte
+## de chapitre en chapitre (le placement, lui, reste calibré à la main niveau
+## par niveau). Fixé par start_level d'après l'ID du niveau, lu par chaque
+## ennemi à son apparition (via un appel différé, car les ennemis sont posés
+## avant l'appel à start_level dans le _ready des niveaux).
+const CHAPTER_SPEED := {0: 1.0, 1: 1.0, 2: 1.2, 3: 1.4, 4: 1.4}
+var speed_scale := 1.0
+
 var level_id: String = ""
 var start_time: float = 0.0
 var orbs_collected: int = 0
@@ -42,12 +50,25 @@ func _ready() -> void:
 
 func start_level(id: String, total_orbs_count: int) -> void:
 	level_id = id
+	speed_scale = float(CHAPTER_SPEED.get(_chapter_of(id), 1.0))
 	start_time = float(Time.get_ticks_msec()) / 1000.0
 	orbs_collected = 0
 	total_orbs = maxf(1.0, float(total_orbs_count))
 	damage_taken = 0
 	kills = 0
 	best_combo = 0
+
+## Chapitre d'un niveau d'après son ID (« level_7 » → 2). 1-5 → ch.1, 6-10 →
+## ch.2, 11-15 → ch.3 ; le sanctuaire caché (« level_secret », sans chiffre)
+## reste en ch.0.
+func _chapter_of(id: String) -> int:
+	var digits := ""
+	for c in id:
+		if c >= "0" and c <= "9":
+			digits += c
+	if digits == "":
+		return 0
+	return int(ceil(float(int(digits)) / 5.0))
 
 ## Relance le chronomètre : appelé quand le joueur prend réellement la
 ## main (après le survol d'introduction), pour que le temps affiché ne

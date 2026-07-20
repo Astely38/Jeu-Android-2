@@ -29,6 +29,9 @@ var _aura: Sprite2D
 func _ready() -> void:
 	if Challenge.kensei:
 		speed *= 1.3
+	# Escalade de vitesse selon le chapitre (différée : le niveau fixe le
+	# facteur après avoir posé ses ennemis, voir Challenge.start_level).
+	_apply_chapter_speed.call_deferred()
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SHINOBI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
 		{"name": "run", "path": SHINOBI + "Run.png", "frames": 8, "fps": 12.0, "loop": true},
@@ -42,6 +45,11 @@ func _ready() -> void:
 	sh.width = 28.0
 	add_child(sh)
 	move_child(sh, 0)
+
+## Applique le multiplicateur de vitesse du chapitre courant (le combat
+## s'accélère de chapitre en chapitre). Appelé en différé depuis _ready.
+func _apply_chapter_speed() -> void:
+	speed *= Challenge.speed_scale
 
 ## Transforme cette Ombre en Ombre d'élite. À appeler après add_child
 ## (les nœuds @onready doivent exister). Le sprite grandit mais la

@@ -23,6 +23,9 @@ func _ready() -> void:
 	start_x = position.x
 	if Challenge.kensei:
 		speed *= 1.35
+	# Escalade de vitesse selon le chapitre (différée : le niveau fixe le
+	# facteur après avoir posé ses ennemis, voir Challenge.start_level).
+	_apply_chapter_speed.call_deferred()
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "walk", "path": ONRE + "Walk.png", "frames": 7, "fps": 9.0, "loop": true},
 		{"name": "dead", "path": ONRE + "Dead.png", "frames": 6, "fps": 10.0, "loop": false},
@@ -34,6 +37,11 @@ func _ready() -> void:
 	sh.width = 26.0
 	add_child(sh)
 	move_child(sh, 0)
+
+## Applique le multiplicateur de vitesse du chapitre courant (le combat
+## s'accélère de chapitre en chapitre). Appelé en différé depuis _ready.
+func _apply_chapter_speed() -> void:
+	speed *= Challenge.speed_scale
 
 ## Le corps d'Eneko n'est jamais un obstacle physique pour cet ennemi :
 ## sans ça, la dépénétration de l'ennemi « colle » Eneko pendant la ruée

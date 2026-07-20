@@ -38,6 +38,11 @@ func _ready() -> void:
 		_r = 14.0
 		speed *= 1.4
 		velocity = spawn_vel
+	# Escalade de vitesse selon le chapitre (différée : le niveau fixe le
+	# facteur après avoir posé ses ennemis, voir Challenge.start_level).
+	# Les éclats nés d'une division repartent de la vitesse de base : chacun
+	# relit le facteur, jamais cumulé deux fois.
+	_apply_chapter_speed.call_deferred()
 	z_index = 6  # devant le décor et l'avant-plan, bien visible
 	_build_mask()
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
@@ -47,6 +52,11 @@ func _ready() -> void:
 	sh.max_drop = 520.0
 	add_child(sh)
 	move_child(sh, 0)
+
+## Applique le multiplicateur de vitesse du chapitre courant (le combat
+## s'accélère de chapitre en chapitre). Appelé en différé depuis _ready.
+func _apply_chapter_speed() -> void:
+	speed *= Challenge.speed_scale
 
 ## Construit le masque d'Oni : lueur, face rouge, cornes, sourcils, yeux
 ## luisants, gueule à crocs.

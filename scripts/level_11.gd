@@ -43,8 +43,8 @@ const PLATFORMS := [
 ]
 const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
 ## La plateforme 2440-2920 est le refuge (la lueur de Léonie y veille).
-const PATROL_XS := [900.0, 3850.0, 6300.0]
-const SHADOW_XS := [1470.0, 3300.0, 5780.0]
+const PATROL_XS := [900.0, 2080.0, 3850.0, 6300.0, 7040.0]
+const SHADOW_XS := [1470.0, 3300.0, 4540.0, 5780.0]
 const ELITE_XS := [5160.0]
 const MASK_XS := [2080.0, 4540.0, 6420.0]
 const TRAP_XS := [700.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]

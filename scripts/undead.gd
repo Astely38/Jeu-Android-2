@@ -23,6 +23,14 @@ func _ready() -> void:
 	start_x = position.x
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_build_body()
+	# Escalade de vitesse selon le chapitre (différée : le niveau fixe le
+	# facteur après avoir posé ses ennemis, voir Challenge.start_level).
+	_apply_chapter_speed.call_deferred()
+
+## Applique le multiplicateur de vitesse du chapitre courant (le combat
+## s'accélère de chapitre en chapitre). Appelé en différé depuis _ready.
+func _apply_chapter_speed() -> void:
+	speed *= Challenge.speed_scale
 
 func _build_body() -> void:
 	var bone_color := Color(0.72, 0.78, 0.68)
