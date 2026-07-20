@@ -23,6 +23,7 @@ const SAMURAI := "res://assets/character/samurai/"
 
 const SHIELD_Y := 392.0     # vol protégé, au-dessus d'Eneko (ne le bouscule pas)
 const EXPOSED_Y := 477.0    # s'effondre au sol, à portée (hauteur d'Eneko)
+const EXPOSE_REACH := 40.0  # distance latérale à laquelle il s'effondre (portée sabre ~43)
 const MIRROR_LERP := [3.2, 4.4, 5.6]
 const THROW_CD := [1.5, 1.1, 0.8]
 const WIND_TIME := 0.4
@@ -85,10 +86,17 @@ func _physics_process(delta: float) -> void:
 
 	if _exposed:
 		_expose_t -= delta
-		# Brisé, le Reflet est ATTIRÉ vers Eneko et s'effondre à sa portée.
-		# Sans ça, miroité à l'autre bout de l'arène, il resterait injoignable
-		# le temps de l'exposition (le joueur ne pourrait jamais le frapper).
-		global_position.x = lerpf(global_position.x, _player.global_position.x, minf(1.0, delta * 4.6))
+		# Brisé, le Reflet s'effondre À PORTÉE de sabre d'Eneko — mais À CÔTÉ,
+		# jamais superposé : il se pose juste devant le héros, du côté où il se
+		# trouve déjà, pour rester tranchable sans lui rentrer dans le corps.
+		# Sans ce rapprochement, miroité à l'autre bout de l'arène, il resterait
+		# injoignable le temps de l'exposition (le joueur ne pourrait le frapper).
+		var side := signf(global_position.x - _player.global_position.x)
+		if side == 0.0:
+			side = -1.0 if (_anim != null and _anim.flip_h) else 1.0
+		var reach_x := clampf(_player.global_position.x + side * EXPOSE_REACH,
+			_arena_min + 40.0, _arena_max - 40.0)
+		global_position.x = lerpf(global_position.x, reach_x, minf(1.0, delta * 4.6))
 		global_position.y = lerpf(global_position.y, EXPOSED_Y, minf(1.0, delta * 7.0))
 		_face_player()
 		if _expose_t <= 0.0:
