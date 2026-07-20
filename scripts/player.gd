@@ -1182,6 +1182,10 @@ func _on_menu_pressed() -> void:
 		_open_pause()
 
 func _open_pause() -> void:
+	# Garde de ré-entrée : ne jamais empiler deux menus de pause (l'ancien
+	# CanvasLayer fuiterait sinon).
+	if _pause_layer != null:
+		return
 	get_tree().paused = true
 	_pause_layer = CanvasLayer.new()
 	_pause_layer.layer = 5

@@ -82,11 +82,16 @@ func load_data() -> void:
 				data[key] = parsed[key]
 
 func save_data() -> void:
-	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	# Écriture atomique : on écrit d'abord un fichier temporaire, puis on le
+	# renomme sur la sauvegarde finale. Ainsi, si l'application est tuée en
+	# pleine écriture, save.json reste intact (pas de progression corrompue).
+	var tmp := SAVE_PATH + ".tmp"
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f == null:
 		return
 	f.store_string(JSON.stringify(data))
 	f.close()
+	DirAccess.rename_absolute(tmp, SAVE_PATH)
 
 func has_save() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)
@@ -130,7 +135,7 @@ func complete_level(level_id: String, orbs: int) -> void:
 			data["unlocked_levels"].append(next_id)
 	save_data()
 
-## Reliques cachées : une par niveau (level_1 à level_12), facultatives et
+## Reliques cachées : une par niveau (level_1 à level_15), facultatives et
 ## sans effet sur le grade. TOTAL_RELICS sert au succès « Chercheur de reliques ».
 const TOTAL_RELICS := 15
 
