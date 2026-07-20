@@ -8,34 +8,34 @@ extends Node
 ##   tous les effets sonores vers "Sons" (coupe séparée dans les Réglages).
 
 ## Écran-titre et sélection de niveaux.
-const MENU_TRACK := "res://assets/music/evening_calm.mp3"
+const MENU_TRACK := "res://assets/music/evening_calm.ogg"
 
 ## Une piste d'exploration par niveau (thème japonais). Les niveaux-boss
 ## démarrent sur leur ambiance puis basculent sur COMBAT_TRACK à l'arène.
 const LEVEL_TRACKS := {
 	# Chapitre I — de la clairière au sanctuaire (doux vers solennel).
 	"level_1": "res://assets/music/dream_sakura.ogg",        # Clairière des bambous
-	"level_2": "res://assets/music/moonlight_harp.mp3",      # Temple oublié (nuit)
-	"level_3": "res://assets/music/mysterious_kyoto.mp3",    # Village des ombres
+	"level_2": "res://assets/music/moonlight_harp.ogg",      # Temple oublié (nuit)
+	"level_3": "res://assets/music/mysterious_kyoto.ogg",    # Village des ombres
 	"level_4": "res://assets/music/mountain_shrine.ogg",     # Montagne des brumes
 	"level_5": "res://assets/music/honobono_teahouse.ogg",   # Sanctuaire (boss ch.I)
 	# Chapitre II — rivages de cendre et Puits (plus sombre).
-	"level_6": "res://assets/music/travel_asia.mp3",
-	"level_7": "res://assets/music/samurai_flute.mp3",
-	"level_8": "res://assets/music/samurai_meditation.mp3",
-	"level_9": "res://assets/music/dark_temple_yokai.mp3",   # mini-boss (Grand Masque)
-	"level_10": "res://assets/music/samurai_azian.mp3",      # boss ch.II (Cœur de l'Ombre)
+	"level_6": "res://assets/music/travel_asia.ogg",
+	"level_7": "res://assets/music/samurai_flute.ogg",
+	"level_8": "res://assets/music/samurai_meditation.ogg",
+	"level_9": "res://assets/music/dark_temple_yokai.ogg",   # mini-boss (Grand Masque)
+	"level_10": "res://assets/music/samurai_azian.ogg",      # boss ch.II (Cœur de l'Ombre)
 	# Chapitre III — royaume-miroir (tendu).
-	"level_11": "res://assets/music/samurai_loop.mp3",
-	"level_12": "res://assets/music/samurai_code.mp3",
-	"level_13": "res://assets/music/genji_rise.mp3",
-	"level_14": "res://assets/music/revolt_samurai.mp3",     # Gouffre aux anneaux
+	"level_11": "res://assets/music/samurai_loop.ogg",
+	"level_12": "res://assets/music/samurai_code.ogg",
+	"level_13": "res://assets/music/genji_rise.ogg",
+	"level_14": "res://assets/music/revolt_samurai.ogg",     # Gouffre aux anneaux
 	"level_15": "res://assets/music/shamisen_rock.ogg",      # boss final (avant arène)
-	"level_secret": "res://assets/music/danse_samurais.mp3",
+	"level_secret": "res://assets/music/danse_samurais.ogg",
 }
 
 ## Thème de combat épique commun à tous les boss (bushido cinématique).
-const COMBAT_TRACK := "res://assets/music/last_samurai_epic.mp3"
+const COMBAT_TRACK := "res://assets/music/last_samurai_epic.ogg"
 
 ## Volume musique bas : les vraies pistes sont masterisées fort, on laisse la
 ## place aux bruitages de gameplay (bus "Sons").
