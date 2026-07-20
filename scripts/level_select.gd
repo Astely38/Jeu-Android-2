@@ -7,15 +7,73 @@ const GOLD := Color(0.92, 0.65, 0.3)
 const GREEN := Color(0.45, 0.75, 0.4)
 const CREAM := Color(0.97, 0.93, 0.85)
 
+## Regroupement des niveaux par chapitre dans la liste. Un niveau absent de
+## cette table n'affiche pas d'en-tête (il suit le chapitre courant).
+const CHAPTER_OF := {
+	"level_1": 1, "level_2": 1, "level_3": 1, "level_4": 1, "level_5": 1,
+	"level_6": 2, "level_7": 2, "level_8": 2, "level_9": 2, "level_10": 2,
+	"level_11": 3, "level_12": 3, "level_13": 3, "level_14": 3, "level_15": 3,
+}
+const CHAPTER_NAMES := {
+	1: "Chapitre I — La Voie du Sabre",
+	2: "Chapitre II — La Source de l'Ombre",
+	3: "Chapitre III — L'Écho dans le Noir",
+	4: "Chapitre IV — Au-delà du Miroir",
+}
+
 func _ready() -> void:
 	_style_button($BackButton, Color(0.6, 0.5, 0.45))
 	$BackButton.pressed.connect(_on_back_pressed)
 	_build_list()
+	UiScroll.make_touch_friendly($Scroll)
 
 func _build_list() -> void:
 	var list: VBoxContainer = $Scroll/List
+	# Les niveaux sont groupés par chapitre : un en-tête s'insère à chaque
+	# changement de chapitre le long de LEVEL_ORDER.
+	# Compteur de reliques : n'apparaît qu'une fois la première dénichée
+	# (sinon on vendrait l'existence du secret).
+	if SaveManager.relics_found() > 0:
+		list.add_child(_relic_counter())
+	var cur_chapter := 0
 	for level_id in SaveManager.LEVEL_ORDER:
+		var ch: int = CHAPTER_OF.get(level_id, cur_chapter)
+		if ch != cur_chapter:
+			cur_chapter = ch
+			list.add_child(_chapter_header(CHAPTER_NAMES.get(ch, "")))
 		list.add_child(_build_row(level_id))
+	# Le Jardin Céleste n'apparaît qu'une fois découvert en jeu — pas
+	# de ligne « Verrouillé » qui vendrait la mèche.
+	if SaveManager.is_unlocked("level_secret"):
+		list.add_child(_chapter_header("Détour"))
+		list.add_child(_build_row("level_secret"))
+
+## Bandeau du nombre de reliques déjà réunies (sur douze).
+func _relic_counter() -> Control:
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_top", 4)
+	m.add_theme_constant_override("margin_bottom", 6)
+	m.add_theme_constant_override("margin_left", 4)
+	var l := Label.new()
+	l.text = "✦ Reliques   %d / %d" % [SaveManager.relics_found(), SaveManager.TOTAL_RELICS]
+	l.add_theme_font_size_override("font_size", 18)
+	l.add_theme_color_override("font_color", Color(1.0, 0.82, 0.4))
+	m.add_child(l)
+	return m
+
+## En-tête de chapitre : un titre doré discret qui sépare les groupes de
+## niveaux dans la liste.
+func _chapter_header(text: String) -> Control:
+	var m := MarginContainer.new()
+	m.add_theme_constant_override("margin_top", 12)
+	m.add_theme_constant_override("margin_bottom", 2)
+	m.add_theme_constant_override("margin_left", 4)
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 20)
+	l.add_theme_color_override("font_color", GOLD)
+	m.add_child(l)
+	return m
 
 func _build_row(level_id: String) -> Control:
 	var has_scene: bool = SaveManager.LEVEL_SCENES.has(level_id)
@@ -46,11 +104,21 @@ func _build_row(level_id: String) -> Control:
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(vbox)
 
+	var title_row := HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(title_row)
 	var title := Label.new()
 	title.text = SaveManager.LEVEL_NAMES.get(level_id, level_id)
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", CREAM if playable else Color(0.55, 0.53, 0.5))
-	vbox.add_child(title)
+	title_row.add_child(title)
+	# Sceau doré : le niveau a livré sa relique cachée.
+	if SaveManager.has_relic(level_id):
+		var seal := Label.new()
+		seal.text = "✦"
+		seal.add_theme_font_size_override("font_size", 22)
+		seal.add_theme_color_override("font_color", Color(1.0, 0.82, 0.4))
+		title_row.add_child(seal)
 
 	var sub := Label.new()
 	if not has_scene:
@@ -107,8 +175,9 @@ func _style_button(b: Button, accent: Color) -> void:
 	b.add_theme_color_override("font_pressed_color", Color(1, 0.98, 0.92))
 
 func _on_play_pressed(level_id: String) -> void:
+	Challenge.kensei = false
 	SaveManager.set_last_level(level_id)
-	get_tree().change_scene_to_file(SaveManager.LEVEL_SCENES[level_id])
+	Transition.goto(SaveManager.LEVEL_SCENES[level_id])
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

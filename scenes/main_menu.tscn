@@ -26,16 +26,16 @@ texture = SubResource("tex_bg")
 
 [node name="Title" type="Label" parent="."]
 offset_left = 80.0
-offset_top = 42.0
+offset_top = 28.0
 offset_right = 880.0
-offset_bottom = 180.0
+offset_bottom = 178.0
 theme_override_colors/font_color = Color(0.98, 0.94, 0.86, 1)
 theme_override_colors/font_outline_color = Color(0.2, 0.08, 0.1, 1)
 theme_override_constants/outline_size = 10
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.45)
 theme_override_constants/shadow_offset_x = 3
 theme_override_constants/shadow_offset_y = 4
-theme_override_font_sizes/font_size = 58
+theme_override_font_sizes/font_size = 52
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "Eneko
@@ -43,50 +43,52 @@ la Voie du Sabre"
 
 [node name="Subtitle" type="Label" parent="."]
 offset_left = 80.0
-offset_top = 182.0
+offset_top = 186.0
 offset_right = 880.0
-offset_bottom = 214.0
+offset_bottom = 216.0
 theme_override_colors/font_color = Color(0.95, 0.8, 0.55, 0.9)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.4)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 19
 horizontal_alignment = 1
+vertical_alignment = 1
 text = "~ Un conte de sabre et d'esprits ~"
 
 [node name="ContinueButton" type="Button" parent="."]
 offset_left = 370.0
-offset_top = 272.0
+offset_top = 250.0
 offset_right = 590.0
-offset_bottom = 328.0
+offset_bottom = 306.0
 theme_override_font_sizes/font_size = 26
 text = "Continuer"
 
 [node name="LevelsButton" type="Button" parent="."]
 offset_left = 370.0
-offset_top = 340.0
+offset_top = 318.0
 offset_right = 590.0
-offset_bottom = 396.0
+offset_bottom = 374.0
 theme_override_font_sizes/font_size = 26
 text = "Niveaux"
 
 [node name="QuitButton" type="Button" parent="."]
 offset_left = 395.0
-offset_top = 408.0
+offset_top = 386.0
 offset_right = 565.0
-offset_bottom = 456.0
+offset_bottom = 434.0
 theme_override_font_sizes/font_size = 22
 text = "Quitter"
 
 [node name="Hint" type="Label" parent="."]
 offset_left = 80.0
-offset_top = 490.0
+offset_top = 448.0
 offset_right = 880.0
-offset_bottom = 520.0
+offset_bottom = 474.0
 theme_override_colors/font_color = Color(0.95, 0.9, 0.82, 0.75)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 17
 horizontal_alignment = 1
+vertical_alignment = 1
 text = "Contrôles tactiles : Gauche / Droite / Saut · Attaque"

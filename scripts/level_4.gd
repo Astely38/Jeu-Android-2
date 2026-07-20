@@ -45,9 +45,11 @@ const PLATFORMS := [
 const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
 ## La plateforme 2440-2920 est le sanctuaire de Léonie : aucun ennemi ni
 ## piège n'y est placé.
-const PATROL_XS := [900.0, 1500.0, 2150.0, 3200.0, 3850.0, 4600.0, 5300.0, 6300.0]
-const SHADOW_XS := [1420.0, 2200.0, 3300.0, 4450.0, 5200.0, 6350.0, 6900.0]
-const TRAP_XS := [700.0, 2000.0, 3150.0, 4400.0, 5650.0, 6850.0]
+const PATROL_XS := [900.0, 1500.0, 3850.0, 5300.0, 6300.0]
+const SHADOW_XS := [1420.0, 4450.0, 6350.0, 6900.0]
+## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
+const ELITE_XS := [5200.0]
+const TRAP_XS := [700.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]
 const CAIRN_XS := [800.0, 2500.0, 3920.0, 5160.0, 6420.0, 7150.0]
 ## Ponts de corde praticables : x = centre du trou, y = demi-largeur du
 ## tablier (déborde de ~10 px sur chaque plateforme voisine).
@@ -56,7 +58,7 @@ const BRIDGES := [Vector2(1790, 100), Vector2(4235, 115), Vector2(6080, 110)]
 const CRUMBLES := [Vector2(3620, 70), Vector2(4825, 70)]
 ## Yūrei tireurs : toujours au-dessus d'une plateforme (jamais d'un pont
 ## ni d'un trou), pour ne pas transformer chaque traversée en piège.
-const SPIRIT_XS := [2080.0, 4540.0, 6420.0]
+const SPIRIT_XS := [2080.0]
 ## Ascenseur spirituel : x = centre, y = dessus de la dalle au point bas
 ## (atteignable d'un saut depuis le bord du trou, juste après le sanctuaire).
 ## Il monte de 175 px et dessert les trois orbes bonus placées en hauteur.
@@ -69,17 +71,20 @@ const ORBS := [
 	Vector2(3920, 420), Vector2(4230, 385), Vector2(4540, 420),
 	Vector2(4850, 385), Vector2(5160, 420), Vector2(5470, 385),
 	Vector2(5780, 420), Vector2(6100, 385), Vector2(6420, 420),
-	Vector2(6730, 385), Vector2(7040, 420),
+	# La dernière orbe de l'approche reste EN DEÇÀ de la porte (GOAL_X=7000) :
+	# au-delà, elle serait piégée derrière le torii de sortie et rendrait la
+	# Platine impossible (elle exige de tout ramasser).
+	Vector2(6730, 385), Vector2(6800, 420),
 	# Orbes bonus desservies par l'ascenseur spirituel.
 	Vector2(2925, 258), Vector2(2995, 240), Vector2(3065, 258),
 ]
 
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "La Montagne des Brumes. L'air se raréfie, et les Ombres s'accrochent aux corniches." },
-	{ "name": "Léonie", "text": "Tu as traversé la forêt, le temple, le village. Chaque épreuve t'a rendu plus fort." },
-	{ "name": "Léonie", "text": "Le sommet cache le dernier sanctuaire. Ce qui t'y attend demandera tout ton courage." },
-	{ "name": "Léonie", "text": "Je ne peux pas monter plus haut avec toi. À partir d'ici, tu marches seul, Eneko." },
-	{ "name": "Eneko", "text": "Je continuerai. Pour tous ceux que j'ai croisés en chemin." },
+	{ "name": "Léonie", "text": "Nous y sommes presque. Le Sanctuaire Final, où brûlait la Flamme, se dresse au-delà de ces cimes." },
+	{ "name": "Léonie", "text": "Je dois te dire la vérité, Eneko. Le Gardien que tu vas affronter... je le connaissais. Il veillait la Flamme avec moi." },
+	{ "name": "Léonie", "text": "Le désespoir l'a corrompu quand la lumière a vacillé. Ta lame ne doit pas le détruire — mais le délivrer." },
+	{ "name": "Léonie", "text": "Je ne peux monter plus haut. Au sommet, tu marches seul. Mais ma lumière restera en toi." },
+	{ "name": "Eneko", "text": "Je le libérerai, et je rallumerai la Flamme. Je te le promets, Léonie." },
 ]
 
 ## Rafales de vent : toutes les WIND_PERIOD secondes, une bourrasque pousse
@@ -92,9 +97,16 @@ const WIND_STRENGTH := 130.0
 var sfx_win: AudioStreamPlayer
 var mist_wisps: CPUParticles2D
 var snow: CPUParticles2D
+var frost_trail: CPUParticles2D
 var _wind_t := 0.0
 var _wind_dir := 1.0
 var _wind_active := false
+var _step_dist := 0.0
+## Éclats de neige qui pétillent au soleil sur les congères.
+var _glints: Array = []
+## Rapaces qui planent en cercle très haut (voir _process).
+var _raptors: Array = []
+var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -104,7 +116,9 @@ var _wind_active := false
 
 func _ready() -> void:
 	_build_decor()
+	Atmosphere.add_foreground(self, Color(0.11, 0.12, 0.17, 0.3))
 	_build_platforms()
+	_build_hazards()
 	_build_cairns()
 	_build_bridges()
 	_build_crumbles()
@@ -115,17 +129,69 @@ func _ready() -> void:
 	_build_kill_zone()
 	_spawn_entities()
 	_setup_audio()
+	_setup_ambient()
+	_build_frost_trail()
+	_build_snow_glints()
+	# Sur les sommets, Eneko soulève de la neige (et non de la terre).
+	player.set_land_dust_color(Color(0.92, 0.95, 1.0, 0.75))
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
-	Challenge.start_level(LEVEL_ID, ORBS.size())
+	# Relique cachée, tapie à gauche de l'apparition.
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(60, 466)
+	add_child(relic)
+	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
+	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_XS.size())
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_5", "")
 	next_button.visible = next_scene != ""
 	if next_scene != "":
-		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+		next_button.pressed.connect(func(): Transition.goto(next_scene))
 	# Survol d'introduction : du torii du sommet jusqu'à Eneko.
 	player.intro_pan(Vector2(GOAL_X, 380.0))
+
+## Petits éclats blancs posés sur la neige des congères, qui pétillent au
+## soleil à des rythmes décalés. Purement décoratif, au ras du sol.
+func _build_snow_glints() -> void:
+	for pi in PLATFORMS.size():
+		var p: Vector2 = PLATFORMS[pi]
+		var top := p.y - 50.0
+		var n := 4
+		var gi := 0
+		while gi < n:
+			var gx := p.x - (p.y - 60.0) + float(gi) * (2.0 * (p.y - 60.0) / float(n))
+			gx += float((gi * 37 + pi * 53) % 40) - 20.0
+			var g := _poly(self, PackedVector2Array([
+				Vector2(0, -3), Vector2(2, 0), Vector2(0, 3), Vector2(-2, 0),
+			]), Color(1, 1, 1, 0.0), Vector2(gx, top - 2.0 - float(gi % 2) * 2.0))
+			g.z_index = 1
+			_glints.append({"node": g, "phase": float((int(gx) * 13) % 628) * 0.01})
+			gi += 1
+
+func _process(delta: float) -> void:
+	_t += delta
+	for gl in _glints:
+		var g: Polygon2D = gl["node"]
+		# Scintillement bref et espacé : la plupart du temps invisible.
+		var s := sin(_t * 3.2 + float(gl["phase"]))
+		g.modulate.a = clampf((s - 0.7) / 0.3, 0.0, 1.0) * 0.9
+	for rp in _raptors:
+		var rn: Node2D = rp["node"]
+		var ph: float = float(rp["phase"])
+		var ang := _t * float(rp["spd"]) + ph
+		var rad: float = float(rp["rad"])
+		var nx := float(rp["cx"]) + cos(ang) * rad
+		var ny := float(rp["cy"]) + sin(ang) * rad * 0.4
+		rn.position = Vector2(nx, ny)
+		rn.scale.x = 1.0 if sin(ang) >= 0.0 else -1.0
+		# Battement d'ailes lent et planant.
+		var fl := 0.3 * sin(_t * float(rp["flap"]) + ph)
+		var lw: Polygon2D = rp["lw"]
+		var rw: Polygon2D = rp["rw"]
+		lw.rotation = fl
+		rw.rotation = -fl
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(player):
@@ -134,6 +200,15 @@ func _physics_process(delta: float) -> void:
 		mist_wisps.position = Vector2(player.position.x, player.position.y - 40.0)
 	if snow != null:
 		snow.position = Vector2(player.position.x, player.position.y - 340.0)
+	if frost_trail != null:
+		frost_trail.position = Vector2(player.position.x, player.position.y + 6.0)
+
+	# Traces de pas enfoncées dans la neige, semées à intervalles réguliers.
+	if player.is_on_floor() and absf(player.velocity.x) > 30.0:
+		_step_dist += absf(player.velocity.x) * delta
+		if _step_dist >= 46.0:
+			_step_dist = 0.0
+			_spawn_footprint()
 
 	# Cycle des rafales de vent.
 	_wind_t += delta
@@ -153,6 +228,42 @@ func _physics_process(delta: float) -> void:
 		snow.gravity = Vector2(_wind_dir * 160.0, 26) if in_gust else Vector2(4, 26)
 
 # --- Construction du niveau ---------------------------------------------
+
+## Souffle glacé : de la brume pâle s'échappe autour d'Eneko et reste en
+## place derrière lui (coords globales), comme une haleine dans le froid.
+## Empreinte creusée dans la neige au pied d'Eneko, qui s'efface lentement.
+func _spawn_footprint() -> void:
+	var f := Polygon2D.new()
+	var pts := PackedVector2Array()
+	for k in 8:
+		var a := k * TAU / 8.0
+		pts.append(Vector2(cos(a) * 7.0, sin(a) * 3.0))
+	f.polygon = pts
+	f.color = Color(0.42, 0.47, 0.58, 0.5)
+	f.global_position = player.global_position + Vector2(-player.facing * 6.0, 28.0)
+	add_child(f)
+	var t := create_tween()
+	t.tween_interval(2.2)
+	t.tween_property(f, "modulate:a", 0.0, 2.0)
+	t.finished.connect(f.queue_free)
+
+func _build_frost_trail() -> void:
+	frost_trail = CPUParticles2D.new()
+	frost_trail.local_coords = false
+	frost_trail.amount = 16
+	frost_trail.lifetime = 1.3
+	frost_trail.preprocess = 1.3
+	frost_trail.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	frost_trail.emission_rect_extents = Vector2(10, 18)
+	frost_trail.direction = Vector2(0, -1)
+	frost_trail.spread = 45.0
+	frost_trail.gravity = Vector2(0, -10)
+	frost_trail.initial_velocity_min = 5.0
+	frost_trail.initial_velocity_max = 18.0
+	frost_trail.scale_amount_min = 1.6
+	frost_trail.scale_amount_max = 3.2
+	frost_trail.color = Color(0.86, 0.92, 1.0, 0.22)
+	add_child(frost_trail)
 
 func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
 	var p := Polygon2D.new()
@@ -193,17 +304,38 @@ func _build_decor() -> void:
 		sun_pts.append(Vector2(cos(sa) * 30.0, sin(sa) * 30.0))
 		sk += 1
 	_poly(sky, sun_pts, Color(1.0, 1.0, 0.94, 0.65), Vector2(680, 80))
+	# Rayons pâles filtrés par la brume d'altitude.
+	var rays := GodRays.new()
+	rays.color = Color(1.0, 1.0, 0.96, 0.055)
+	rays.length = 1300.0
+	rays.half_spread = 0.9
+	rays.position = Vector2(680.0, 80.0)
+	sky.add_child(rays)
+	# Rapaces qui planent en larges cercles très haut dans le ciel.
 	var bx := 350.0
 	var bi := 0
 	while bx < LEVEL_END:
 		var by := 60.0 + float(bi * 61 % 100)
-		for w in 2:
-			var off := Vector2(float(w) * 22.0, float(w) * 8.0)
-			_poly(sky, PackedVector2Array([
-				Vector2(-8, 0), Vector2(0, -5), Vector2(8, 0), Vector2(0, -1),
-			]), Color(0.3, 0.32, 0.38, 0.7), Vector2(bx, by) + off)
+		var rap := Node2D.new()
+		rap.position = Vector2(bx, by)
+		var col := Color(0.3, 0.32, 0.38, 0.7)
+		var lw := _poly(rap, PackedVector2Array([
+			Vector2(0, 0), Vector2(-9, -4), Vector2(-2, -1),
+		]), col)
+		var rw := _poly(rap, PackedVector2Array([
+			Vector2(0, 0), Vector2(9, -4), Vector2(2, -1),
+		]), col)
+		sky.add_child(rap)
+		_raptors.append({
+			"node": rap, "lw": lw, "rw": rw,
+			"cx": bx, "cy": by, "rad": 40.0 + float(bi % 3) * 20.0,
+			"spd": 0.35 + float(bi % 3) * 0.12, "flap": 2.2 + float(bi % 3) * 0.6,
+			"phase": float(bi) * 1.7,
+		})
 		bx += 1100.0 + float(bi * 71 % 350)
 		bi += 1
+	# Voiles nuageux d'altitude, pâles et froids, qui dérivent lentement.
+	TextureLab.add_clouds(sky, 5, 90.0, 210.0, LEVEL_END, Color(0.92, 0.95, 1.0, 0.14))
 
 	# Pics lointains, bleu-gris, sommets enneigés.
 	var far := ParallaxLayer.new()
@@ -213,9 +345,11 @@ func _build_decor() -> void:
 	var mi := 0
 	while mx < LEVEL_END + 900.0:
 		var mh := 260.0 + float(mi * 61 % 140)
-		_poly(far, PackedVector2Array([
+		var ftri := PackedVector2Array([
 			Vector2(-320, 0), Vector2(0, -mh), Vector2(320, 0),
-		]), Color(0.5, 0.56, 0.66, 0.55), Vector2(mx, 540))
+		])
+		_poly(far, ftri, Color(0.5, 0.56, 0.66, 0.55), Vector2(mx, 540))
+		TextureLab.grain_poly(far, ftri, 0.09, Vector2(mx, 0), Vector2(mx, 540))
 		_poly(far, PackedVector2Array([
 			Vector2(-42, -mh + 40), Vector2(0, -mh), Vector2(42, -mh + 40), Vector2(0, -mh + 56),
 		]), Color(0.95, 0.96, 1.0, 0.75), Vector2(mx, 540))
@@ -230,10 +364,12 @@ func _build_decor() -> void:
 	mi = 0
 	while mx < LEVEL_END + 900.0:
 		var rh := 170.0 + float(mi * 39 % 90)
-		_poly(near_ridge, PackedVector2Array([
+		var rtri := PackedVector2Array([
 			Vector2(-220, 0), Vector2(-60, -rh + 26), Vector2(20, -rh),
 			Vector2(100, -rh + 34), Vector2(220, 0),
-		]), Color(0.38, 0.4, 0.46, 0.6), Vector2(mx, 560))
+		])
+		_poly(near_ridge, rtri, Color(0.38, 0.4, 0.46, 0.6), Vector2(mx, 560))
+		TextureLab.grain_poly(near_ridge, rtri, 0.14, Vector2(mx * 0.8, 0), Vector2(mx, 560))
 		mx += 360.0 + float(mi * 33 % 100)
 		mi += 1
 
@@ -362,6 +498,21 @@ func _build_platforms() -> void:
 
 		add_child(body)
 
+## Pièges spectraux des sommets : un geyser et une faux teintée de givre, sur
+## des plateformes dégagées — À L'ÉCART du sanctuaire de Léonie (2440-2920),
+## des patrouilles, pièges et cairns.
+func _build_hazards() -> void:
+	var gy := SpiritGeyser.new()
+	gy.position = Vector2(3450.0, GROUND_Y - 50.0)
+	gy.phase = 0.3
+	add_child(gy)
+	var pd := SpectralPendulum.new()
+	pd.position = Vector2(4050.0, GROUND_Y - 50.0)
+	pd.arm_len = 145.0
+	pd.phase = 1.1
+	pd.tint = Color(0.6, 0.85, 1.0)  # faux de givre spectral
+	add_child(pd)
+
 ## Cairns décoratifs (piles de pierres) sur certaines plateformes.
 func _build_cairns() -> void:
 	for cx in CAIRN_XS:
@@ -463,19 +614,19 @@ func _build_traps() -> void:
 		trap.position = Vector2(x, GROUND_Y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(44, 24)
+		rect.size = Vector2(66, 34)
 		shape.shape = rect
 		trap.add_child(shape)
 		_poly(trap, PackedVector2Array([
-			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+			Vector2(-33, 22), Vector2(33, 22), Vector2(33, 6), Vector2(-33, 6),
 		]), Color(0.5, 0.55, 0.62))
-		for k in 3:
-			var ox := -16.0 + k * 16.0
+		for k in 4:
+			var ox := -24.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+				Vector2(ox - 7, 6), Vector2(ox + 7, 6), Vector2(ox, -22),
 			]), Color(0.72, 0.82, 0.92, 0.85))
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -12),
+				Vector2(ox - 3, 2), Vector2(ox + 3, 2), Vector2(ox, -18),
 			]), Color(0.85, 0.92, 0.98, 0.9))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)
@@ -503,6 +654,7 @@ func _build_goal() -> void:
 	_poly(goal, PackedVector2Array([Vector2(-42, -70), Vector2(42, -70), Vector2(38, -58), Vector2(-38, -58)]), Color(0.42, 0.48, 0.58))
 	_poly(goal, PackedVector2Array([Vector2(-32, -46), Vector2(32, -46), Vector2(32, -38), Vector2(-32, -38)]), Color(0.5, 0.56, 0.66))
 	add_child(goal)
+	Atmosphere.breathe(glow)
 	goal.body_entered.connect(_on_goal_body_entered)
 
 func _build_kill_zone() -> void:
@@ -525,6 +677,11 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = Vector2(x, SPAWN_Y)
 		add_child(s)
+	for x in ELITE_XS:
+		var el := SHADOW_SCENE.instantiate()
+		el.position = Vector2(x, SPAWN_Y)
+		add_child(el)
+		el.make_elite()
 	for x in SPIRIT_XS:
 		var sp := SPIRIT_SCENE.instantiate()
 		sp.position = Vector2(x, SPAWN_Y - 90.0)
@@ -533,7 +690,7 @@ func _spawn_entities() -> void:
 	# vit maintenant sur la plateforme-refuge avant le passage des ponts.
 	PlatformPainter.build_sanctuary(self, 2680.0, GROUND_Y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()
-	leonie.position = Vector2(2680.0, SPAWN_Y - 26.0)
+	leonie.position = Vector2(2680.0, SPAWN_Y)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
 	for o in ORBS:
@@ -542,6 +699,14 @@ func _spawn_entities() -> void:
 		add_child(orb)
 
 ## Vent glacial, plus fort et plus aigu que dans les niveaux précédents.
+## Répliques d'ambiance au fil du niveau (non bloquantes).
+func _setup_ambient() -> void:
+	var amb := AmbientDialogue.new()
+	add_child(amb)
+	amb.add_line(self, 850.0, "Eneko", "L'air se glace. Chaque pas me coûte un peu plus.")
+	amb.add_line(self, 3300.0, "Eneko", "Léonie m'avait prévenu... au-delà, je marche seul.")
+	amb.add_line(self, 6420.0, "Eneko", "Le dernier sanctuaire m'attend, tout au sommet.")
+
 func _setup_audio() -> void:
 	var wind := AudioStreamPlayer.new()
 	wind.stream = load("res://assets/sfx/wind.wav")
@@ -559,6 +724,9 @@ func _setup_audio() -> void:
 
 func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
 	if body == player:
+		if not cp.has_meta("lit"):
+			cp.set_meta("lit", true)
+			Atmosphere.spark_burst(self, cp.global_position, Color(0.5, 1.0, 0.6))
 		player.set_checkpoint(Vector2(cp.global_position.x, SPAWN_Y))
 		flag.color = Color(0.4, 0.9, 0.5, 0.95)
 
@@ -624,4 +792,4 @@ func _on_dialogue_finished() -> void:
 	player.set_physics_process(true)
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

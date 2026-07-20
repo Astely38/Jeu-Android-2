@@ -21,6 +21,9 @@ const SAMURAI := "res://assets/character/samurai/"
 const COYOTE_TIME := 0.12
 const JUMP_BUFFER := 0.15
 const JUMP_CUT_VELOCITY := -160.0
+## Double Saut spirituel (bénédiction de Léonie, débloqué après le Ch. I) :
+## un second bond en plein vol, un peu moins puissant, escorté d'un halo.
+const AIR_JUMP_VELOCITY := -430.0
 const ANIM_BASE_SCALE := Vector2(1.0, 1.0)
 ## Ruée du sabreur : élan horizontal éclair avec images rémanentes et
 ## invincibilité, limité par un temps de recharge. La traversée des
@@ -32,6 +35,15 @@ const DASH_TIME := 0.2
 const DASH_GHOST_EXTRA := 0.18
 const DASH_COOLDOWN := 0.9
 
+## Fil Spirituel : Eneko lance un fil vers un ancrage lumineux (nœuds du
+## groupe « spirit_anchor ») et s'y hisse d'un trait. Portée, vitesse de
+## traction, petit rebond à l'arrivée et délai avant de relancer.
+const GRAPPLE_RANGE := 360.0
+const GRAPPLE_SPEED := 780.0
+const GRAPPLE_MAX_TIME := 0.6
+const GRAPPLE_POP := -260.0
+const GRAPPLE_COOLDOWN := 0.35
+
 var moving_left := false
 var moving_right := false
 var attacking := false
@@ -40,6 +52,12 @@ var health := MAX_HEALTH
 var invuln := 0.0
 var knockback := 0.0
 var lock_timer := 0.0
+## Frappe en ruée : fenêtre pendant/juste après une ruée où l'attaque devient
+## un coup tournant élargi qui inflige un dégât supplémentaire.
+var _heavy := false
+var _dash_strike_window := 0.0
+## Cibles déjà touchées par le coup de sabre en cours (évite les doublons).
+var _hit_bodies: Array = []
 var anim_time := 0.0
 var orbs := 0
 var start_position := Vector2.ZERO
@@ -54,11 +72,27 @@ var _orb_burst: CPUParticles2D
 var _coyote := 0.0
 var _jump_buffer := 0.0
 var _touch_jump_held := false
+## Double Saut : nombre de sauts aériens déjà utilisés depuis le dernier
+## contact au sol, et nombre autorisé (1 si le pouvoir est débloqué, 0 sinon).
+var _air_jumps := 0
+var _max_air := 0
+## Front montant de la touche de saut clavier (le double saut ne doit partir
+## que sur une nouvelle pression, pas tant que la touche est maintenue).
+var _kb_jump_prev := false
 var _was_on_floor := false
 var _fall_speed := 0.0
 var _shake := 0.0
+## Bruitages créés en code : atterrissage, impact sur un ennemi.
+var _sfx_land: AudioStreamPlayer
+var _sfx_hit: AudioStreamPlayer
 var _dash_timer := 0.0
 var _dash_cd := 0.0
+## Fil Spirituel : état de la traction en cours.
+var _grappling := false
+var _grapple_timer := 0.0
+var _grapple_cd := 0.0
+var _grapple_target := Vector2.ZERO
+var _thread: Line2D
 var _ghost_timer := 0.0
 ## Fenêtre de traversée des ennemis (couvre l'élan + une marge de sortie).
 var _ghost_through := 0.0
@@ -72,9 +106,16 @@ var _bless_aura: Sprite2D
 const COMBO_WINDOW := 5.0
 var _combo := 0
 var _combo_timer := 0.0
+## Bref éclat du feu follet quand un éclat de lumière est ramassé.
+var _orb_flash := 0.0
 var _combo_label: Label
+## Vignette rouge de lisibilité : éclat bref quand Eneko est touché, et
+## pulsation douce et continue quand il ne reste qu'un seul cœur (danger).
+var _vignette: TextureRect
+var _vignette_flash := 0.0
 
 @onready var attack_area: Area2D = $AttackArea
+@onready var attack_shape: CollisionShape2D = $AttackArea/CollisionShape2D
 @onready var anim: AnimatedSprite2D = $Anim
 @onready var orb_label: Label = $HUD/OrbCount
 @onready var time_label: Label = $HUD/TimeLabel
@@ -95,20 +136,37 @@ func _ready() -> void:
 	# ralenti ne doit jamais laisser le temps figé.
 	Engine.time_scale = 1.0
 	add_to_group("player")
+	# Double Saut spirituel : autorisé une fois le Chapitre I terminé.
+	_max_air = 1 if SaveManager.double_jump_unlocked() else 0
 	start_position = position
 	attack_area.monitoring = false
+	# Le sabre touche aussi la couche 3 : les ennemis « déphasés » (un boss
+	# exposé qui ne bloque plus Eneko physiquement mais reste tranchable).
+	attack_area.set_collision_mask_value(3, true)
 	attack_area.body_entered.connect(_on_attack_area_body_entered)
 	attack_area.area_entered.connect(_on_attack_area_area_entered)
 	_build_combo_label()
+	_add_contact_shadow(30.0)
+	add_child(GuardianWisp.new())  # le feu follet de Léonie veille sur Eneko
+	_sfx_land = _make_sfx("res://assets/sfx/land.wav", -6.0)
+	_sfx_hit = _make_sfx("res://assets/sfx/enemy_hit.wav", -4.0)
+	# Cœurs supplémentaires (mode détente) puis vie de départ au maximum.
+	_ensure_hearts()
+	health = _max_health()
+	if Challenge.kensei:
+		_build_kensei_badge()
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": SAMURAI + "Idle.png", "frames": 6, "fps": 8.0, "loop": true},
 		{"name": "run", "path": SAMURAI + "Run.png", "frames": 8, "fps": 13.0, "loop": true},
 		{"name": "jump", "path": SAMURAI + "Jump.png", "frames": 12, "fps": 14.0, "loop": false},
 		{"name": "attack", "path": SAMURAI + "Attack_1.png", "frames": 6, "fps": 14.0, "loop": false},
 		{"name": "hurt", "path": SAMURAI + "Hurt.png", "frames": 2, "fps": 9.0, "loop": false},
+		{"name": "dead", "path": SAMURAI + "Dead.png", "frames": 3, "fps": 6.0, "loop": false},
 	])
 	_play("idle")
 	orb_label.text = "x0"
+	_build_vignette()
+	_build_thread()
 	_update_hearts()
 	_update_heart_hint()
 
@@ -178,6 +236,17 @@ func _physics_process(delta: float) -> void:
 		_combo_timer -= delta
 		if _combo_timer <= 0.0:
 			_end_combo()
+	if _orb_flash > 0.0:
+		_orb_flash -= delta
+	_update_vignette(delta)
+
+	_dash_strike_window = maxf(0.0, _dash_strike_window - delta)
+
+	# Le coup de sabre touche aussi les cibles DÉJÀ au contact (pas seulement
+	# celles qui entrent dans la zone) — indispensable face au boss immobile.
+	if attacking:
+		for b in attack_area.get_overlapping_bodies():
+			_try_hit(b)
 
 	# Verrou d'animation (attaque / touché).
 	if lock_timer > 0.0:
@@ -185,6 +254,9 @@ func _physics_process(delta: float) -> void:
 		if lock_timer <= 0.0 and attacking:
 			attacking = false
 			attack_area.monitoring = false
+			# Restaure la portée normale après une frappe en ruée.
+			attack_shape.scale = Vector2.ONE
+			_heavy = false
 
 	# Ruée du sabreur : trajectoire horizontale figée, gravité suspendue,
 	# images rémanentes semées derrière Eneko.
@@ -195,6 +267,24 @@ func _physics_process(delta: float) -> void:
 		_ghost_through -= delta
 		if _ghost_through <= 0.0:
 			set_collision_mask_value(2, true)
+	_grapple_cd = maxf(0.0, _grapple_cd - delta)
+	# Fil Spirituel : traction vers l'ancrage, prioritaire sur tout le reste.
+	if _grappling:
+		_grapple_timer += delta
+		var to: Vector2 = _grapple_target - global_position
+		if to.length() <= 28.0 or _grapple_timer > GRAPPLE_MAX_TIME:
+			_end_grapple()
+		else:
+			velocity = to.normalized() * GRAPPLE_SPEED
+			move_and_slide()
+			_update_thread()
+			_play("jump")
+			# Bloqué par un mur en route : on coupe le fil.
+			if get_slide_collision_count() > 0 and to.length() > 44.0:
+				_end_grapple()
+			return
+		return
+
 	if _dash_timer > 0.0:
 		_dash_timer -= delta
 		velocity = Vector2(facing * DASH_SPEED, 0)
@@ -235,6 +325,7 @@ func _physics_process(delta: float) -> void:
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)
 	if is_on_floor():
 		_coyote = COYOTE_TIME
+		_air_jumps = 0  # le contact au sol rend le double saut
 		if not _was_on_floor:
 			_on_landed()
 		if _jump_buffer > 0.0:
@@ -245,18 +336,28 @@ func _physics_process(delta: float) -> void:
 	_was_on_floor = is_on_floor()
 
 	# Secousse de caméra (dégâts, coups de sabre) qui s'amortit vite.
+	# Accessibilité : supprimée si le joueur a coupé les secousses d'écran.
 	if _shake > 0.0:
 		_shake = maxf(0.0, _shake - delta * 30.0)
-		camera.offset = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
+		if SaveManager.setting_on("shake"):
+			camera.offset = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
+		else:
+			camera.offset = Vector2.ZERO
 	elif camera.offset != Vector2.ZERO:
 		camera.offset = Vector2.ZERO
 
-	if Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_SPACE):
+	# Saut clavier sur FRONT MONTANT : indispensable pour le double saut, qui
+	# ne doit pas s'enchaîner tant que la touche reste enfoncée.
+	var kb_jump := Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_SPACE)
+	if kb_jump and not _kb_jump_prev:
 		jump()
+	_kb_jump_prev = kb_jump
 	if Input.is_physical_key_pressed(KEY_X):
 		attack()
 	if Input.is_physical_key_pressed(KEY_SHIFT) or Input.is_physical_key_pressed(KEY_C):
 		dash()
+	if Input.is_physical_key_pressed(KEY_E) or Input.is_physical_key_pressed(KEY_F):
+		grapple()
 
 	_update_animation()
 	_animate(delta)
@@ -299,6 +400,10 @@ func _set_facing(dir: float) -> void:
 func jump() -> void:
 	if is_on_floor() or _coyote > 0.0:
 		_do_jump()
+	elif _air_jumps < _max_air:
+		# Double Saut spirituel : un second bond en plein vol.
+		_air_jumps += 1
+		_do_air_jump()
 	else:
 		# Trop tôt : on retient la demande, le saut partira à l'atterrissage.
 		_jump_buffer = JUMP_BUFFER
@@ -306,20 +411,90 @@ func jump() -> void:
 func _do_jump() -> void:
 	velocity.y = JUMP_VELOCITY
 	_coyote = 0.0
-	sfx_jump.play()
+	Sfx.varied(sfx_jump, 0.9, 1.1)
 	# Étirement vertical au décollage (squash & stretch).
 	anim.scale = Vector2(0.82, 1.18)
 	var t := create_tween()
 	t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.18)
 
+## Double Saut : relance verticale un peu plus douce, son plus aigu, et un
+## halo doré (la lumière de Léonie) qui s'évase sous les pieds d'Eneko.
+func _do_air_jump() -> void:
+	velocity.y = AIR_JUMP_VELOCITY
+	Sfx.varied(sfx_jump, 1.18, 1.32)
+	anim.scale = Vector2(0.8, 1.22)
+	var t := create_tween()
+	t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.18)
+	_spiritual_burst()
+	SaveManager.vibrate(10)
+
+## Halo d'envol : un anneau de lumière qui s'agrandit et s'efface, plus un
+## éclat d'étincelles dorées. Rattaché au parent (survit au mouvement d'Eneko).
+func _spiritual_burst() -> void:
+	var host := get_parent()
+	if host == null:
+		return
+	var ring := Line2D.new()
+	ring.width = 3.0
+	ring.default_color = Color(1.0, 0.88, 0.55, 0.85)
+	var pts := PackedVector2Array()
+	for i in 21:
+		var a := i * TAU / 20.0
+		pts.append(Vector2(cos(a) * 20.0, sin(a) * 7.0))
+	ring.points = pts
+	ring.global_position = global_position + Vector2(0, 22)
+	ring.z_index = 4
+	host.add_child(ring)
+	var tw := ring.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ring, "scale", Vector2(2.8, 2.8), 0.35)
+	tw.tween_property(ring, "modulate:a", 0.0, 0.35)
+	tw.chain().tween_callback(ring.queue_free)
+	Atmosphere.spark_burst(host, global_position + Vector2(0, 8), Color(1.0, 0.85, 0.5))
+
+## Crée un lecteur de bruitage en code (routé vers le bus « Sons » par le
+## gestionnaire de musique) et le rattache à Eneko.
+func _make_sfx(path: String, vol_db: float) -> AudioStreamPlayer:
+	var p := AudioStreamPlayer.new()
+	p.stream = load(path)
+	p.volume_db = vol_db
+	add_child(p)
+	return p
+
 ## Atterrissage : écrasement du sprite + bouffée de poussière si la chute
 ## était rapide.
 func _on_landed() -> void:
+	if _fall_speed > 120.0:
+		Sfx.varied(_sfx_land, 0.94, 1.08)
 	if _fall_speed > 300.0:
 		anim.scale = Vector2(1.19, 0.78)
 		var t := create_tween()
 		t.tween_property(anim, "scale", ANIM_BASE_SCALE, 0.15)
 		_land_dust.restart()
+	# Réception franche : une onde de poussière s'étale au sol.
+	if _fall_speed > 520.0:
+		_spawn_landing_ring()
+		_shake = maxf(_shake, 3.0)
+
+## Anneau de poussière qui s'élargit et s'efface au point d'atterrissage
+## (posé sur le niveau : il reste au sol pendant qu'Eneko repart).
+func _spawn_landing_ring() -> void:
+	var ring := Line2D.new()
+	ring.width = 4.0
+	ring.default_color = Color(0.88, 0.83, 0.68, 0.55)
+	var pts := PackedVector2Array()
+	for k in 22:
+		var a := k * TAU / 22.0
+		pts.append(Vector2(cos(a) * 11.0, sin(a) * 4.0))
+	pts.append(pts[0])
+	ring.points = pts
+	ring.global_position = global_position + Vector2(0, 26.0)
+	get_parent().add_child(ring)
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(ring, "scale", Vector2(4.6, 4.6), 0.42)
+	t.tween_property(ring, "modulate:a", 0.0, 0.42)
+	t.chain().tween_callback(ring.queue_free)
 
 func _jump_held() -> bool:
 	return _touch_jump_held \
@@ -340,7 +515,101 @@ func dash() -> void:
 	# Pendant la ruée (et la marge de sortie), Eneko TRAVERSE les ennemis
 	# (couche 2) : l'esquive passe au travers des charges du Gardien.
 	set_collision_mask_value(2, false)
-	sfx_dash.play()
+	# Attaquer pendant cette fenêtre déclenche la frappe en ruée (coup lourd).
+	_dash_strike_window = DASH_TIME + 0.3
+	Sfx.varied(sfx_dash, 0.95, 1.08)
+	_spawn_speed_lines()
+
+## Fil Spirituel : file d'un trait vers l'ancrage lumineux le mieux placé
+## (devant/au-dessus, dans la portée). Sans cible, ne fait rien.
+func grapple() -> void:
+	if _grappling or _grapple_cd > 0.0 or _dead or lock_timer > 0.0 or _dash_timer > 0.0:
+		return
+	var anchor := _find_anchor()
+	if anchor == null:
+		return
+	_grappling = true
+	_grapple_timer = 0.0
+	_grapple_cd = GRAPPLE_COOLDOWN
+	_grapple_target = anchor.global_position
+	# Pendant la traction, on traverse les ennemis et on ignore la gravité.
+	set_collision_mask_value(2, false)
+	invuln = maxf(invuln, 0.12)
+	_thread.visible = true
+	_update_thread()
+	if anchor.has_method("ping"):
+		anchor.ping()
+	Sfx.varied(sfx_dash, 1.12, 1.22)
+
+## Meilleur ancrage à portée : privilégie ce qui est devant et en hauteur, à
+## distance décroissante.
+func _find_anchor() -> Node2D:
+	var best: Node2D = null
+	var best_score := -999.0
+	for a in get_tree().get_nodes_in_group("spirit_anchor"):
+		if not (a is Node2D) or not is_instance_valid(a):
+			continue
+		var to: Vector2 = (a as Node2D).global_position - global_position
+		var d := to.length()
+		if d > GRAPPLE_RANGE or d < 14.0:
+			continue
+		var dir := to / d
+		# Biais : devant (selon le regard) + vers le haut, moins la distance.
+		var score := dir.x * facing * 0.4 + (-dir.y) * 0.7 + (1.0 - d / GRAPPLE_RANGE)
+		if score > best_score:
+			best_score = score
+			best = a
+	return best
+
+func _end_grapple() -> void:
+	if not _grappling:
+		return
+	_grappling = false
+	_thread.visible = false
+	set_collision_mask_value(2, true)
+	# Petit rebond à l'arrivée + élan conservé, et le double saut se recharge.
+	velocity.y = GRAPPLE_POP
+	velocity.x = facing * SPEED * 0.5
+	_air_jumps = 0
+	Atmosphere.spark_burst(self, _grapple_target, Color(0.6, 0.92, 1.0))
+
+## Fil visible entre Eneko et l'ancrage (coordonnées locales, se met à jour
+## chaque frame de traction).
+func _build_thread() -> void:
+	_thread = Line2D.new()
+	_thread.width = 2.6
+	_thread.default_color = Color(0.7, 0.95, 1.0, 0.9)
+	_thread.z_index = 2
+	_thread.visible = false
+	add_child(_thread)
+
+func _update_thread() -> void:
+	if _thread == null:
+		return
+	_thread.points = PackedVector2Array([
+		Vector2(0, -8), to_local(_grapple_target),
+	])
+
+## Lignes de vitesse : traits horizontaux qui fusent derrière Eneko au
+## départ de la Ruée, glissent vers l'arrière et s'effacent — sensation
+## de vitesse pure.
+func _spawn_speed_lines() -> void:
+	for i in 5:
+		var line := Polygon2D.new()
+		var len_x := 26.0 + float(i % 3) * 14.0
+		line.polygon = PackedVector2Array([
+			Vector2(0, -1.4), Vector2(len_x, -0.6), Vector2(len_x, 0.6), Vector2(0, 1.4),
+		])
+		line.color = Color(0.7, 0.9, 1.0, 0.55)
+		var oy := -30.0 + float(i) * 14.0
+		line.position = Vector2(-facing * 18.0, oy)
+		line.scale.x = -facing
+		add_child(line)
+		var t := line.create_tween()
+		t.set_parallel(true)
+		t.tween_property(line, "position:x", line.position.x - facing * 60.0, 0.28)
+		t.tween_property(line, "modulate:a", 0.0, 0.28)
+		t.chain().tween_callback(line.queue_free)
 
 ## Image rémanente bleutée semée pendant la ruée, qui s'estompe vite.
 func _spawn_ghost() -> void:
@@ -362,12 +631,73 @@ func _spawn_ghost() -> void:
 
 ## Micro-arrêt du temps à l'impact d'un coup qui porte (le "crunch" des
 ## jeux d'action). Durée mesurée en temps réel, insensible au time_scale.
-func _hit_stop() -> void:
+func _hit_stop(dur := 0.06) -> void:
 	if Engine.time_scale < 1.0:
 		return
 	Engine.time_scale = 0.15
-	await get_tree().create_timer(0.06, true, false, true).timeout
+	await get_tree().create_timer(dur, true, false, true).timeout
 	Engine.time_scale = 1.0
+
+## Éclat d'impact au point de contact du sabre : étoile blanche, éclats
+## radiaux, et une onde de choc sur les coups qui tuent. Rendu dans le niveau
+## (au monde), pour rester sur place quand Eneko poursuit son mouvement.
+func _spawn_impact(at: Vector2, strong: bool) -> void:
+	var host := get_parent()
+	if host == null:
+		return
+	var tint := Color(1.0, 0.9, 0.55) if strong else Color(0.82, 0.94, 1.0)
+	var star := Polygon2D.new()
+	var pts := PackedVector2Array()
+	for i in 12:
+		var a := i * PI / 6.0
+		var r := (16.0 if strong else 10.0) if i % 2 == 0 else (6.0 if strong else 3.5)
+		pts.append(Vector2(cos(a) * r, sin(a) * r))
+	star.polygon = pts
+	star.color = Color(1, 1, 1, 0.95)
+	star.position = at
+	star.z_index = 25
+	host.add_child(star)
+	var t := star.create_tween()
+	t.set_parallel(true)
+	t.tween_property(star, "scale", Vector2(2.1, 2.1) if strong else Vector2(1.4, 1.4), 0.15)
+	t.tween_property(star, "modulate:a", 0.0, 0.15)
+	t.chain().tween_callback(star.queue_free)
+	var n := 6 if strong else 4
+	for i in n:
+		var ang := TAU * float(i) / float(n) + randf() * 0.5
+		var ln := 16.0 if strong else 11.0
+		var ray := Polygon2D.new()
+		ray.polygon = PackedVector2Array([
+			Vector2(0, -2), Vector2(ln, -1), Vector2(ln + 6.0, 0), Vector2(ln, 1), Vector2(0, 2),
+		])
+		ray.color = tint
+		ray.position = at
+		ray.rotation = ang
+		ray.z_index = 25
+		host.add_child(ray)
+		var rt := ray.create_tween()
+		rt.set_parallel(true)
+		rt.tween_property(ray, "position", at + Vector2(cos(ang), sin(ang)) * (34.0 if strong else 22.0), 0.18)
+		rt.tween_property(ray, "modulate:a", 0.0, 0.18)
+		rt.chain().tween_callback(ray.queue_free)
+	if strong:
+		var ring := Line2D.new()
+		ring.width = 3.0
+		ring.default_color = Color(1.0, 0.92, 0.6, 0.85)
+		ring.closed = true
+		var rp := PackedVector2Array()
+		for i in 18:
+			var a := i * TAU / 18.0
+			rp.append(Vector2(cos(a) * 10.0, sin(a) * 10.0))
+		ring.points = rp
+		ring.position = at
+		ring.z_index = 25
+		host.add_child(ring)
+		var gt := ring.create_tween()
+		gt.set_parallel(true)
+		gt.tween_property(ring, "scale", Vector2(3.4, 3.4), 0.22)
+		gt.tween_property(ring, "modulate:a", 0.0, 0.22)
+		gt.chain().tween_callback(ring.queue_free)
 
 ## Panoramique d'introduction : la caméra part d'un point fort du niveau
 ## (torii, sommet, arène du boss...) et glisse jusqu'à Eneko. Le niveau
@@ -409,33 +739,84 @@ func attack() -> void:
 	attacking = true
 	lock_timer = ATTACK_DURATION
 	attack_area.monitoring = true
-	sfx_slash.play()
+	_hit_bodies.clear()
+	# Frappe en ruée : si l'attaque suit de près une ruée, c'est un coup
+	# tournant ÉLARGI qui inflige 2 dégâts (idéal pour punir le Gardien).
+	_heavy = _dash_strike_window > 0.0
+	_dash_strike_window = 0.0
+	if _heavy:
+		attack_shape.scale = Vector2(2.0, 1.7)
+		Sfx.varied(sfx_slash, 0.68, 0.82)  # coup plus grave et lourd
+		SaveManager.vibrate(30)
+		_shake = maxf(_shake, 3.5)
+		_spawn_heavy_slash()
+	else:
+		attack_shape.scale = Vector2.ONE
+		Sfx.varied(sfx_slash, 0.9, 1.12)
+		_spawn_slash_trail()
 	_play("attack")
-	_spawn_slash_trail()
 
-## Croissant blanc éphémère qui matérialise l'arc du coup de sabre.
-func _spawn_slash_trail() -> void:
+## Arc du coup de sabre : un halo doré large et un cœur blanc vif, tracés en
+## croissant, avec un léger balayage rotatif — la lame semble trancher l'air.
+func _slash_crescent(outer: float, inner: float) -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	var n := 8
 	var i := 0
 	while i <= n:
 		var a := -1.1 + 2.2 * float(i) / float(n)
-		pts.append(Vector2(cos(a) * 34.0, sin(a) * 34.0))
+		pts.append(Vector2(cos(a) * outer, sin(a) * outer))
 		i += 1
 	var j := n
 	while j >= 0:
 		var a2 := -1.1 + 2.2 * float(j) / float(n)
-		pts.append(Vector2(cos(a2) * 22.0, sin(a2) * 22.0))
+		pts.append(Vector2(cos(a2) * inner, sin(a2) * inner))
 		j -= 1
-	var trail := Polygon2D.new()
-	trail.polygon = pts
-	trail.color = Color(1, 1, 1, 0.6)
-	trail.position = Vector2(16.0 * facing, -8.0)
-	trail.scale = Vector2(facing, 1.0)
-	add_child(trail)
-	var t := create_tween()
-	t.tween_property(trail, "modulate:a", 0.0, 0.22)
-	t.finished.connect(trail.queue_free)
+	return pts
+
+func _spawn_slash_trail() -> void:
+	var pivot := Node2D.new()
+	pivot.position = Vector2(16.0 * facing, -8.0)
+	pivot.scale = Vector2(facing, 1.0)
+	pivot.rotation = -0.5
+	add_child(pivot)
+	# Halo doré, large et diffus.
+	var glow := Polygon2D.new()
+	glow.polygon = _slash_crescent(40.0, 18.0)
+	glow.color = Color(1.0, 0.85, 0.45, 0.4)
+	pivot.add_child(glow)
+	# Cœur blanc vif de la lame.
+	var core := Polygon2D.new()
+	core.polygon = _slash_crescent(34.0, 24.0)
+	core.color = Color(1, 1, 1, 0.75)
+	pivot.add_child(core)
+	var t := pivot.create_tween()
+	t.set_parallel(true)
+	t.tween_property(pivot, "rotation", 0.6, 0.2).set_ease(Tween.EASE_OUT)
+	t.tween_property(pivot, "modulate:a", 0.0, 0.24)
+	t.chain().tween_callback(pivot.queue_free)
+
+## Grand arc tournant de la frappe en ruée : un croissant large et lumineux
+## qui balaie plus loin autour d'Eneko.
+func _spawn_heavy_slash() -> void:
+	var pivot := Node2D.new()
+	pivot.position = Vector2(20.0 * facing, -8.0)
+	pivot.scale = Vector2(facing, 1.0)
+	pivot.rotation = -1.0
+	add_child(pivot)
+	var glow := Polygon2D.new()
+	glow.polygon = _slash_crescent(66.0, 30.0)
+	glow.color = Color(0.7, 0.9, 1.0, 0.45)
+	pivot.add_child(glow)
+	var core := Polygon2D.new()
+	core.polygon = _slash_crescent(56.0, 40.0)
+	core.color = Color(1, 1, 1, 0.85)
+	pivot.add_child(core)
+	var t := pivot.create_tween()
+	t.set_parallel(true)
+	t.tween_property(pivot, "rotation", 1.4, 0.26).set_ease(Tween.EASE_OUT)
+	t.tween_property(pivot, "scale", Vector2(facing * 1.25, 1.25), 0.26)
+	t.tween_property(pivot, "modulate:a", 0.0, 0.3)
+	t.chain().tween_callback(pivot.queue_free)
 
 func take_damage(amount: int, from_position: Vector2) -> void:
 	if invuln > 0.0:
@@ -448,14 +829,15 @@ func take_damage(amount: int, from_position: Vector2) -> void:
 			_bless_aura.visible = false
 		invuln = INVULN_TIME
 		_shake = 4.0
-		sfx_hurt.play()
+		Sfx.varied(sfx_hurt, 0.92, 1.08)
 		SaveManager.vibrate(25)
 		return
 	Challenge.register_damage()
 	_end_combo()
 	health -= amount
 	_update_hearts()
-	sfx_hurt.play()
+	_vignette_flash = 0.85
+	Sfx.varied(sfx_hurt, 0.92, 1.08)
 	_shake = 7.0
 	SaveManager.vibrate(45)
 	if health <= 0:
@@ -480,7 +862,8 @@ func fall_damage() -> void:
 	_end_combo()
 	health -= 1
 	_update_hearts()
-	sfx_hurt.play()
+	_vignette_flash = 0.85
+	Sfx.varied(sfx_hurt, 0.92, 1.08)
 	_shake = 7.0
 	SaveManager.vibrate(45)
 	if health <= 0:
@@ -488,10 +871,33 @@ func fall_damage() -> void:
 		return
 	_return_to_checkpoint()
 
+## Permet à un niveau de teinter la poussière soulevée à l'atterrissage
+## (ex. neige blanche sur les sommets enneigés au lieu de terre).
+func set_land_dust_color(c: Color) -> void:
+	if _land_dust != null:
+		_land_dust.color = c
+
 ## Soin complet (accordé par Léonie au passage).
 func heal_full() -> void:
-	health = MAX_HEALTH
+	health = _max_health()
 	_update_hearts()
+
+## Plafond de cœurs : 2 en mode Kensei ; sinon 3, plus le bonus du mode
+## détente (accessibilité) si le joueur l'a activé.
+func _max_health() -> int:
+	if Challenge.kensei:
+		return 2
+	return MAX_HEALTH + SaveManager.bonus_hearts()
+
+## Crée au besoin des cœurs d'interface supplémentaires (mode détente) en
+## dupliquant le dernier, pour que la barre de vie affiche jusqu'à 5 cœurs.
+func _ensure_hearts() -> void:
+	while hearts.size() < _max_health():
+		var last: Sprite2D = hearts[hearts.size() - 1]
+		var h: Sprite2D = last.duplicate()
+		h.position = last.position + Vector2(44, 0)
+		last.get_parent().add_child(h)
+		hearts.append(h)
 
 ## Bénédiction de Léonie : une aura dorée entoure Eneko et le prochain
 ## coup encaissé est annulé.
@@ -518,12 +924,28 @@ func _die_and_restart() -> void:
 	if _dead:
 		return
 	_dead = true
+	Achievements.add_death()
 	health = 0
 	_update_hearts()
-	sfx_hurt.play()
-	_flash_game_over()
+	Sfx.varied(sfx_hurt, 0.85, 0.95)
 	set_physics_process(false)
-	await get_tree().create_timer(1.1).timeout
+	attacking = false
+	attack_area.monitoring = false
+	# Eneko s'effondre : il joue l'animation de mort, bascule légèrement et
+	# s'affaisse au sol.
+	anim.rotation = 0.0
+	anim.play("dead")
+	SaveManager.vibrate(60)
+	var base_y := anim.position.y
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(anim, "rotation", deg_to_rad(26.0) * facing, 0.45) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(anim, "position:y", base_y + 5.0, 0.45) \
+		.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	_flash_game_over()
+	await get_tree().create_timer(1.8).timeout
+	anim.rotation = 0.0
 	get_tree().reload_current_scene()
 
 ## Message temporaire "vous avez perdu" affiché quand les 3 cœurs tombent à
@@ -559,21 +981,23 @@ func set_checkpoint(pos: Vector2) -> void:
 		sfx_checkpoint.play()
 	start_position = pos
 
-## Ramasse un orbe spirituel : recharge l'énergie, et tous les 5 orbes
-## Eneko récupère un cœur.
-func collect_orb() -> void:
-	Challenge.register_orb()
-	orbs += 1
+## Ramasse un orbe spirituel (ou une orbe dorée qui en vaut plusieurs) :
+## tous les 5 orbes, Eneko récupère un cœur.
+func collect_orb(count: int = 1) -> void:
+	for k in count:
+		Challenge.register_orb()
+		orbs += 1
+		if orbs % 5 == 0 and health < _max_health():
+			health += 1
+			_update_hearts()
 	# Progression visible : "7/21" plutôt qu'un simple compteur.
 	if Challenge.total_orbs > 0:
 		orb_label.text = "%d/%d" % [orbs, Challenge.total_orbs]
 	else:
 		orb_label.text = "x%d" % orbs
-	sfx_orb.play()
+	Sfx.varied(sfx_orb, 0.92, 1.12)
 	_orb_burst.restart()
-	if orbs % 5 == 0 and health < MAX_HEALTH:
-		health += 1
-		_update_hearts()
+	_orb_flash = 0.45  # le feu follet de Léonie s'illumine : la Flamme grandit
 	_update_heart_hint()
 
 ## Compte à rebours vers le prochain cœur (un tous les 5 orbes).
@@ -585,14 +1009,94 @@ func _update_hearts() -> void:
 	for i in hearts.size():
 		hearts[i].visible = i < health
 
+## Vignette rouge en bord d'écran, tissée d'un dégradé radial (centre limpide,
+## coins teintés). Sous le reste du HUD et transparente aux touches.
+func _build_vignette() -> void:
+	var grad := Gradient.new()
+	grad.offsets = PackedFloat32Array([0.5, 1.0])
+	grad.colors = PackedColorArray([Color(0.75, 0.05, 0.08, 0.0), Color(0.75, 0.05, 0.08, 0.85)])
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 480
+	tex.height = 270
+	_vignette = TextureRect.new()
+	_vignette.texture = tex
+	_vignette.anchor_right = 1.0
+	_vignette.anchor_bottom = 1.0
+	_vignette.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_vignette.stretch_mode = TextureRect.STRETCH_SCALE
+	_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_vignette.modulate = Color(1, 1, 1, 0)
+	$HUD.add_child(_vignette)
+	$HUD.move_child(_vignette, 0)
+
+func _update_vignette(delta: float) -> void:
+	if _vignette == null:
+		return
+	_vignette_flash = maxf(0.0, _vignette_flash - delta * 2.2)
+	# L'éclat vif à l'impact respecte le réglage « flash » (accessibilité) ;
+	# la pulsation lente de danger critique reste, elle, toujours visible.
+	var flash := _vignette_flash if SaveManager.setting_on("flash") else 0.0
+	var low := 0.0
+	if health <= 1 and not _dead:
+		var phase := Time.get_ticks_msec() / 1000.0
+		low = 0.24 + 0.12 * (0.5 + 0.5 * sin(phase * 5.0))
+	_vignette.modulate.a = maxf(flash, low)
+
 func _on_attack_area_body_entered(body: Node2D) -> void:
-	if body.has_method("die"):
-		body.die()
-		Challenge.register_kill()
-		_register_combo_kill()
-		_shake = 3.5  # impact ressenti à chaque coup qui porte
-		SaveManager.vibrate(18)
-		_hit_stop()
+	_try_hit(body)
+
+## Applique un coup de sabre à une cible, une seule fois par attaque. Appelé
+## à l'entrée dans la zone MAIS AUSSI en continu sur les corps déjà au contact
+## (voir _physics_process) : sans ça, un boss immobile collé à Eneko ne
+## déclenche jamais body_entered et ne subit aucun dégât.
+func _try_hit(body: Node2D) -> void:
+	if not attacking or not body.has_method("die"):
+		return
+	if body in _hit_bodies:
+		return
+	_hit_bodies.append(body)
+	# call() : les die() des ennemis renvoient true/false (l'armure des
+	# Ombres d'élite encaisse le premier coup) ; les die() void (boss,
+	# anciens ennemis) renvoient null et comptent comme un coup qui tue.
+	var res: Variant = body.call("die")
+	Sfx.varied(_sfx_hit, 0.9, 1.12)  # claquement du sabre sur la cible
+	# Frappe en ruée : une seconde entaille (2 dégâts, brise l'armure).
+	if _heavy and is_instance_valid(body) and body.has_method("die"):
+		body.call("die")
+	if res is bool and bool(res) == false:
+		_shake = maxf(_shake, 2.2)  # le coup a porté, mais l'esprit tient debout
+		_spawn_impact(body.global_position, false)
+		SaveManager.vibrate(12)
+		return
+	Challenge.register_kill()
+	_register_combo_kill()
+	_spawn_impact(body.global_position, true)
+	_shake = maxf(_shake, 5.0 if _heavy else 3.6)  # impact ressenti à chaque coup
+	SaveManager.vibrate(26 if _heavy else 18)
+	_hit_stop(0.09 if _heavy else 0.06)
+
+## Petit badge rouge sous le chrono pour rappeler que le mode Kensei est actif.
+func _build_kensei_badge() -> void:
+	var badge := Label.new()
+	badge.text = "KENSEI"
+	badge.position = Vector2(330, 54)
+	badge.add_theme_font_size_override("font_size", 13)
+	badge.add_theme_color_override("font_color", Color(1.0, 0.42, 0.35))
+	badge.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
+	badge.add_theme_constant_override("shadow_offset_x", 1)
+	badge.add_theme_constant_override("shadow_offset_y", 1)
+	$HUD.add_child(badge)
+
+## Ombre de contact projetée au sol sous Eneko (rendue derrière le sprite).
+func _add_contact_shadow(w: float) -> void:
+	var sh := ContactShadow.new()
+	sh.width = w
+	add_child(sh)
+	move_child(sh, 0)
 
 ## Label « Combo ×N » en haut à droite, sous le compteur d'orbes (caché au
 ## repos) — le haut-centre est réservé au chrono et aux titres de victoire.
@@ -638,8 +1142,10 @@ func _end_combo() -> void:
 ## Le sabre dissipe aussi les projectiles (orbes corrompus des Yūrei).
 func _on_attack_area_area_entered(area: Area2D) -> void:
 	if area.has_method("die"):
+		var p := area.global_position
 		area.die()
-		_shake = 2.0
+		_shake = maxf(_shake, 2.0)
+		_spawn_impact(p, false)
 
 func _on_left_pressed() -> void:
 	moving_left = true
@@ -662,6 +1168,9 @@ func _on_jump_released() -> void:
 
 func _on_dash_pressed() -> void:
 	dash()
+
+func _on_grapple_pressed() -> void:
+	grapple()
 
 func _on_attack_pressed() -> void:
 	attack()
@@ -725,7 +1234,7 @@ func _open_pause() -> void:
 	var menu := _pause_button("Retour au menu", Color(0.6, 0.5, 0.45))
 	menu.pressed.connect(func():
 		get_tree().paused = false
-		get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+		Transition.goto("res://scenes/main_menu.tscn")
 	)
 	box.add_child(menu)
 

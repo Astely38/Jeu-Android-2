@@ -6,7 +6,7 @@ extends Node
 const SAVE_PATH := "user://save.json"
 
 ## Ordre de progression des niveaux.
-const LEVEL_ORDER := ["level_1", "level_2", "level_3", "level_4", "level_5"]
+const LEVEL_ORDER := ["level_1", "level_2", "level_3", "level_4", "level_5", "level_6", "level_7", "level_8", "level_9", "level_10", "level_11", "level_12", "level_13", "level_14", "level_15"]
 
 const LEVEL_NAMES := {
 	"level_1": "La Clairière des Bambous",
@@ -14,6 +14,17 @@ const LEVEL_NAMES := {
 	"level_3": "Le Village des Ombres",
 	"level_4": "La Montagne des Brumes",
 	"level_5": "Le Sanctuaire Final",
+	"level_6": "II · Les Rivages de Cendre",
+	"level_7": "II · La Gorge d'Obsidienne",
+	"level_8": "II · Le Puits de l'Ombre",
+	"level_9": "II · Le Gardien du Puits",
+	"level_10": "II · Le Cœur de l'Ombre",
+	"level_11": "III · Le Miroir des Âmes",
+	"level_12": "III · Les Reflets Brisés",
+	"level_13": "III · La Poursuite du Reflet",
+	"level_14": "III · Le Gouffre aux Anneaux",
+	"level_15": "III · Le Reflet",
+	"level_secret": "✦ Le Jardin Céleste",
 }
 
 ## Seuls les niveaux listés ici existent réellement pour l'instant ; les
@@ -24,6 +35,17 @@ const LEVEL_SCENES := {
 	"level_3": "res://levels/level_3.tscn",
 	"level_4": "res://levels/level_4.tscn",
 	"level_5": "res://levels/level_5.tscn",
+	"level_6": "res://levels/level_6.tscn",
+	"level_7": "res://levels/level_7.tscn",
+	"level_8": "res://levels/level_8.tscn",
+	"level_9": "res://levels/level_9.tscn",
+	"level_10": "res://levels/level_10.tscn",
+	"level_11": "res://levels/level_11.tscn",
+	"level_12": "res://levels/level_12.tscn",
+	"level_13": "res://levels/level_13.tscn",
+	"level_14": "res://levels/level_14.tscn",
+	"level_15": "res://levels/level_15.tscn",
+	"level_secret": "res://levels/level_secret.tscn",
 }
 
 var data := {}
@@ -40,6 +62,11 @@ func load_data() -> void:
 		"best_times": {},
 		"last_level": "level_1",
 		"settings": {},
+		"achievements": {},
+		"stats": {},
+		"kensei_done": [],
+		"relics": [],
+		"prologue_seen": false,
 	}
 	if not FileAccess.file_exists(SAVE_PATH):
 		return
@@ -103,9 +130,74 @@ func complete_level(level_id: String, orbs: int) -> void:
 			data["unlocked_levels"].append(next_id)
 	save_data()
 
-## Réglages du joueur ("music", "sfx", "vibrations") — activés par défaut.
-func setting_on(key: String) -> bool:
-	return bool(data.get("settings", {}).get(key, true))
+## Reliques cachées : une par niveau (level_1 à level_12), facultatives et
+## sans effet sur le grade. TOTAL_RELICS sert au succès « Chercheur de reliques ».
+const TOTAL_RELICS := 15
+
+func has_relic(level_id: String) -> bool:
+	return data.get("relics", []).has(level_id)
+
+func mark_relic(level_id: String) -> void:
+	if not data.has("relics"):
+		data["relics"] = []
+	if not data["relics"].has(level_id):
+		data["relics"].append(level_id)
+		save_data()
+
+func relics_found() -> int:
+	return data.get("relics", []).size()
+
+## Le Jardin Céleste vient d'être découvert (vieux torii moussu du
+## niveau 1) : il apparaît désormais dans la sélection de niveaux.
+## Absent de LEVEL_ORDER, il ne compte pas dans la progression normale.
+func discover_secret() -> void:
+	if not data["unlocked_levels"].has("level_secret"):
+		data["unlocked_levels"].append("level_secret")
+		save_data()
+	Achievements.unlock("jardin_celeste")
+
+## Niveaux terminés en mode Kensei.
+func is_kensei_done(level_id: String) -> bool:
+	return data.get("kensei_done", []).has(level_id)
+
+func mark_kensei_done(level_id: String) -> void:
+	if not data.has("kensei_done"):
+		data["kensei_done"] = []
+	if not data["kensei_done"].has(level_id):
+		data["kensei_done"].append(level_id)
+		save_data()
+
+## Le mode Kensei se débloque en battant le Gardien une première fois.
+func kensei_unlocked() -> bool:
+	return is_completed("level_5")
+
+## Le Double Saut spirituel (bénédiction de Léonie) se débloque à la fin du
+## Chapitre I — en battant le Gardien. Disponible ensuite dans tous les
+## niveaux, y compris en rejouant le Chapitre I.
+func double_jump_unlocked() -> bool:
+	return is_completed("level_5")
+
+## Prologue d'introduction : affiché une seule fois, au premier lancement.
+func prologue_seen() -> bool:
+	return bool(data.get("prologue_seen", false))
+
+func set_prologue_seen() -> void:
+	data["prologue_seen"] = true
+	save_data()
+
+## Réglages du joueur ("music", "sfx", "vibrations", "shake", "flash" —
+## activés par défaut ; "assist" — désactivé par défaut). `default_on` permet
+## de choisir la valeur par défaut d'une clé absente de la sauvegarde.
+func setting_on(key: String, default_on: bool = true) -> bool:
+	return bool(data.get("settings", {}).get(key, default_on))
+
+## Mode détente (accessibilité) : désactivé par défaut ; offre des cœurs
+## supplémentaires au joueur qui le souhaite.
+func assist_on() -> bool:
+	return setting_on("assist", false)
+
+func bonus_hearts() -> int:
+	return 2 if assist_on() else 0
 
 func set_setting(key: String, value: bool) -> void:
 	if not data.has("settings"):

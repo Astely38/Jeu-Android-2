@@ -7,6 +7,7 @@ extends Node2D
 const ORB_SCENE := preload("res://scenes/orb.tscn")
 const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
+const SPLIT_SCENE := preload("res://scenes/split_shade.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 const SPIRIT_SCENE := preload("res://scenes/spirit.tscn")
 const LIFT_SCENE := preload("res://scenes/lift_platform.tscn")
@@ -44,13 +45,17 @@ const PLATFORMS := [
 const CHECKPOINT_XS := [1620.0, 3450.0, 5150.0]
 ## La plateforme 3140-3660 est le sanctuaire de Léonie : aucun ennemi ni
 ## piège n'y est placé.
-const PATROL_XS := [950.0, 1550.0, 2200.0, 2800.0, 4050.0, 4700.0, 5900.0]
-const SHADOW_XS := [1400.0, 2650.0, 2900.0, 4600.0, 5350.0, 6100.0, 6600.0]
+const PATROL_XS := [950.0, 1550.0, 2200.0, 2800.0, 5900.0]
+const SHADOW_XS := [1400.0, 6100.0, 6600.0]
+## Ombres scindantes (se dédoublent quand on les tranche).
+const SPLIT_XS := [2650.0, 5350.0]
+## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
+const ELITE_XS := [4600.0]
 ## Yūrei tireurs : esprits flottants qui crachent des orbes corrompus.
 ## Toujours au-dessus d'une plateforme (jamais d'un trou) : leur descente
 ## vers Eneko ne doit pas l'attirer dans le vide.
-const SPIRIT_XS := [2250.0, 4550.0]
-const TRAP_XS := [800.0, 2050.0, 3850.0, 4850.0, 6450.0]
+const SPIRIT_XS := []
+const TRAP_XS := [800.0, 2050.0, 3900.0, 4820.0, 6450.0]
 ## Ascenseur spirituel : x = centre, y = dessus de la dalle au point bas
 ## (atteignable d'un saut depuis le bord du trou). Il monte de 175 px et
 ## dessert les trois orbes bonus placées en hauteur.
@@ -69,17 +74,24 @@ const ORBS := [
 ]
 
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "Le Village des Ombres... autrefois chaleureux et vivant, maintenant rongé par la corruption." },
-	{ "name": "Léonie", "text": "Les Ombres y sont nombreuses, mais elles fuient devant la lumière du sabre. Fais briller ta lame." },
-	{ "name": "Léonie", "text": "Ma lumière t'entoure. Les esprits des habitants veillent aussi sur toi. Sois courageux." },
-	{ "name": "Léonie", "text": "Traverse ce village avec respect. Ramène la paix que les Ombres lui ont volée." },
-	{ "name": "Eneko", "text": "Je n'oublierai pas les âmes qui habitent ce lieu." },
+	{ "name": "Léonie", "text": "Ce village vivait sous la Flamme d'Aube. Quand elle s'est éteinte, ses habitants sont devenus des Ombres... ou des âmes en peine." },
+	{ "name": "Léonie", "text": "Ta lame ne les tue pas : elle les délivre. Chaque esprit tranché retrouve enfin le repos." },
+	{ "name": "Léonie", "text": "Les éclats que tu rends à la lumière apaisent aussi ces âmes. Continue, je t'en prie." },
+	{ "name": "Léonie", "text": "Traverse ce village avec respect, et ramène-lui la paix que les Ombres lui ont volée." },
+	{ "name": "Eneko", "text": "Je porterai leur mémoire jusqu'à la Flamme." },
 ]
 
 var sfx_win: AudioStreamPlayer
 var wisps: CPUParticles2D
+var rain: CPUParticles2D
+var _flash: ColorRect
+var _bolt_t := 3.0
 var _flames: Array = []
 var _halos: Array = []
+## Papillons de nuit qui tournent autour des braseros (voir _process).
+var _moths: Array = []
+## Délai avant la prochaine ondulation de pluie au sol.
+var _ripple_cd := 0.5
 var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
@@ -90,7 +102,12 @@ var _t := 0.0
 
 func _ready() -> void:
 	_build_decor()
+	Atmosphere.add_foreground(self, Color(0.09, 0.05, 0.11, 0.34))
+	# Brume texturée qui roule au ras des dalles trempées par la pluie.
+	TextureLab.add_ground_mist(self, 8, GROUND_Y - 44.0, LEVEL_END,
+		Color(0.62, 0.6, 0.72, 0.12), 1)
 	_build_platforms()
+	_build_hazards()
 	_build_braziers()
 	_build_checkpoints()
 	_build_traps()
@@ -99,21 +116,60 @@ func _ready() -> void:
 	_build_kill_zone()
 	_spawn_entities()
 	_setup_audio()
+	_setup_ambient()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
-	Challenge.start_level(LEVEL_ID, ORBS.size())
+	# Relique cachée, tapie à gauche de l'apparition.
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(60, 466)
+	add_child(relic)
+	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
+	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_XS.size())
 	_attach_player_glow()
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_4", "")
 	next_button.visible = next_scene != ""
 	if next_scene != "":
-		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+		next_button.pressed.connect(func(): Transition.goto(next_scene))
+	_build_lightning()
 	# Survol d'introduction : du torii, à travers le village, jusqu'à Eneko.
 	player.intro_pan(Vector2(GOAL_X, 380.0))
 
+## Voile blanc qui servira aux éclairs de l'orage.
+func _build_lightning() -> void:
+	var fl := CanvasLayer.new()
+	fl.layer = 2
+	add_child(fl)
+	_flash = ColorRect.new()
+	_flash.color = Color(0.82, 0.86, 1.0, 0.0)
+	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fl.add_child(_flash)
+
+## Un éclair : double flash bref qui illumine tout l'écran.
+func _lightning() -> void:
+	if _flash == null:
+		return
+	var t := create_tween()
+	if SaveManager.setting_on("flash"):
+		# Éclair franc : double flash lumineux.
+		t.tween_property(_flash, "color:a", 0.5, 0.07)
+		t.tween_property(_flash, "color:a", 0.0, 0.13)
+		t.tween_property(_flash, "color:a", 0.34, 0.05)
+		t.tween_property(_flash, "color:a", 0.0, 0.28)
+	else:
+		# Accessibilité (photosensibilité) : une seule lueur douce, sans strobe.
+		t.tween_property(_flash, "color:a", 0.14, 0.35)
+		t.tween_property(_flash, "color:a", 0.0, 0.5)
+
 func _process(delta: float) -> void:
 	_t += delta
+	_bolt_t -= delta
+	if _bolt_t <= 0.0:
+		_bolt_t = randf_range(6.5, 13.0)
+		_lightning()
 	for i in _flames.size():
 		var f: Polygon2D = _flames[i]
 		f.scale.y = 1.0 + 0.16 * sin(_t * 8.0 + i * 1.7)
@@ -121,10 +177,55 @@ func _process(delta: float) -> void:
 	for i in _halos.size():
 		var h: Sprite2D = _halos[i]
 		h.modulate.a = 0.18 + 0.06 * sin(_t * 4.6 + i * 1.3)
+	for m in _moths:
+		var mn: Node2D = m["node"]
+		var ph: float = float(m["phase"])
+		var ang := _t * float(m["spd"]) + ph
+		var rad: float = float(m["rad"])
+		mn.position = Vector2(
+			float(m["cx"]) + cos(ang) * rad,
+			float(m["cy"]) + sin(ang) * rad * 0.55,
+		)
+		# Face au sens de vol + battement d'ailes.
+		mn.scale.x = 1.0 if sin(ang) >= 0.0 else -1.0
+		var rw: Polygon2D = m["rwing"]
+		rw.scale.y = 0.5 + 0.5 * sin(_t * 18.0 + ph)
+	# Ondulations de pluie : gouttes qui frappent le sol trempé près d'Eneko.
+	_ripple_cd -= delta
+	if _ripple_cd <= 0.0 and is_instance_valid(player):
+		_ripple_cd = randf_range(0.25, 0.6)
+		_spawn_ripple()
+
+## Rond d'onde qui s'élargit et s'efface là où une goutte touche le sol,
+## dans un rayon autour d'Eneko (plat, en perspective de sol).
+func _spawn_ripple() -> void:
+	var px: float = player.position.x + randf_range(-260.0, 260.0)
+	var py := GROUND_Y - 46.0 + randf_range(-6.0, 6.0)
+	var ring := Line2D.new()
+	ring.width = 1.6
+	ring.default_color = Color(0.7, 0.8, 0.95, 0.5)
+	ring.closed = true
+	var pts := PackedVector2Array()
+	var k := 0
+	while k < 14:
+		var a := k * TAU / 14.0
+		pts.append(Vector2(cos(a) * 10.0, sin(a) * 3.2))
+		k += 1
+	ring.points = pts
+	ring.position = Vector2(px, py)
+	ring.z_index = 1
+	add_child(ring)
+	var tw := ring.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(ring, "scale", Vector2(2.6, 2.6), 0.6)
+	tw.tween_property(ring, "modulate:a", 0.0, 0.6)
+	tw.chain().tween_callback(ring.queue_free)
 
 func _physics_process(_delta: float) -> void:
 	if wisps != null and is_instance_valid(player):
 		wisps.position = Vector2(player.position.x, player.position.y - 200.0)
+	if rain != null and is_instance_valid(player):
+		rain.position = Vector2(player.position.x, player.position.y - 340.0)
 
 # --- Construction du niveau ---------------------------------------------
 
@@ -176,6 +277,13 @@ func _build_decor() -> void:
 		moon_pts.append(Vector2(cos(a) * 46.0, sin(a) * 46.0))
 		k += 1
 	_poly(sky_layer, moon_pts, Color(0.95, 0.5, 0.32, 0.9), Vector2(700, 90))
+	# Rayons rougeoyants de la lune de sang sur le village.
+	var rays := GodRays.new()
+	rays.color = Color(1.0, 0.5, 0.34, 0.06)
+	rays.length = 1300.0
+	rays.half_spread = 0.85
+	rays.position = Vector2(700.0, 90.0)
+	sky_layer.add_child(rays)
 	# Quelques étoiles pâles.
 	var si := 0
 	while si < 18:
@@ -254,6 +362,23 @@ func _build_decor() -> void:
 	wisps.scale_amount_max = 4.0
 	wisps.color = Color(0.4, 0.25, 0.5, 0.3)
 	add_child(wisps)
+
+	# Pluie fine et froide qui tombe sur le village (suit Eneko, plan large).
+	rain = CPUParticles2D.new()
+	rain.amount = 130
+	rain.lifetime = 0.9
+	rain.preprocess = 0.9
+	rain.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	rain.emission_rect_extents = Vector2(620, 20)
+	rain.direction = Vector2(0.12, 1)
+	rain.spread = 0.0
+	rain.gravity = Vector2(30, 900)
+	rain.initial_velocity_min = 420.0
+	rain.initial_velocity_max = 520.0
+	rain.scale_amount_min = 0.6
+	rain.scale_amount_max = 1.2
+	rain.color = Color(0.7, 0.68, 0.85, 0.35)
+	add_child(rain)
 
 	# Lucioles chaudes qui dansent autour des cordées de lanternes :
 	# petites lumières vivantes au milieu du village mort.
@@ -362,6 +487,20 @@ func _build_lantern_string(parent: Node, base: Vector2, mist_tex: Texture2D) -> 
 		_poly(parent, lpts, Color(1.0, 0.6, 0.26, 0.9), base)
 		li += 1
 
+## Pièges spectraux du temple : un geyser au sol et une faux pendulaire, sur
+## des zones dégagées — À L'ÉCART du sanctuaire de Léonie (3140-3660), des
+## braseros, patrouilles et checkpoints.
+func _build_hazards() -> void:
+	var gy := SpiritGeyser.new()
+	gy.position = Vector2(5750.0, GROUND_Y - 50.0)
+	gy.phase = 0.5
+	add_child(gy)
+	var pd := SpectralPendulum.new()
+	pd.position = Vector2(4180.0, GROUND_Y - 50.0)
+	pd.arm_len = 145.0
+	pd.phase = 0.8
+	add_child(pd)
+
 ## Rue du village : terre sombre, pavés, herbes fanées et clôtures.
 func _build_platforms() -> void:
 	for pi in PLATFORMS.size():
@@ -427,6 +566,15 @@ func _build_braziers() -> void:
 		halo.position = Vector2(0, -46.0)
 		b.add_child(halo)
 		_halos.append(halo)
+		# Reflet chaud du brasier sur la chaussée mouillée par la pluie :
+		# une flaque de lumière étirée au sol qui vacille avec la flamme.
+		var pool := Sprite2D.new()
+		pool.texture = mist_tex
+		pool.modulate = Color(1.0, 0.55, 0.22, 0.16)
+		pool.scale = Vector2(3.0, 0.7)
+		pool.position = Vector2(0, 4.0)
+		b.add_child(pool)
+		_halos.append(pool)
 		var flame := Polygon2D.new()
 		flame.position = Vector2(0, -36.0)
 		flame.polygon = PackedVector2Array([
@@ -441,6 +589,42 @@ func _build_braziers() -> void:
 		flame.add_child(inner)
 		b.add_child(flame)
 		_flames.append(flame)
+		# Vapeur : la pluie qui grésille sur les braises monte en volutes pâles.
+		var steam := CPUParticles2D.new()
+		steam.position = Vector2(0, -34.0)
+		steam.amount = 10
+		steam.lifetime = 2.4
+		steam.local_coords = false
+		steam.direction = Vector2(0, -1)
+		steam.spread = 18.0
+		steam.gravity = Vector2(0, -22.0)
+		steam.initial_velocity_min = 14.0
+		steam.initial_velocity_max = 28.0
+		steam.scale_amount_min = 2.0
+		steam.scale_amount_max = 4.0
+		steam.color = Color(0.85, 0.85, 0.9, 0.16)
+		steam.texture = mist_tex
+		b.add_child(steam)
+		# Papillons de nuit attirés par la flamme : ils tournent autour.
+		var mi := 0
+		var nm := 2 + (int(bx) % 2)
+		while mi < nm:
+			var m := Node2D.new()
+			m.position = Vector2(0, -40.0)
+			var mc := Color(0.2, 0.16, 0.14)
+			_poly(m, PackedVector2Array([
+				Vector2(0, 0), Vector2(-6, -4), Vector2(-5, 3),
+			]), mc)
+			var rwing := _poly(m, PackedVector2Array([
+				Vector2(0, 0), Vector2(6, -4), Vector2(5, 3),
+			]), mc)
+			b.add_child(m)
+			_moths.append({
+				"node": m, "rwing": rwing, "cx": 0.0, "cy": -40.0,
+				"rad": 16.0 + float(mi) * 7.0, "spd": 1.6 + float(mi) * 0.5,
+				"phase": float(int(bx) + mi * 90) * 0.05,
+			})
+			mi += 1
 		add_child(b)
 
 ## Points de contrôle : lanternes de pierre (tōrō) dont la flamme
@@ -496,19 +680,19 @@ func _build_traps() -> void:
 		trap.position = Vector2(x, GROUND_Y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(44, 24)
+		rect.size = Vector2(66, 34)
 		shape.shape = rect
 		trap.add_child(shape)
 		_poly(trap, PackedVector2Array([
-			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+			Vector2(-33, 22), Vector2(33, 22), Vector2(33, 6), Vector2(-33, 6),
 		]), Color(0.3, 0.19, 0.11))
-		for k in 3:
-			var ox := -16.0 + k * 16.0
+		for k in 4:
+			var ox := -24.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+				Vector2(ox - 7, 6), Vector2(ox + 7, 6), Vector2(ox, -22),
 			]), Color(0.44, 0.28, 0.15))
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -12),
+				Vector2(ox - 3, 2), Vector2(ox + 3, 2), Vector2(ox, -18),
 			]), Color(0.54, 0.36, 0.2))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)
@@ -532,6 +716,7 @@ func _build_goal() -> void:
 	_poly(goal, PackedVector2Array([Vector2(-42, -70), Vector2(42, -70), Vector2(38, -58), Vector2(-38, -58)]), Color(0.78, 0.16, 0.12))
 	_poly(goal, PackedVector2Array([Vector2(-32, -46), Vector2(32, -46), Vector2(32, -38), Vector2(-32, -38)]), Color(0.85, 0.2, 0.15))
 	add_child(goal)
+	Atmosphere.breathe(glow)
 	goal.body_entered.connect(_on_goal_body_entered)
 
 func _build_kill_zone() -> void:
@@ -554,13 +739,22 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = Vector2(x, SPAWN_Y)
 		add_child(s)
+	for x in ELITE_XS:
+		var el := SHADOW_SCENE.instantiate()
+		el.position = Vector2(x, SPAWN_Y)
+		add_child(el)
+		el.make_elite()
+	for x in SPLIT_XS:
+		var sp := SPLIT_SCENE.instantiate()
+		sp.position = Vector2(x, SPAWN_Y - 70.0)  # masque d'Oni : flotte en l'air
+		add_child(sp)
 	for x in SPIRIT_XS:
 		var sp := SPIRIT_SCENE.instantiate()
 		sp.position = Vector2(x, SPAWN_Y - 85.0)
 		add_child(sp)
 	PlatformPainter.build_sanctuary(self, 3550.0, GROUND_Y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()
-	leonie.position = Vector2(3550.0, SPAWN_Y - 26.0)
+	leonie.position = Vector2(3550.0, SPAWN_Y)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
 	for o in ORBS:
@@ -569,6 +763,14 @@ func _spawn_entities() -> void:
 		add_child(orb)
 
 ## Vent ambiant grave + son de victoire.
+## Répliques d'ambiance au fil du niveau (non bloquantes).
+func _setup_ambient() -> void:
+	var amb := AmbientDialogue.new()
+	add_child(amb)
+	amb.add_line(self, 870.0, "Eneko", "Un village entier, réduit au silence. Où sont ses habitants ?")
+	amb.add_line(self, 2760.0, "Esprit", "Merci, samouraï... rends la paix à nos foyers.")
+	amb.add_line(self, 5300.0, "Eneko", "Je me souviendrai de chacun d'eux.")
+
 func _setup_audio() -> void:
 	var wind := AudioStreamPlayer.new()
 	wind.stream = load("res://assets/sfx/wind.wav")
@@ -586,6 +788,9 @@ func _setup_audio() -> void:
 
 func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
 	if body == player:
+		if not cp.has_meta("lit"):
+			cp.set_meta("lit", true)
+			Atmosphere.spark_burst(self, cp.global_position, Color(0.5, 1.0, 0.6))
 		player.set_checkpoint(Vector2(cp.global_position.x, SPAWN_Y))
 		flag.color = Color(0.4, 0.9, 0.5, 0.95)
 
@@ -655,4 +860,4 @@ func _on_dialogue_finished() -> void:
 	player.set_physics_process(true)
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

@@ -158,7 +158,7 @@ func die() -> void:
 	velocity = Vector2.ZERO
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
-	sfx_die.play()
+	Sfx.varied(sfx_die, 0.9, 1.12)
 	var tween := create_tween()
 	tween.tween_property(body_node, "modulate:a", 0.0, 0.7)
 	tween.finished.connect(queue_free)

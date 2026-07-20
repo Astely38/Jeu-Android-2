@@ -21,6 +21,11 @@ const GRADE_COLORS := {
 	"PLATINUM": Color(0.75, 0.9, 1.0),
 }
 
+## Mode Kensei (débloqué en battant le Gardien) : 2 cœurs, ennemis plus
+## rapides, pas de bénédiction. Armé par la sélection de niveaux, désarmé
+## au retour au menu principal ; survit aux morts et aux « niveau suivant ».
+var kensei := false
+
 var level_id: String = ""
 var start_time: float = 0.0
 var orbs_collected: int = 0
@@ -68,11 +73,13 @@ func register_orb() -> void:
 
 func register_kill() -> void:
 	kills += 1
+	Achievements.add_kill()
 
 ## Le joueur vient d'atteindre une série de `combo` esprits d'affilée.
 func register_combo(combo: int) -> void:
 	if combo > best_combo:
 		best_combo = combo
+	Achievements.on_combo(combo)
 
 func get_time_elapsed() -> float:
 	var now := float(Time.get_ticks_msec()) / 1000.0
@@ -89,6 +96,7 @@ func get_results() -> Dictionary:
 		"combo": best_combo,
 		"time": elapsed,
 		"grade": _calculate_grade(),
+		"kensei": kensei,
 	}
 
 func _calculate_grade() -> String:
@@ -123,6 +131,7 @@ func finish_level() -> Dictionary:
 	var prev_time := SaveManager.best_time(level_id)
 	if prev_time <= 0.0 or elapsed < prev_time:
 		SaveManager.set_best_time(level_id, elapsed)
+	Achievements.on_level_finished(results)
 	reset()
 	return results
 

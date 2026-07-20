@@ -29,61 +29,85 @@ static func build_sanctuary(level: Node2D, x: float, ground_y: float) -> void:
 	var stone_dark := Color(0.68, 0.65, 0.58)
 	var gold := Color(0.88, 0.72, 0.32)
 
-	var dais := StaticBody2D.new()
-	dais.position = Vector2(x, ground_y)
-	var shape := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	rect.size = Vector2(170, 26)
-	shape.shape = rect
-	shape.position = Vector2(0, -13)
-	dais.add_child(shape)
+	# Sanctuaire à FLEUR DE SOL : aucune collision (Node2D, pas StaticBody2D),
+	# rendu derrière les personnages. On marche à travers sans avoir à sauter.
+	var shrine := Node2D.new()
+	shrine.position = Vector2(x, ground_y)
+	shrine.z_index = -1
+	level.add_child(shrine)
 
-	# Estrade : corps en pierre pâle, filet d'or, marches biseautées.
-	_poly(dais, PackedVector2Array([
-		Vector2(-85, 0), Vector2(85, 0), Vector2(76, -26), Vector2(-76, -26),
-	]), stone)
-	_poly(dais, PackedVector2Array([
-		Vector2(-76, -26), Vector2(76, -26), Vector2(74, -21), Vector2(-74, -21),
+	# Dalle de sanctuaire incrustée au ras du sol : fin liseré d'or + pierre.
+	_poly(shrine, PackedVector2Array([
+		Vector2(-92, -2), Vector2(92, -2), Vector2(92, 6), Vector2(-92, 6),
 	]), gold)
-	_poly(dais, PackedVector2Array([
-		Vector2(-85, 0), Vector2(-60, 0), Vector2(-64, -8), Vector2(-82, -8),
-	]), stone_dark)
-	_poly(dais, PackedVector2Array([
-		Vector2(85, 0), Vector2(60, 0), Vector2(64, -8), Vector2(82, -8),
-	]), stone_dark)
+	_poly(shrine, PackedVector2Array([
+		Vector2(-88, 1), Vector2(88, 1), Vector2(88, 6), Vector2(-88, 6),
+	]), stone)
+	# Losange doré au centre de la dalle.
+	_poly(shrine, PackedVector2Array([
+		Vector2(-12, 2), Vector2(0, -3), Vector2(12, 2), Vector2(0, 7),
+	]), gold)
 
-	# Deux petites lanternes de pierre aux extrémités de l'estrade.
+	# Torii doré léger en fond (décoratif : on passe dessous).
+	_poly(shrine, PackedVector2Array([
+		Vector2(-60, 0), Vector2(-53, 0), Vector2(-53, -86), Vector2(-60, -86),
+	]), gold)
+	_poly(shrine, PackedVector2Array([
+		Vector2(53, 0), Vector2(60, 0), Vector2(60, -86), Vector2(53, -86),
+	]), gold)
+	_poly(shrine, PackedVector2Array([
+		Vector2(-72, -86), Vector2(72, -86), Vector2(68, -97), Vector2(-68, -97),
+	]), gold)
+	_poly(shrine, PackedVector2Array([
+		Vector2(-84, -100), Vector2(84, -100), Vector2(78, -108), Vector2(-78, -108),
+	]), Color(0.7, 0.56, 0.24))
+	_poly(shrine, PackedVector2Array([
+		Vector2(-60, -74), Vector2(60, -74), Vector2(60, -80), Vector2(-60, -80),
+	]), Color(0.7, 0.56, 0.24))
+
+	# Deux petites lanternes de pierre aux extrémités (posées sur le sol).
 	for side in [-1.0, 1.0]:
-		var lx := float(side) * 62.0
-		_poly(dais, PackedVector2Array([
-			Vector2(lx - 3, -26), Vector2(lx + 3, -26), Vector2(lx + 3, -46), Vector2(lx - 3, -46),
+		var lx := float(side) * 82.0
+		_poly(shrine, PackedVector2Array([
+			Vector2(lx - 3, 0), Vector2(lx + 3, 0), Vector2(lx + 3, -20), Vector2(lx - 3, -20),
 		]), stone_dark)
-		_poly(dais, PackedVector2Array([
-			Vector2(lx - 7, -46), Vector2(lx + 7, -46), Vector2(lx + 7, -58), Vector2(lx - 7, -58),
+		_poly(shrine, PackedVector2Array([
+			Vector2(lx - 7, -20), Vector2(lx + 7, -20), Vector2(lx + 7, -32), Vector2(lx - 7, -32),
 		]), stone)
-		_poly(dais, PackedVector2Array([
-			Vector2(lx - 4, -48), Vector2(lx + 4, -48), Vector2(lx + 4, -56), Vector2(lx - 4, -56),
+		_poly(shrine, PackedVector2Array([
+			Vector2(lx - 4, -22), Vector2(lx + 4, -22), Vector2(lx + 4, -30), Vector2(lx - 4, -30),
 		]), Color(1.0, 0.85, 0.45, 0.9))
-		_poly(dais, PackedVector2Array([
-			Vector2(lx - 9, -58), Vector2(lx + 9, -58), Vector2(lx + 5, -64), Vector2(lx - 5, -64),
+		_poly(shrine, PackedVector2Array([
+			Vector2(lx - 9, -32), Vector2(lx + 9, -32), Vector2(lx + 5, -38), Vector2(lx - 5, -38),
 		]), stone_dark)
 
-	# Halo de lumière chaude au-dessus de l'estrade.
+	# Voile texturé doré qui tourne lentement derrière le halo : la clarté
+	# des aïeux, vivante et matérielle.
+	var aura := Sprite2D.new()
+	aura.texture = TextureLab.cloud_veil()
+	aura.modulate = Color(1.0, 0.86, 0.5, 0.14)
+	aura.scale = Vector2(0.8, 0.8)
+	aura.position = Vector2(0, -56)
+	aura.z_index = -1
+	shrine.add_child(aura)
+	var atw := aura.create_tween().set_loops()
+	atw.tween_property(aura, "rotation", TAU, 16.0)
+
+	# Halo de lumière chaude et pétales dorés qui montent du sanctuaire.
 	var glow := Sprite2D.new()
 	glow.texture = load("res://assets/mist.svg")
 	glow.modulate = Color(1.0, 0.88, 0.55, 0.16)
 	glow.scale = Vector2(3.4, 3.0)
-	glow.position = Vector2(0, -70)
-	dais.add_child(glow)
+	glow.position = Vector2(0, -56)
+	shrine.add_child(glow)
 
-	# Pétales dorés qui montent doucement du sanctuaire.
 	var petals := CPUParticles2D.new()
-	petals.position = Vector2(0, -40)
+	petals.position = Vector2(0, -24)
 	petals.amount = 8
 	petals.lifetime = 4.0
 	petals.preprocess = 4.0
 	petals.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	petals.emission_rect_extents = Vector2(80, 40)
+	petals.emission_rect_extents = Vector2(80, 30)
 	petals.direction = Vector2(0, -1)
 	petals.spread = 30.0
 	petals.gravity = Vector2(0, -14)
@@ -92,9 +116,25 @@ static func build_sanctuary(level: Node2D, x: float, ground_y: float) -> void:
 	petals.scale_amount_min = 1.2
 	petals.scale_amount_max = 2.0
 	petals.color = Color(1.0, 0.86, 0.5, 0.6)
-	dais.add_child(petals)
+	shrine.add_child(petals)
 
-	level.add_child(dais)
+	# Lucioles dorées qui vagabondent doucement autour du sanctuaire.
+	var flies := CPUParticles2D.new()
+	flies.position = Vector2(0, -42)
+	flies.amount = 7
+	flies.lifetime = 3.6
+	flies.preprocess = 3.6
+	flies.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	flies.emission_rect_extents = Vector2(74, 42)
+	flies.direction = Vector2(0, -1)
+	flies.spread = 180.0
+	flies.gravity = Vector2.ZERO
+	flies.initial_velocity_min = 4.0
+	flies.initial_velocity_max = 13.0
+	flies.scale_amount_min = 1.2
+	flies.scale_amount_max = 2.2
+	flies.color = Color(1.0, 0.9, 0.5, 0.85)
+	shrine.add_child(flies)
 
 static func _poly(parent: Node, pts: PackedVector2Array, color: Color) -> void:
 	var p := Polygon2D.new()
@@ -145,6 +185,12 @@ static func paint(parent: Node2D, half_w: float, theme: Dictionary) -> void:
 	else:
 		_wavy_band(parent, half_w, 150.0, BOTTOM, 34, seed_i, 11, body_b)
 		_wavy_band(parent, half_w, 320.0, BOTTOM, 40, seed_i, 47, dark)
+
+	# 1b) Grain de matière : voile de mouchetures sombres tuilé sur le corps,
+	# pour que la pierre/terre ne paraisse plus lisse et plate. Décalé selon
+	# la position du bloc pour éviter toute répétition visible.
+	TextureLab.add_grain(parent, half_w, SURF_BOTTOM, 260.0,
+		0.14 if cut else 0.18, float(seed_i % 128))
 
 	# 2) Ombrage des flancs : le bloc paraît arrondi au lieu de tranché.
 	var side_shade := Color(dark.r, dark.g, dark.b, 0.5)
@@ -232,3 +278,7 @@ static func paint(parent: Node2D, half_w: float, theme: Dictionary) -> void:
 			Vector2(sx + r, sy), Vector2(sx, sy + r),
 		]), speck)
 		s += 1
+
+	# 9) Fin liseré très clair au tout bord supérieur : la lumière rasante
+	# accroche l'arête et détache la plateforme du fond.
+	_rect(parent, half_w - 2.0, TOP - 2.0, TOP, Color(top_light.r, top_light.g, top_light.b, 0.5))

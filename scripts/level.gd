@@ -30,11 +30,11 @@ const PLATFORM_THEME := {
 }
 
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "Eneko, c'est bon de te voir." },
-	{ "name": "Léonie", "text": "La Clairière des Bambous est belle, mais ses secrets sont anciens et douloureux." },
-	{ "name": "Léonie", "text": "Tes ancêtres ont marché sur ce chemin. Ton sabre porte leur force." },
-	{ "name": "Léonie", "text": "Traverse cette forêt avec respect. Le torii t'attend." },
-	{ "name": "Eneko", "text": "Je suis prêt, Léonie." },
+	{ "name": "Léonie", "text": "Eneko, te voilà. La clairière où tu as grandi fut la première que les Ombres ont dévorée." },
+	{ "name": "Léonie", "text": "Ces orbes qui luisent sont des éclats de la Flamme d'Aube. Rassemble-les : chacun ravive un peu la lumière." },
+	{ "name": "Léonie", "text": "Je ne peux pas me battre. Mais ma clarté te protège un moment — sers-t'en pour avancer." },
+	{ "name": "Léonie", "text": "Franchis le torii, au bout du chemin. De sanctuaire en sanctuaire, nous remonterons jusqu'à la Flamme." },
+	{ "name": "Eneko", "text": "Alors allons-y. Je leur rendrai la lumière qu'on leur a prise." },
 ]
 
 ## Plateformes : x = centre, y = demi-largeur. Trous de 120 à 150 px
@@ -48,11 +48,18 @@ const PLATFORMS := [
 const CHECKPOINT_XS := [1650.0, 3400.0, 5100.0]
 ## La plateforme 2 (630-1150) est le sanctuaire de Léonie : aucun ennemi
 ## ni piège n'y est placé.
-const PATROL_XS := [1550.0, 2200.0, 2750.0, 3450.0, 4700.0, 5900.0, 6500.0]
-const SHADOW_XS := [1600.0, 2560.0, 4100.0, 5300.0, 6480.0]
+const PATROL_XS := [1550.0, 3450.0, 4700.0, 5900.0]
+const SHADOW_XS := [2560.0, 6480.0]
+## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
+const ELITE_XS := [4100.0]
 ## Pièges à pics : proches d'un bord de plateforme, contournables en marchant
 ## ou en sautant par-dessus (jamais un passage obligé).
-const TRAP_XS := [1930.0, 2680.0, 3900.0, 5220.0, 6520.0]
+## Opener volontairement aéré : trois pieux bien espacés (jamais collés à un
+## geyser), pour enseigner l'esquive sans saturer le tout premier niveau.
+const TRAP_XS := [2680.0, 3900.0, 6520.0]
+## Geysers de flamme spectrale (piège cyclique télégraphié). Placés au large,
+## à l'écart des autres dangers : on passe pendant la fenêtre dormante.
+const GEYSER_XS := [2050.0, 4520.0]
 ## Ascenseur spirituel : x = centre, y = dessus de la dalle au point bas
 ## (atteignable d'un saut depuis le bord du trou). Il monte de 175 px et
 ## dessert les trois orbes bonus placées en hauteur.
@@ -71,6 +78,17 @@ const ORBS := [
 
 var sfx_win: AudioStreamPlayer
 var petals: CPUParticles2D
+var pollen: CPUParticles2D
+var _portal_used := false
+## Touffes d'herbe qui ondulent au vent et frémissent au passage d'Eneko.
+var _grass: Array = []
+## Oiseaux posés qui s'envolent quand Eneko approche.
+var _birds: Array = []
+## Papillons qui voltigent en suivant un chemin sinueux.
+var _butterflies: Array = []
+## Taches de lumière dorée qui dansent au sol sous la frondaison.
+var _dapples: Array = []
+var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -81,25 +99,43 @@ var petals: CPUParticles2D
 
 func _ready() -> void:
 	_build_decor()
+	Atmosphere.add_foreground(self, Color(0.06, 0.13, 0.08, 0.34))
+	# Fine brume du matin qui traîne au ras de l'herbe.
+	TextureLab.add_ground_mist(self, 7, GROUND_Y - 44.0, LEVEL_END,
+		Color(0.85, 0.9, 0.85, 0.08), 1)
 	_build_platforms()
 	PlatformPainter.build_sanctuary(self, 890.0, GROUND_Y - 50.0)
 	_build_checkpoints()
 	_build_traps()
+	_build_geysers()
 	_build_lifts()
 	_build_goal()
+	_build_secret_portal()
+	_build_tutorial_signs()
+	_build_grass()
+	_build_birds()
+	_build_dapples()
+	_build_butterflies()
 	_build_kill_zone()
 	_spawn_entities()
 	_setup_audio()
+	_setup_ambient()
 	win_label.visible = false
 	SaveManager.set_last_level(LEVEL_ID)
-	Challenge.start_level(LEVEL_ID, ORBS.size())
+	# Relique cachée, tapie à gauche de l'apparition (on part vers la droite).
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(60, 466)
+	add_child(relic)
+	# Les orbes dorées des Ombres d'élite comptent dans le total (3 chacune).
+	Challenge.start_level(LEVEL_ID, ORBS.size() + 3 * ELITE_XS.size())
 	leonie.set_lines(LEONIE_LINES)
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_2", "")
 	next_button.visible = next_scene != ""
 	if next_scene != "":
-		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+		next_button.pressed.connect(func(): Transition.goto(next_scene))
 	# Survol d'introduction : du torii jusqu'à Eneko.
 	player.intro_pan(Vector2(GOAL_X, 380.0))
 
@@ -133,6 +169,13 @@ func _build_decor() -> void:
 	sun.scale = Vector2(9.0, 9.0)
 	sun.position = Vector2(700.0, -60.0)
 	sky_layer.add_child(sun)
+	# Rayons dorés du couchant qui plongent dans la clairière.
+	var rays := GodRays.new()
+	rays.color = Color(1.0, 0.88, 0.55, 0.06)
+	rays.length = 1500.0
+	rays.half_spread = 0.7
+	rays.position = Vector2(700.0, -60.0)
+	sky_layer.add_child(rays)
 
 	# Montagnes lointaines bleutées, avec sommets enneigés.
 	var mountains := ParallaxLayer.new()
@@ -142,9 +185,12 @@ func _build_decor() -> void:
 	var mi := 0
 	while mx < LEVEL_END + 900.0:
 		var mh := 220.0 + float(mi * 53 % 100)
-		_poly(mountains, PackedVector2Array([
+		var mtri := PackedVector2Array([
 			Vector2(-280, 0), Vector2(0, -mh), Vector2(280, 0),
-		]), Color(0.55, 0.62, 0.74, 0.6), Vector2(mx, 560))
+		])
+		_poly(mountains, mtri, Color(0.55, 0.62, 0.74, 0.6), Vector2(mx, 560))
+		# Grain rocheux tuilé sur le flanc de la montagne.
+		TextureLab.grain_poly(mountains, mtri, 0.1, Vector2(mx, 0), Vector2(mx, 560))
 		_poly(mountains, PackedVector2Array([
 			Vector2(-34, -mh + 34), Vector2(0, -mh), Vector2(34, -mh + 34), Vector2(0, -mh + 48),
 		]), Color(0.92, 0.94, 0.98, 0.55), Vector2(mx, 560))
@@ -159,10 +205,12 @@ func _build_decor() -> void:
 	mi = 0
 	while mx < LEVEL_END + 900.0:
 		var hh := 150.0 + float(mi * 37 % 70)
-		_poly(hills, PackedVector2Array([
+		var htri := PackedVector2Array([
 			Vector2(-240, 0), Vector2(-80, -hh + 30), Vector2(0, -hh),
 			Vector2(110, -hh + 40), Vector2(240, 0),
-		]), Color(0.44, 0.56, 0.5, 0.55), Vector2(mx, 570))
+		])
+		_poly(hills, htri, Color(0.44, 0.56, 0.5, 0.55), Vector2(mx, 570))
+		TextureLab.grain_poly(hills, htri, 0.12, Vector2(mx * 0.7, 0), Vector2(mx, 570))
 		mx += 340.0 + float(mi * 29 % 90)
 		mi += 1
 
@@ -181,6 +229,8 @@ func _build_decor() -> void:
 			]), Color(1, 1, 1, 0.55), Vector2(cx, cy))
 		cx += 650.0 + float(ci * 37 % 140)
 		ci += 1
+	# Voiles nuageux texturés qui dérivent doucement au-dessus des amas.
+	TextureLab.add_clouds(clouds, 6, 30.0, 170.0, LEVEL_END, Color(1, 1, 1, 0.16))
 
 	# Vols d'oiseaux : petits chevrons sombres par groupes de trois.
 	var bx := 500.0
@@ -272,6 +322,24 @@ func _build_decor() -> void:
 	petals.color = Color(0.95, 0.74, 0.78)
 	add_child(petals)
 
+	# Poussière de pollen dorée en suspension, éclairée par le couchant :
+	# de fines lueurs qui flottent lentement et donnent de l'air à la scène.
+	pollen = CPUParticles2D.new()
+	pollen.amount = 20
+	pollen.lifetime = 6.5
+	pollen.preprocess = 6.5
+	pollen.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	pollen.emission_rect_extents = Vector2(560, 280)
+	pollen.direction = Vector2(0.2, -1)
+	pollen.spread = 45.0
+	pollen.gravity = Vector2(4, -5)
+	pollen.initial_velocity_min = 4.0
+	pollen.initial_velocity_max = 14.0
+	pollen.scale_amount_min = 1.0
+	pollen.scale_amount_max = 2.2
+	pollen.color = Color(1.0, 0.94, 0.68, 0.5)
+	add_child(pollen)
+
 ## Plateformes : collision + pilier de terre profond (fini le sol flottant),
 ## avec touffes d'herbe et cailloux pour casser la platitude des blocs.
 func _build_platforms() -> void:
@@ -356,19 +424,19 @@ func _build_traps() -> void:
 		trap.position = Vector2(x, GROUND_Y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(44, 24)
+		rect.size = Vector2(66, 34)
 		shape.shape = rect
 		trap.add_child(shape)
 		_poly(trap, PackedVector2Array([
-			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+			Vector2(-33, 22), Vector2(33, 22), Vector2(33, 6), Vector2(-33, 6),
 		]), Color(0.38, 0.24, 0.13))
-		for k in 3:
-			var ox := -16.0 + k * 16.0
+		for k in 4:
+			var ox := -24.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+				Vector2(ox - 7, 6), Vector2(ox + 7, 6), Vector2(ox, -22),
 			]), Color(0.52, 0.34, 0.18))
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 2, 2), Vector2(ox + 2, 2), Vector2(ox, -12),
+				Vector2(ox - 3, 2), Vector2(ox + 3, 2), Vector2(ox, -18),
 			]), Color(0.6, 0.42, 0.22))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)
@@ -376,6 +444,14 @@ func _build_traps() -> void:
 func _on_trap_body_entered(body: Node2D) -> void:
 	if body == player and body.has_method("take_damage"):
 		body.take_damage(1, body.global_position + Vector2(0, 40))
+
+## Geysers de flamme spectrale, désynchronisés par une phase différente.
+func _build_geysers() -> void:
+	for i in GEYSER_XS.size():
+		var g := SpiritGeyser.new()
+		g.position = Vector2(GEYSER_XS[i], GROUND_Y - 50.0)
+		g.phase = float(i) * (SpiritGeyser.PERIOD / float(GEYSER_XS.size())) + 0.4
+		add_child(g)
 
 func _build_goal() -> void:
 	var goal := Area2D.new()
@@ -396,7 +472,128 @@ func _build_goal() -> void:
 	_poly(goal, PackedVector2Array([Vector2(-42, -70), Vector2(42, -70), Vector2(38, -58), Vector2(-38, -58)]), Color(0.78, 0.16, 0.12))
 	_poly(goal, PackedVector2Array([Vector2(-32, -46), Vector2(32, -46), Vector2(32, -38), Vector2(-32, -38)]), Color(0.85, 0.2, 0.15))
 	add_child(goal)
+	Atmosphere.breathe(glow)
 	goal.body_entered.connect(_on_goal_body_entered)
+
+## Portail secret : un vieux torii de pierre moussu, à contre-sens du
+## chemin (tout à gauche du départ, derrière Eneko). S'y glisser révèle
+## le Jardin Céleste. Quelques lucioles dorées récompensent la curiosité.
+func _build_secret_portal() -> void:
+	var portal := Area2D.new()
+	portal.position = Vector2(36.0, 430.0)
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(46, 130)
+	shape.shape = rect
+	portal.add_child(shape)
+	var stone := Color(0.5, 0.55, 0.5)
+	var stone_dark := Color(0.4, 0.45, 0.42)
+	var moss := Color(0.35, 0.5, 0.3, 0.9)
+	_poly(portal, PackedVector2Array([
+		Vector2(-24, 70), Vector2(-16, 70), Vector2(-18, -40), Vector2(-26, -40),
+	]), stone)
+	_poly(portal, PackedVector2Array([
+		Vector2(16, 70), Vector2(24, 70), Vector2(26, -40), Vector2(18, -40),
+	]), stone)
+	_poly(portal, PackedVector2Array([
+		Vector2(-32, -44), Vector2(32, -44), Vector2(34, -52), Vector2(-34, -52),
+	]), stone_dark)
+	_poly(portal, PackedVector2Array([
+		Vector2(-28, -34), Vector2(28, -34), Vector2(28, -28), Vector2(-28, -28),
+	]), stone)
+	_poly(portal, PackedVector2Array([
+		Vector2(-26, -40), Vector2(-14, -40), Vector2(-20, -30),
+	]), moss)
+	_poly(portal, PackedVector2Array([
+		Vector2(18, 10), Vector2(26, 6), Vector2(26, 26), Vector2(18, 22),
+	]), moss)
+	_poly(portal, PackedVector2Array([
+		Vector2(-26, 40), Vector2(-16, 44), Vector2(-16, 60), Vector2(-26, 58),
+	]), moss)
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(1.0, 0.9, 0.6, 0.14)
+	glow.scale = Vector2(1.6, 2.2)
+	glow.position = Vector2(0, 10)
+	portal.add_child(glow)
+	var fireflies := CPUParticles2D.new()
+	fireflies.amount = 7
+	fireflies.lifetime = 3.2
+	fireflies.preprocess = 3.2
+	fireflies.position = Vector2(0, 10)
+	fireflies.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	fireflies.emission_rect_extents = Vector2(20, 46)
+	fireflies.direction = Vector2(0, -1)
+	fireflies.spread = 60.0
+	fireflies.gravity = Vector2.ZERO
+	fireflies.initial_velocity_min = 4.0
+	fireflies.initial_velocity_max = 12.0
+	fireflies.scale_amount_min = 1.2
+	fireflies.scale_amount_max = 2.0
+	fireflies.color = Color(1.0, 0.9, 0.5, 0.8)
+	portal.add_child(fireflies)
+	add_child(portal)
+	portal.body_entered.connect(_on_secret_portal_body_entered)
+
+func _on_secret_portal_body_entered(body: Node2D) -> void:
+	if _portal_used or body != player:
+		return
+	_portal_used = true
+	SaveManager.discover_secret()
+	Transition.goto("res://levels/level_secret.tscn")
+
+## Panneaux d'apprentissage en bois plantés au long de la première clairière :
+## ils enseignent les commandes au bon moment, sans bloquer le jeu.
+func _build_tutorial_signs() -> void:
+	var signs := [
+		{"x": 150.0, "text": "◄  ►   Se déplacer"},
+		{"x": 470.0, "text": "▲   Sauter"},
+		{"x": 1270.0, "text": "Épée   Trancher les esprits"},
+		{"x": 1500.0, "text": "Ruée   Traverse les ennemis"},
+	]
+	for s in signs:
+		_build_sign(float(s["x"]), String(s["text"]))
+
+func _build_sign(x: float, text: String) -> void:
+	var surf := GROUND_Y - 50.0
+	var post := Node2D.new()
+	post.position = Vector2(x, surf)
+	add_child(post)
+	var wood := Color(0.44, 0.3, 0.17)
+	var wood_dark := Color(0.32, 0.21, 0.12)
+	# Poteau planté dans le sol.
+	_poly(post, PackedVector2Array([
+		Vector2(-4, 0), Vector2(4, 0), Vector2(4, -72), Vector2(-4, -72),
+	]), wood_dark)
+	# Planche gravée, cerclée d'un liseré plus sombre.
+	_poly(post, PackedVector2Array([
+		Vector2(-104, -72), Vector2(104, -72), Vector2(104, -108), Vector2(-104, -108),
+	]), wood)
+	_poly(post, PackedVector2Array([
+		Vector2(-104, -72), Vector2(104, -72), Vector2(104, -76), Vector2(-104, -76),
+	]), wood_dark)
+	_poly(post, PackedVector2Array([
+		Vector2(-104, -104), Vector2(104, -104), Vector2(104, -108), Vector2(-104, -108),
+	]), wood_dark)
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.size = Vector2(208, 36)
+	lbl.position = Vector2(-104, -108)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_color_override("font_color", Color(0.99, 0.93, 0.8))
+	lbl.add_theme_color_override("font_outline_color", Color(0.18, 0.1, 0.05))
+	lbl.add_theme_constant_override("outline_size", 4)
+	post.add_child(lbl)
+
+## Répliques d'ambiance d'Eneko au fil de la clairière (non bloquantes).
+func _setup_ambient() -> void:
+	var amb := AmbientDialogue.new()
+	add_child(amb)
+	amb.add_line(self, 2200.0, "Eneko", "J'ai grandi dans ces bambous. Les voir se faner me serre le cœur.")
+	amb.add_line(self, 3900.0, "Eneko", "Chaque esprit tranché est une âme rendue au repos.")
+	amb.add_line(self, 5600.0, "Eneko", "Le torii, enfin. La clairière retrouvera la paix.")
 
 func _build_kill_zone() -> void:
 	var kz := Area2D.new()
@@ -418,6 +615,11 @@ func _spawn_entities() -> void:
 		var s := SHADOW_SCENE.instantiate()
 		s.position = Vector2(x, SPAWN_Y)
 		add_child(s)
+	for x in ELITE_XS:
+		var el := SHADOW_SCENE.instantiate()
+		el.position = Vector2(x, SPAWN_Y)
+		add_child(el)
+		el.make_elite()
 	for o in ORBS:
 		var orb := ORB_SCENE.instantiate()
 		orb.position = o
@@ -441,9 +643,167 @@ func _setup_audio() -> void:
 func _physics_process(_delta: float) -> void:
 	if petals != null and is_instance_valid(player):
 		petals.position = Vector2(player.position.x, player.position.y - 340.0)
+	if pollen != null and is_instance_valid(player):
+		pollen.position = Vector2(player.position.x, player.position.y - 120.0)
+
+## Touffes d'herbe : ondulation lente au vent + frémissement quand Eneko
+## passe à proximité (elles se penchent dans le sens opposé à son passage).
+func _build_grass() -> void:
+	var green := Color(0.36, 0.56, 0.28)
+	var green_hi := Color(0.5, 0.72, 0.36)
+	for p in PLATFORMS:
+		for side in [-1.0, 1.0]:
+			var cx: float = p.x + float(side) * (p.y - 60.0)
+			var clump := Node2D.new()
+			clump.position = Vector2(cx, GROUND_Y - 50.0)
+			clump.z_index = 1
+			add_child(clump)
+			var bi := 0
+			while bi < 5:
+				var bx := -12.0 + float(bi) * 6.0
+				var bh := 20.0 + float((bi * 7 + int(cx)) % 14)
+				var lean := (float(bi) - 2.0) * 3.0
+				var col := green_hi if bi % 2 == 0 else green
+				_poly(clump, PackedVector2Array([
+					Vector2(bx - 2.5, 0), Vector2(bx + 2.5, 0),
+					Vector2(bx + lean, -bh),
+				]), col)
+				bi += 1
+			_grass.append({"node": clump, "base_x": cx, "phase": cx * 0.02})
+
+## Oiseaux noirs posés au sol le long du chemin.
+func _build_birds() -> void:
+	var bird_c := Color(0.14, 0.1, 0.15)
+	for bx in [720.0, 2000.0, 3300.0, 4650.0, 5950.0]:
+		var b := Node2D.new()
+		b.position = Vector2(float(bx), GROUND_Y - 52.0)
+		b.z_index = 1
+		_poly(b, PackedVector2Array([
+			Vector2(-6, 0), Vector2(6, 0), Vector2(5, -7), Vector2(-4, -6),
+		]), bird_c)
+		_poly(b, PackedVector2Array([
+			Vector2(3, -6), Vector2(9, -9), Vector2(4, -3),
+		]), bird_c)
+		_poly(b, PackedVector2Array([
+			Vector2(-6, -5), Vector2(-14, -7), Vector2(-5, -2),
+		]), bird_c)
+		add_child(b)
+		_birds.append({"node": b, "base_x": float(bx), "flown": false})
+
+## Taches de soleil filtrées par les feuilles : ovales dorés très diffus posés
+## au sol, qui dérivent lentement et respirent en intensité.
+func _build_dapples() -> void:
+	var tex: Texture2D = load("res://assets/mist.svg")
+	var dx := 300.0
+	var di := 0
+	while dx < LEVEL_END:
+		var s := Sprite2D.new()
+		s.texture = tex
+		s.modulate = Color(1.0, 0.9, 0.55, 0.14)
+		var sc := 1.4 + float(di % 3) * 0.5
+		s.scale = Vector2(sc, sc * 0.4)
+		s.position = Vector2(dx, GROUND_Y - 46.0 - float(di % 2) * 8.0)
+		s.z_index = 0
+		add_child(s)
+		_dapples.append({
+			"node": s, "base_x": dx, "phase": dx * 0.01,
+			"amp": 24.0 + float(di % 3) * 12.0, "a0": 0.14,
+		})
+		dx += 420.0 + float(di * 53 % 160)
+		di += 1
+
+## Papillons : deux ailes triangulaires qui battent, portés sur un vol sinueux
+## autour d'un point d'attache le long du chemin.
+func _build_butterflies() -> void:
+	var cols := [
+		Color(0.98, 0.72, 0.3), Color(0.95, 0.5, 0.55),
+		Color(0.85, 0.85, 0.95), Color(0.7, 0.55, 0.85),
+	]
+	var bx := 620.0
+	var bi := 0
+	while bx < LEVEL_END:
+		var col: Color = cols[bi % cols.size()]
+		var b := Node2D.new()
+		b.position = Vector2(bx, GROUND_Y - 150.0 - float(bi % 3) * 40.0)
+		b.z_index = 3
+		add_child(b)
+		var lw := _poly(b, PackedVector2Array([
+			Vector2(0, 0), Vector2(-11, -8), Vector2(-9, 6),
+		]), col)
+		var rw := _poly(b, PackedVector2Array([
+			Vector2(0, 0), Vector2(11, -8), Vector2(9, 6),
+		]), col)
+		_poly(b, PackedVector2Array([
+			Vector2(-1, -5), Vector2(1, -5), Vector2(1, 6), Vector2(-1, 6),
+		]), Color(0.15, 0.1, 0.12))
+		_butterflies.append({
+			"node": b, "lw": lw, "rw": rw,
+			"base": b.position, "phase": bx * 0.03,
+			"rx": 90.0 + float(bi % 3) * 30.0, "ry": 34.0 + float(bi % 2) * 16.0,
+			"spd": 0.5 + float(bi % 3) * 0.18,
+		})
+		bx += 780.0 + float(bi * 47 % 260)
+		bi += 1
+
+func _process(delta: float) -> void:
+	_t += delta
+	var px := player.position.x if is_instance_valid(player) else -100000.0
+	for g in _grass:
+		var node: Node2D = g["node"]
+		var wind := 0.09 * sin(_t * 1.8 + float(g["phase"]))
+		var dx: float = float(g["base_x"]) - px
+		var near := clampf((90.0 - absf(dx)) / 90.0, 0.0, 1.0)
+		node.rotation = wind + 0.5 * near * signf(dx)
+	for bd in _birds:
+		if bool(bd["flown"]):
+			continue
+		if absf(float(bd["base_x"]) - px) < 130.0:
+			bd["flown"] = true
+			_fly_away(bd["node"], px)
+	for dp in _dapples:
+		var dn: Sprite2D = dp["node"]
+		var ph: float = float(dp["phase"])
+		dn.position.x = float(dp["base_x"]) + float(dp["amp"]) * sin(_t * 0.35 + ph)
+		var a: float = float(dp["a0"]) * (0.6 + 0.4 * sin(_t * 0.8 + ph * 1.7))
+		dn.modulate.a = a
+	for bf in _butterflies:
+		var bn: Node2D = bf["node"]
+		var ph2: float = float(bf["phase"])
+		var spd: float = float(bf["spd"])
+		var base: Vector2 = bf["base"]
+		var nx := base.x + float(bf["rx"]) * sin(_t * spd + ph2)
+		var ny := base.y + float(bf["ry"]) * sin(_t * spd * 2.0 + ph2) * 0.6
+		bn.position = Vector2(nx, ny)
+		# Face au sens du vol.
+		bn.scale.x = 1.0 if cos(_t * spd + ph2) >= 0.0 else -1.0
+		# Battement d'ailes.
+		var flap := 0.55 + 0.45 * sin(_t * 14.0 + ph2)
+		var lw: Polygon2D = bf["lw"]
+		var rw: Polygon2D = bf["rw"]
+		lw.scale.x = flap
+		rw.scale.x = flap
+
+## Envol effarouché : l'oiseau file vers le haut, à l'opposé d'Eneko, en
+## battant des ailes, puis disparaît.
+func _fly_away(node: Node2D, px: float) -> void:
+	var dir := signf(node.position.x - px)
+	if dir == 0.0:
+		dir = 1.0
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(node, "position", node.position + Vector2(dir * 300.0, -260.0), 1.3)
+	t.tween_property(node, "modulate:a", 0.0, 1.3)
+	t.chain().tween_callback(node.queue_free)
+	var flap := node.create_tween()
+	flap.set_loops(7)
+	flap.tween_property(node, "rotation", 0.3 * dir, 0.09)
+	flap.tween_property(node, "rotation", -0.1 * dir, 0.09)
 
 func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
 	if body == player:
+		if not cp.has_meta("lit"):
+			cp.set_meta("lit", true)
+			Atmosphere.spark_burst(self, cp.global_position, Color(0.5, 1.0, 0.6))
 		player.set_checkpoint(Vector2(cp.global_position.x, SPAWN_Y))
 		flag.color = Color(0.35, 0.8, 0.4)
 
@@ -510,4 +870,4 @@ func _on_dialogue_finished() -> void:
 	player.set_physics_process(true)
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

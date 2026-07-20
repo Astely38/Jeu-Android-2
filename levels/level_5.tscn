@@ -42,8 +42,8 @@ anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -200.0
 offset_right = 200.0
-offset_top = 14.0
-offset_bottom = 44.0
+offset_top = 86.0
+offset_bottom = 112.0
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.55, 0.15, 0.15, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5)
@@ -53,12 +53,12 @@ horizontal_alignment = 1
 text = "Le Gardien Corrompu"
 
 [node name="BarBG" type="Polygon2D" parent="BossUI"]
-position = Vector2(300, 54)
+position = Vector2(300, 126)
 color = Color(0.12, 0.09, 0.07, 0.85)
 polygon = PackedVector2Array(0, -9, 360, -9, 360, 9, 0, 9)
 
 [node name="BarFill" type="Polygon2D" parent="BossUI"]
-position = Vector2(300, 54)
+position = Vector2(300, 126)
 color = Color(0.75, 0.14, 0.14, 0.95)
 polygon = PackedVector2Array(2, -7, 358, -7, 358, 7, 2, 7)
 

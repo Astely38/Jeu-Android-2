@@ -39,12 +39,12 @@ const PLATFORMS := [
 	Vector2(4700, 900),  # l'arène du combat final
 ]
 const CHECKPOINT_XS := [1470.0, 3520.0]
-const PATROL_XS := [850.0, 1470.0, 2090.0, 2900.0, 3520.0]
-const SHADOW_XS := [1300.0, 2150.0, 2950.0, 3600.0]
+const PATROL_XS := [1470.0, 2090.0, 3520.0]
+const SHADOW_XS := [1300.0]
 ## Yūrei tireurs : toujours au-dessus d'une plateforme — le passage aux
 ## dalles effondrables reste un défi de plateforme pur, sans tirs.
-const SPIRIT_XS := [950.0, 2200.0]
-const TRAP_XS := [700.0, 1950.0, 2800.0, 3450.0]
+const SPIRIT_XS := []
+const TRAP_XS := [730.0, 1970.0, 2800.0, 3450.0]
 const PILLAR_XS := [3900.0, 4250.0, 5150.0, 5500.0]
 ## Dalles effondrables : x = centre, y = demi-largeur. Les deux premières
 ## sont le seul chemin au-dessus du grand vide — il faut enchaîner les
@@ -64,11 +64,12 @@ const BOSS_SPAWN_X := 5250.0
 const LEVEL_END := 6000.0
 
 const BOSS_INTRO_LINES := [
-	{ "name": "???", "text": "Qui ose troubler le dernier repos du sanctuaire ?" },
-	{ "name": "Eneko", "text": "Je suis venu mettre fin à la corruption. Une bonne fois pour toutes." },
-	{ "name": "???", "text": "Alors viens. Voyons si ta lame vaut mieux que celles qui l'ont précédée." },
+	{ "name": "???", "text": "Qui ose troubler les cendres de ce sanctuaire ?" },
+	{ "name": "Eneko", "text": "Je viens rallumer la Flamme d'Aube. Et te délivrer, Gardien — Léonie m'a tout dit." },
+	{ "name": "Eneko", "text": "(Ses mots me reviennent : « Lis ses coups. Pare-les au bon moment... ou esquive d'une ruée et frappe juste après — ta lame tranchera deux fois plus fort. »)" },
+	{ "name": "???", "text": "Léonie... ce nom n'éveille plus rien en moi. Il ne reste que l'Ombre. Viens la briser, si tu le peux." },
 ]
-const VICTORY_LINE := "La Voie du Sabre est accomplie !"
+const VICTORY_LINE := "La Flamme d'Aube renaît !"
 
 var sfx_win: AudioStreamPlayer
 var motes: CPUParticles2D
@@ -76,6 +77,15 @@ var boss: CharacterBody2D = null
 var _arena_triggered := false
 var _boss_intro_done := false
 var _barriers: Array = []
+## Rais de lumière de l'arène : chacun balance et respire (voir _process).
+var _shafts: Array = []
+## Bannières de l'approche : elles ondulent doucement (voir _process).
+var _banners: Array = []
+## Taches de vitrail projetées au sol de l'arène (voir _process).
+var _glass: Array = []
+## Poussières dorées qui flottent dans les rais de lumière (voir _process).
+var _dust: Array = []
+var _t := 0.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -87,29 +97,40 @@ var _barriers: Array = []
 
 func _ready() -> void:
 	_build_decor()
+	# Brume sacrée texturée qui rampe au sol du sanctuaire.
+	TextureLab.add_ground_mist(self, 8, GROUND_Y - 44.0, LEVEL_END,
+		Color(0.86, 0.82, 0.7, 0.1), 1)
 	_build_platforms()
+	_build_glass_floor()
 	_build_pillars()
 	_build_crumbles()
 	_build_checkpoints()
 	_build_traps()
+	_build_hazards()
 	_build_arena_trigger()
 	_build_kill_zone()
 	_spawn_entities()
 	_spawn_boss()
 	_setup_audio()
+	_setup_ambient()
 	win_label.visible = false
 	boss_ui.visible = false
 	# Si on vient de mourir pendant le combat, le niveau redémarre : on
 	# revient au thème du monde jusqu'à la prochaine entrée dans l'arène.
 	Music.play_world()
 	SaveManager.set_last_level(LEVEL_ID)
+	# Relique cachée, tapie à gauche de l'apparition.
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(60, 466)
+	add_child(relic)
 	Challenge.start_level(LEVEL_ID, ORBS.size())
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
 	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_6", "")
 	next_button.visible = next_scene != ""
 	if next_scene != "":
-		next_button.pressed.connect(func(): get_tree().change_scene_to_file(next_scene))
+		next_button.pressed.connect(func(): Transition.goto(next_scene))
 	# Survol d'introduction : de l'arène du Gardien jusqu'à Eneko — le
 	# joueur voit sa destination avant de faire le premier pas.
 	player.intro_pan(Vector2(BOSS_SPAWN_X, 350.0), 2.2)
@@ -118,7 +139,53 @@ func _physics_process(_delta: float) -> void:
 	if motes != null and is_instance_valid(player):
 		motes.position = Vector2(player.position.x, player.position.y - 200.0)
 
+## Anime les rais de lumière de l'arène : léger balancement horizontal et
+## respiration de l'intensité, chacun à son propre rythme.
+func _process(delta: float) -> void:
+	_t += delta
+	for s in _shafts:
+		var n: Polygon2D = s["node"]
+		var ph: float = s["phase"]
+		n.position.x = float(s["base_x"]) + sin(_t * 0.5 + ph) * 14.0
+		n.color.a = 0.06 + 0.05 * (0.5 + 0.5 * sin(_t * 0.8 + ph))
+	for bnr in _banners:
+		var bn: Polygon2D = bnr["node"]
+		bn.rotation = 0.12 * sin(_t * 1.6 + float(bnr["phase"]))
+	for g in _glass:
+		var gn: Polygon2D = g["node"]
+		var ba: float = g["base_a"]
+		gn.color.a = ba * (0.35 + 0.65 * (0.5 + 0.5 * sin(_t * 0.6 + float(g["phase"]))))
+	for d in _dust:
+		var dnode: Polygon2D = d["node"]
+		var dph: float = float(d["phase"])
+		# Montée lente avec enroulement en haut du rai.
+		var yy: float = float(d["y"]) - float(d["spd"]) * delta
+		if yy < -20.0:
+			yy = 560.0
+		d["y"] = yy
+		var sway := 6.0 * sin(_t * 0.7 + dph)
+		dnode.position = Vector2(float(d["x"]) + sway, yy)
+		# Scintillement doux.
+		dnode.color.a = 0.25 + 0.35 * (0.5 + 0.5 * sin(_t * 1.6 + dph))
+
 # --- Construction du niveau ---------------------------------------------
+
+## Taches de lumière colorée projetées au sol de l'arène, comme la clarté
+## qui tombe des verrières d'un sanctuaire ; leur intensité respire.
+func _build_glass_floor() -> void:
+	var cols := [Color(0.4, 0.6, 1.0), Color(1.0, 0.82, 0.4),
+		Color(0.9, 0.32, 0.36), Color(0.95, 0.95, 1.0)]
+	var x := ARENA_MIN_X + 90.0
+	var i := 0
+	while x < ARENA_MAX_X - 60.0:
+		var c: Color = cols[i % cols.size()]
+		var base_a := 0.1 + 0.04 * float(i % 3)
+		var pane := _poly(self, PackedVector2Array([
+			Vector2(-48, 0), Vector2(22, 0), Vector2(50, 42), Vector2(-20, 42),
+		]), Color(c.r, c.g, c.b, base_a), Vector2(x, GROUND_Y - 50.0))
+		_glass.append({"node": pane, "base_a": base_a, "phase": float(i) * 0.9})
+		x += 128.0
+		i += 1
 
 func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
 	var p := Polygon2D.new()
@@ -163,10 +230,25 @@ func _build_decor() -> void:
 	var si := 0
 	while sx < LEVEL_END:
 		var sw := 55.0 + float(si * 31 % 45)
-		_poly(shafts, PackedVector2Array([
+		var beam := _poly(shafts, PackedVector2Array([
 			Vector2(-sw, 0), Vector2(sw * 0.4, 0),
 			Vector2(sw * 1.7, 560), Vector2(sw * 0.3, 560),
 		]), Color(1.0, 0.95, 0.75, 0.09), Vector2(sx, -10))
+		# Chaque rai balance doucement et respire à son propre rythme.
+		_shafts.append({"node": beam, "base_x": sx, "phase": float(si) * 1.4})
+		# Poussières en suspension qui flottent lentement dans le rai.
+		var dn := 0
+		while dn < 5:
+			var offx := -sw * 0.4 + float((dn * 53 + si * 37) % int(sw * 1.6))
+			var yy := float((dn * 97 + si * 61) % 540)
+			var dot := _poly(shafts, PackedVector2Array([
+				Vector2(-1.5, 0), Vector2(0, -1.5), Vector2(1.5, 0), Vector2(0, 1.5),
+			]), Color(1.0, 0.95, 0.72, 0.0), Vector2(sx + offx, yy))
+			_dust.append({
+				"node": dot, "x": sx + offx, "y": yy,
+				"spd": 8.0 + float(dn % 3) * 5.0, "phase": float(dn * 90 + si * 40) * 0.01,
+			})
+			dn += 1
 		sx += 520.0 + float(si * 43 % 240)
 		si += 1
 
@@ -175,15 +257,19 @@ func _build_decor() -> void:
 	var gate := ParallaxLayer.new()
 	gate.motion_scale = Vector2(0.3, 0.6)
 	bg.add_child(gate)
-	_poly(gate, PackedVector2Array([
+	var col_pts := PackedVector2Array([
 		Vector2(-14, 0), Vector2(14, 0), Vector2(14, -260), Vector2(-14, -260),
-	]), GOLD_TRIM, Vector2(BOSS_SPAWN_X + 180.0, 540))
-	_poly(gate, PackedVector2Array([
-		Vector2(-14, 0), Vector2(14, 0), Vector2(14, -260), Vector2(-14, -260),
-	]), GOLD_TRIM, Vector2(BOSS_SPAWN_X - 180.0, 540))
-	_poly(gate, PackedVector2Array([
+	])
+	_poly(gate, col_pts, GOLD_TRIM, Vector2(BOSS_SPAWN_X + 180.0, 540))
+	_poly(gate, col_pts, GOLD_TRIM, Vector2(BOSS_SPAWN_X - 180.0, 540))
+	# Or patiné : grain sur les montants et le linteau du grand portique.
+	TextureLab.grain_poly(gate, col_pts, 0.12, Vector2(0, 0), Vector2(BOSS_SPAWN_X + 180.0, 540))
+	TextureLab.grain_poly(gate, col_pts, 0.12, Vector2(40, 0), Vector2(BOSS_SPAWN_X - 180.0, 540))
+	var lintel_pts := PackedVector2Array([
 		Vector2(-210, -250), Vector2(210, -250), Vector2(190, -280), Vector2(-190, -280),
-	]), GOLD_TRIM, Vector2(BOSS_SPAWN_X, 540))
+	])
+	_poly(gate, lintel_pts, GOLD_TRIM, Vector2(BOSS_SPAWN_X, 540))
+	TextureLab.grain_poly(gate, lintel_pts, 0.12, Vector2(0, 0), Vector2(BOSS_SPAWN_X, 540))
 	var gate_glow := Sprite2D.new()
 	gate_glow.texture = mist_tex
 	gate_glow.modulate = Color(1.0, 0.9, 0.6, 0.35)
@@ -197,9 +283,11 @@ func _build_decor() -> void:
 	bg.add_child(banners)
 	var bx := 400.0
 	while bx < ARENA_TRIGGER_X:
-		_poly(banners, PackedVector2Array([
+		var cloth := _poly(banners, PackedVector2Array([
 			Vector2(-14, 0), Vector2(14, 0), Vector2(14, 90), Vector2(0, 78), Vector2(-14, 90),
 		]), Color(0.95, 0.9, 0.8, 0.85), Vector2(bx, 250.0))
+		# La bannière ondule doucement, comme sous une brise sacrée.
+		_banners.append({"node": cloth, "phase": bx * 0.013})
 		_poly(banners, _rect_points(2.0, -40.0, 90.0), GOLD_TRIM, Vector2(bx, 250.0))
 		bx += 420.0
 
@@ -249,6 +337,8 @@ func _build_pillars() -> void:
 		var pillar := Node2D.new()
 		pillar.position = Vector2(x, GROUND_Y - 50.0)
 		_poly(pillar, _rect_points(16.0, -220.0, 0.0), MARBLE)
+		# Veinage du marbre : fin grain tuilé sur le fût.
+		TextureLab.grain_poly(pillar, _rect_points(16.0, -220.0, 0.0), 0.1, Vector2(float(x), 0.0))
 		_poly(pillar, _rect_points(20.0, -230.0, -216.0), GOLD_TRIM)
 		_poly(pillar, _rect_points(20.0, 0.0, 10.0), GOLD_TRIM)
 		add_child(pillar)
@@ -271,23 +361,45 @@ func _build_checkpoints() -> void:
 		add_child(cp)
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
 
+## Lanceurs de dards spectraux gardant l'approche du sanctuaire : posés au
+## bord droit de deux plateformes, ils tirent vers la gauche — les dards
+## viennent à la rencontre d'Eneko qui avance, et s'esquivent d'un saut.
+func _build_hazards() -> void:
+	# Lanceurs de dards sur les plateformes 2 et 4 (tir vers la gauche).
+	for entry in [{"x": 1680.0, "ph": 0.0}, {"x": 3080.0, "ph": 1.2}]:
+		var d := DartLauncher.new()
+		d.position = Vector2(entry["x"], GROUND_Y - 50.0)
+		d.dir = -1.0
+		d.phase = entry["ph"]
+		d.tint = Color(0.7, 0.5, 1.0)
+		add_child(d)
+	# Presse spectrale sur la plateforme 1 (la moins chargée) : alterne avec
+	# les dards pour un gantelet varié, sans jamais empiler les dangers.
+	var c := SpectralCrusher.new()
+	c.position = Vector2(980.0, GROUND_Y - 50.0)
+	c.phase = 0.0
+	add_child(c)
+
 func _build_traps() -> void:
 	for x in TRAP_XS:
 		var trap := Area2D.new()
 		trap.position = Vector2(x, GROUND_Y - 54.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(44, 24)
+		rect.size = Vector2(66, 34)
 		shape.shape = rect
 		trap.add_child(shape)
 		_poly(trap, PackedVector2Array([
-			Vector2(-22, 18), Vector2(22, 18), Vector2(22, 6), Vector2(-22, 6),
+			Vector2(-33, 22), Vector2(33, 22), Vector2(33, 6), Vector2(-33, 6),
 		]), MARBLE_DARK)
-		for k in 3:
-			var ox := -16.0 + k * 16.0
+		for k in 4:
+			var ox := -24.0 + k * 16.0
 			_poly(trap, PackedVector2Array([
-				Vector2(ox - 5, 6), Vector2(ox + 5, 6), Vector2(ox, -14),
+				Vector2(ox - 7, 6), Vector2(ox + 7, 6), Vector2(ox, -22),
 			]), Color(0.55, 0.15, 0.15))
+			_poly(trap, PackedVector2Array([
+				Vector2(ox - 3, 2), Vector2(ox + 3, 2), Vector2(ox, -18),
+			]), Color(0.7, 0.24, 0.22))
 		add_child(trap)
 		trap.body_entered.connect(_on_trap_body_entered)
 
@@ -355,6 +467,14 @@ func _spawn_boss() -> void:
 	add_child(boss)
 
 ## Vent ambiant, plus doux et plus clair que dans les niveaux précédents.
+## Répliques d'ambiance au fil du niveau (non bloquantes).
+func _setup_ambient() -> void:
+	var amb := AmbientDialogue.new()
+	add_child(amb)
+	amb.add_line(self, 850.0, "Eneko", "Le marbre résonne encore des prières d'autrefois. Ici brûlait la Flamme.")
+	amb.add_line(self, 2900.0, "Eneko", "L'autel est froid. Il ne tient qu'à moi de le rallumer.")
+	amb.add_line(self, 3600.0, "Voix", "Approche, porteur de lumière. Voyons si ta flamme vaut mieux que la mienne.")
+
 func _setup_audio() -> void:
 	var wind := AudioStreamPlayer.new()
 	wind.stream = load("res://assets/sfx/wind.wav")
@@ -463,126 +583,26 @@ func _play_victory_cinematic() -> void:
 	t2.tween_property(flash, "color:a", 0.0, 0.7)
 	t2.finished.connect(layer.queue_free)
 
-## Écran de fin de jeu : à la place du simple écran de victoire, le
-## récapitulatif complet du périple — grade et meilleur temps de chacun
-## des cinq niveaux — avec la performance du combat final en tête.
+## Écran de fin de chapitre, épuré et paginé (ChapterRecap) : d'abord
+## l'épilogue qui apparaît en fondu comme un écran-titre, puis au tap le bilan
+## du combat, puis l'amorce du chapitre suivant avec les boutons.
 func _show_endgame_recap(results: Dictionary) -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 3
-	add_child(layer)
-
-	var bg := ColorRect.new()
-	bg.color = Color(0.07, 0.06, 0.11, 0.92)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	layer.add_child(bg)
-
-	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_CENTER)
-	box.offset_left = -330.0
-	box.offset_right = 330.0
-	box.offset_top = -235.0
-	box.offset_bottom = 235.0
-	box.add_theme_constant_override("separation", 6)
-	layer.add_child(box)
-
-	var title := Label.new()
-	title.text = "La Voie du Sabre est accomplie !"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
-	box.add_child(title)
-
-	var run := Label.new()
-	run.text = "Gardien vaincu — Grade : %s — %s — Orbes : %d/%d — Esprits vaincus : %d" % [
-		Challenge.grade_name(results["grade"]), _format_time(results["time"]),
-		results["orbs"], results["total_orbs"], results["kills"],
-	]
-	if int(results["combo"]) >= 2:
-		run.text += " — Meilleur combo : ×%d" % int(results["combo"])
-	run.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	run.add_theme_font_size_override("font_size", 18)
-	box.add_child(run)
-
-	box.add_child(_spacer(10.0))
-
-	var header := Label.new()
-	header.text = "Ton périple :"
-	header.add_theme_font_size_override("font_size", 20)
-	box.add_child(header)
-
-	for id in SaveManager.LEVEL_ORDER:
-		var lid: String = id
-		box.add_child(_recap_row(lid))
-
-	box.add_child(_spacer(12.0))
-
-	var buttons := HBoxContainer.new()
-	buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons.add_theme_constant_override("separation", 20)
-	box.add_child(buttons)
-
-	var replay := _recap_button("Rejouer le niveau", Color(0.92, 0.65, 0.3))
-	replay.pressed.connect(func(): get_tree().reload_current_scene())
-	buttons.add_child(replay)
-	var menu_b := _recap_button("Retour au menu", Color(0.6, 0.5, 0.45))
-	menu_b.pressed.connect(_on_menu_pressed)
-	buttons.add_child(menu_b)
-
-## Une ligne du récapitulatif : nom du niveau, meilleur grade (coloré) et
-## meilleur temps.
-func _recap_row(row_level_id: String) -> Control:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	var name_l := Label.new()
-	name_l.text = str(SaveManager.LEVEL_NAMES.get(row_level_id, row_level_id))
-	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_l.add_theme_font_size_override("font_size", 18)
-	row.add_child(name_l)
-	var grade := SaveManager.best_grade(row_level_id)
-	var grade_l := Label.new()
-	grade_l.text = Challenge.grade_name(grade) if grade != "" else "—"
-	if grade != "":
-		grade_l.add_theme_color_override("font_color", Challenge.grade_color(grade))
-	grade_l.add_theme_font_size_override("font_size", 18)
-	row.add_child(grade_l)
-	var bt := SaveManager.best_time(row_level_id)
-	var time_l := Label.new()
-	time_l.text = _format_time(bt) if bt > 0.0 else "—"
-	time_l.custom_minimum_size = Vector2(70, 0)
-	time_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	time_l.add_theme_font_size_override("font_size", 18)
-	row.add_child(time_l)
-	return row
-
-func _spacer(h: float) -> Control:
-	var c := Control.new()
-	c.custom_minimum_size = Vector2(0, h)
-	return c
-
-func _recap_button(label_text: String, accent: Color) -> Button:
-	var b := Button.new()
-	b.text = label_text
-	b.custom_minimum_size = Vector2(220, 52)
-	b.add_theme_font_size_override("font_size", 22)
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.1, 0.09, 0.17, 0.92)
-	sb.border_color = accent
-	sb.set_border_width_all(2)
-	sb.set_corner_radius_all(10)
-	sb.set_content_margin_all(8.0)
-	var hov: StyleBoxFlat = sb.duplicate()
-	hov.bg_color = Color(0.2, 0.15, 0.22, 0.95)
-	var prs: StyleBoxFlat = sb.duplicate()
-	prs.bg_color = Color(0.34, 0.2, 0.18, 0.95)
-	b.add_theme_stylebox_override("normal", sb)
-	b.add_theme_stylebox_override("hover", hov)
-	b.add_theme_stylebox_override("pressed", prs)
-	return b
-
-func _format_time(seconds: float) -> String:
-	var mins: int = int(seconds) / 60
-	var secs: int = int(seconds) % 60
-	return "%d:%02d" % [mins, secs]
+	# On masque le HUD de jeu (cœurs, orbes, boutons) pendant l'épilogue.
+	var hud := player.get_node_or_null("HUD")
+	if hud != null:
+		hud.visible = false
+	var recap := ChapterRecap.new()
+	add_child(recap)
+	recap.show_recap({
+		"title": "La Flamme d'Aube renaît !",
+		"accent": Color(1.0, 0.85, 0.4),
+		"epilogue": "Libéré de l'Ombre, le Gardien s'incline une dernière fois, puis s'éteint en paix. La Flamme d'Aube s'élève à nouveau au cœur du Sanctuaire ; sa clarté redescend sur la montagne, le village, le temple, la clairière. Les âmes en peine trouvent enfin le repos, et Léonie, dernier éclat, peut rejoindre la lumière. La contrée est sauvée — par la Voie du Sabre d'Eneko.",
+		"special": "Léonie : « Merci, Eneko. Et reçois ceci : ma lumière t'accompagne — d'un souffle, tu peux désormais bondir une seconde fois en plein vol. »  (Double Saut débloqué : appuie à nouveau sur Sauter en l'air.)",
+		"results": results,
+		"next_title": "Chapitre II — Les Rivages de Cendre",
+		"hook": "Dans son dernier souffle, le Gardien a murmuré : « Je n'étais que le premier à tomber... L'Ombre a une source, par-delà la mer de brume. Et elle s'éveille. » La Voie du Sabre ne fait que commencer.",
+		"next_scene": SaveManager.LEVEL_SCENES.get("level_6", ""),
+	})
 
 func _on_menu_pressed() -> void:
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	Transition.goto("res://scenes/main_menu.tscn")

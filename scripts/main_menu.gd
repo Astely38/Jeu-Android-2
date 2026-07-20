@@ -9,15 +9,27 @@ const CREAM := Color(0.97, 0.93, 0.85)
 var _sun_glow: Sprite2D
 var _t := 0.0
 var _options: Control
+var _achievements_panel: Control
+var _prologue: Control
+var _sfx_click: AudioStreamPlayer
 
 func _ready() -> void:
 	# Garde-fou : si on arrive ici pendant un ralenti (hit-stop, mort du
 	# boss), le temps reprend son cours normal.
 	Engine.time_scale = 1.0
+	# Revenir au menu désarme le mode Kensei ; « Continuer » relance donc
+	# toujours en mode normal, la sélection de niveaux le réarme au besoin.
+	Challenge.kensei = false
 	Music.play_world()
+	# Clic d'interface : joué à chaque bouton (routé vers le bus « Sons »).
+	_sfx_click = AudioStreamPlayer.new()
+	_sfx_click.stream = load("res://assets/sfx/ui_click.wav")
+	_sfx_click.volume_db = -8.0
+	add_child(_sfx_click)
 	_build_scenery()
 	_show_version()
 	_build_options_button()
+	_build_achievements_button()
 	$ContinueButton.visible = SaveManager.has_save()
 	_style_button($ContinueButton, Color(0.92, 0.65, 0.3))
 	_style_button($LevelsButton, Color(0.92, 0.65, 0.3))
@@ -25,6 +37,10 @@ func _ready() -> void:
 	$ContinueButton.pressed.connect(_on_continue_pressed)
 	$LevelsButton.pressed.connect(_on_levels_pressed)
 	$QuitButton.pressed.connect(_on_quit_pressed)
+	_build_prologue_button()
+	# Prologue au tout premier lancement (une seule fois).
+	if not SaveManager.prologue_seen():
+		_open_prologue()
 
 func _process(delta: float) -> void:
 	_t += delta
@@ -56,6 +72,15 @@ func _build_scenery() -> void:
 		var a := k * TAU / 24.0
 		sun_pts.append(Vector2(cos(a) * 58.0, sin(a) * 58.0))
 	_poly(sc, sun_pts, Color(1.0, 0.84, 0.52, 0.95), Vector2(250, 352))
+	# Auréole de rayons dorés autour du soleil couchant (derrière le décor).
+	var rays := GodRays.new()
+	rays.ray_count = 11
+	rays.half_spread = 2.7
+	rays.length = 560.0
+	rays.base_width = 54.0
+	rays.color = Color(1.0, 0.82, 0.45, 0.07)
+	rays.position = Vector2(250, 352)
+	sc.add_child(rays)
 
 	# Oiseaux du soir
 	for b in [Vector2(600, 140), Vector2(662, 116), Vector2(568, 100)]:
@@ -167,6 +192,17 @@ func _build_scenery() -> void:
 	petals.color = Color(0.95, 0.74, 0.78)
 	sc.add_child(petals)
 
+	# Grain d'ensemble très discret : voile de matière tuilé sur tout le
+	# tableau, comme un léger papier peint, sous les boutons et le titre.
+	var grain := Polygon2D.new()
+	grain.polygon = PackedVector2Array([
+		Vector2(0, 0), Vector2(960, 0), Vector2(960, 540), Vector2(0, 540),
+	])
+	grain.texture = TextureLab.platform_grain()
+	grain.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	grain.color = Color(1, 1, 1, 0.06)
+	sc.add_child(grain)
+
 func _style_button(b: Button, accent: Color) -> void:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.1, 0.09, 0.17, 0.88)
@@ -184,12 +220,15 @@ func _style_button(b: Button, accent: Color) -> void:
 	b.add_theme_color_override("font_color", CREAM)
 	b.add_theme_color_override("font_hover_color", Color(1, 0.98, 0.92))
 	b.add_theme_color_override("font_pressed_color", Color(1, 0.98, 0.92))
+	b.pressed.connect(func() -> void:
+		if _sfx_click != null:
+			Sfx.varied(_sfx_click, 0.96, 1.06))
 
 func _on_continue_pressed() -> void:
-	get_tree().change_scene_to_file(SaveManager.get_last_level_scene())
+	Transition.goto(SaveManager.get_last_level_scene())
 
 func _on_levels_pressed() -> void:
-	get_tree().change_scene_to_file(LEVEL_SELECT)
+	Transition.goto(LEVEL_SELECT)
 
 ## Affiche la version de l'application en bas à gauche du menu (remplie
 ## automatiquement par le CI : "0.NN" = numéro de build).
@@ -215,8 +254,8 @@ func _build_options_button() -> void:
 	var b := Button.new()
 	b.text = "⚙ Réglages"
 	b.add_theme_font_size_override("font_size", 16)
-	b.position = Vector2(824, 496)
-	b.size = Vector2(124, 34)
+	b.position = Vector2(802, 498)
+	b.size = Vector2(146, 36)
 	_style_button(b, Color(0.6, 0.5, 0.45))
 	b.pressed.connect(_open_options)
 	add_child(b)
@@ -242,12 +281,12 @@ func _open_options() -> void:
 	sb.set_corner_radius_all(14)
 	sb.set_content_margin_all(24.0)
 	panel.add_theme_stylebox_override("panel", sb)
-	panel.position = Vector2(330, 130)
+	panel.position = Vector2(330, 28)
 	panel.custom_minimum_size = Vector2(300, 0)
 	_options.add_child(panel)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
+	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
 
 	var title := Label.new()
@@ -257,9 +296,14 @@ func _open_options() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 
+	# Audio + accessibilité : sept réglages qui tiennent sans défilement.
 	box.add_child(_setting_row("Musique", "music"))
 	box.add_child(_setting_row("Effets sonores", "sfx"))
 	box.add_child(_setting_row("Vibrations", "vibrations"))
+	box.add_child(_section_label("Accessibilité"))
+	box.add_child(_setting_row("Secousses d'écran", "shake"))
+	box.add_child(_setting_row("Flashs lumineux", "flash"))
+	box.add_child(_setting_row("Mode détente (+2 cœurs)", "assist", false))
 
 	var close := Button.new()
 	close.text = "Fermer"
@@ -268,16 +312,250 @@ func _open_options() -> void:
 	close.pressed.connect(func() -> void: _options.visible = false)
 	box.add_child(close)
 
-func _setting_row(label_text: String, key: String) -> HBoxContainer:
+## ----------------------------------------------------------------- Prologue
+
+## Petit bouton « Prologue » pour (re)lire l'introduction quand on veut.
+func _build_prologue_button() -> void:
+	var b := Button.new()
+	b.text = "Prologue"
+	b.add_theme_font_size_override("font_size", 14)
+	b.position = Vector2(70, 498)
+	b.size = Vector2(120, 34)
+	_style_button(b, Color(0.6, 0.5, 0.45))
+	b.pressed.connect(_open_prologue)
+	add_child(b)
+
+func _open_prologue() -> void:
+	if _prologue != null:
+		_prologue.visible = true
+		return
+	_prologue = Control.new()
+	_prologue.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_prologue)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.02, 0.06, 0.9)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_prologue.add_child(dim)
+
+	# Titre figé en haut : toujours visible, ne défile pas.
+	var title := Label.new()
+	title.text = "La Voie du Sabre"
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(130, 20)
+	title.custom_minimum_size = Vector2(700, 0)
+	title.size = Vector2(700, 40)
+	_prologue.add_child(title)
+
+	# Croix de fermeture en haut à droite : accessible même sans lire.
+	var close := Button.new()
+	close.text = "✕"
+	close.add_theme_font_size_override("font_size", 24)
+	close.position = Vector2(872, 14)
+	close.custom_minimum_size = Vector2(52, 44)
+	_style_button(close, Color(0.55, 0.3, 0.3))
+	close.pressed.connect(_close_prologue)
+	_prologue.add_child(close)
+
+	# Corps défilable : le texte long ne peut plus cacher le bouton.
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(130, 72)
+	scroll.custom_minimum_size = Vector2(700, 400)
+	scroll.size = Vector2(700, 400)
+	UiScroll.make_touch_friendly(scroll)
+	_prologue.add_child(scroll)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 18)
+	box.custom_minimum_size = Vector2(668, 0)
+	scroll.add_child(box)
+
+	var story := Label.new()
+	story.text = "Jadis, la Flamme d'Aube brûlait au cœur du Sanctuaire, et sa lumière tenait les Ombres loin des vivants.\n\nMais le Gardien qui la veillait a sombré dans le désespoir. La Flamme s'est éteinte — et les Ombres ont submergé la clairière, le temple, le village, la montagne.\n\nLéonie, dernier éclat de cette lumière, a trouvé Eneko : le seul dont la lame porte encore la clarté des aïeux.\n\nTon but : rassembler les éclats de la Flamme dispersés dans les terres souillées, atteindre le Sanctuaire, et délivrer le Gardien de sa corruption pour rallumer la Flamme d'Aube. Telle est la Voie du Sabre."
+	story.add_theme_font_size_override("font_size", 20)
+	story.add_theme_color_override("font_color", Color(0.95, 0.92, 0.86))
+	story.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	story.custom_minimum_size = Vector2(668, 0)
+	box.add_child(story)
+
+	var start := Button.new()
+	start.text = "Commencer l'aventure"
+	start.add_theme_font_size_override("font_size", 22)
+	start.custom_minimum_size = Vector2(668, 52)
+	_style_button(start, Color(0.92, 0.65, 0.3))
+	start.pressed.connect(_close_prologue)
+	box.add_child(start)
+
+func _close_prologue() -> void:
+	SaveManager.set_prologue_seen()
+	if _prologue != null:
+		_prologue.visible = false
+
+## ------------------------------------------------------------------- Succès
+
+func _build_achievements_button() -> void:
+	var b := Button.new()
+	b.text = "🏆 Galerie"
+	b.add_theme_font_size_override("font_size", 16)
+	b.position = Vector2(642, 498)
+	b.size = Vector2(146, 36)
+	_style_button(b, Color(0.92, 0.65, 0.3))
+	b.pressed.connect(_open_achievements)
+	add_child(b)
+
+func _open_achievements() -> void:
+	if _achievements_panel != null:
+		_achievements_panel.visible = true
+		return
+	_achievements_panel = Control.new()
+	_achievements_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_achievements_panel)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.03, 0.02, 0.08, 0.75)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_achievements_panel.add_child(dim)
+
+	var panel := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.1, 0.09, 0.17, 0.96)
+	sb.border_color = Color(0.92, 0.65, 0.3)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(14)
+	sb.set_content_margin_all(18.0)
+	panel.add_theme_stylebox_override("panel", sb)
+	panel.position = Vector2(150, 30)
+	panel.custom_minimum_size = Vector2(660, 0)
+	_achievements_panel.add_child(panel)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 10)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.text = "Galerie"
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", CREAM)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(620, 330)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 8)
+	scroll.add_child(list)
+	# Section Succès.
+	list.add_child(_section_label("🏆 Succès — %d/%d" % [Achievements.unlocked_count(), Achievements.DEFS.size()]))
+	for d in Achievements.DEFS:
+		list.add_child(_achievement_row(d))
+	# Section Reliques : une par niveau, à débusquer.
+	list.add_child(_section_label("✦ Reliques — %d/%d" % [SaveManager.relics_found(), SaveManager.TOTAL_RELICS]))
+	for level_id in SaveManager.LEVEL_ORDER:
+		list.add_child(_relic_row(String(level_id)))
+	UiScroll.make_touch_friendly(scroll)
+
+	var close := Button.new()
+	close.text = "Fermer"
+	close.add_theme_font_size_override("font_size", 18)
+	_style_button(close, Color(0.92, 0.65, 0.3))
+	close.pressed.connect(func() -> void: _achievements_panel.visible = false)
+	box.add_child(close)
+
+func _achievement_row(d: Dictionary) -> Control:
+	var unlocked := Achievements.is_unlocked(String(d["id"]))
+	var secret := bool(d.get("secret", false))
+	var row := PanelContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.16, 0.13, 0.22, 0.9) if unlocked else Color(1, 1, 1, 0.04)
+	sb.set_corner_radius_all(8)
+	sb.set_content_margin_all(8.0)
+	if unlocked:
+		sb.border_width_left = 4
+		sb.border_color = Color(1.0, 0.82, 0.35)
+	row.add_theme_stylebox_override("panel", sb)
+	var v := VBoxContainer.new()
+	row.add_child(v)
+	var name_l := Label.new()
+	name_l.text = "? ? ?" if (secret and not unlocked) else String(d["name"])
+	name_l.add_theme_font_size_override("font_size", 18)
+	name_l.add_theme_color_override("font_color",
+		Color(1.0, 0.88, 0.5) if unlocked else Color(0.65, 0.62, 0.6))
+	v.add_child(name_l)
+	var desc_l := Label.new()
+	desc_l.text = "Un secret attend les plus curieux…" if (secret and not unlocked) else String(d["desc"])
+	desc_l.add_theme_font_size_override("font_size", 14)
+	desc_l.add_theme_color_override("font_color",
+		Color(0.85, 0.83, 0.8, 0.85) if unlocked else Color(0.6, 0.58, 0.56, 0.85))
+	desc_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(desc_l)
+	return row
+
+## Ligne de relique dans la galerie : sceau doré si trouvée, contour terne
+## et invite à fouiller sinon. Le nom du niveau aide à savoir où chercher.
+func _relic_row(level_id: String) -> Control:
+	var found := SaveManager.has_relic(level_id)
+	var lvl_name := String(SaveManager.LEVEL_NAMES.get(level_id, level_id))
+	var row := PanelContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.16, 0.13, 0.22, 0.9) if found else Color(1, 1, 1, 0.04)
+	sb.set_corner_radius_all(8)
+	sb.set_content_margin_all(8.0)
+	if found:
+		sb.border_width_left = 4
+		sb.border_color = Color(1.0, 0.82, 0.4)
+	row.add_theme_stylebox_override("panel", sb)
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 10)
+	row.add_child(h)
+	var seal := Label.new()
+	seal.text = "✦" if found else "✧"
+	seal.add_theme_font_size_override("font_size", 22)
+	seal.add_theme_color_override("font_color",
+		Color(1.0, 0.82, 0.4) if found else Color(0.5, 0.48, 0.46))
+	h.add_child(seal)
+	var v := VBoxContainer.new()
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	h.add_child(v)
+	var name_l := Label.new()
+	name_l.text = lvl_name
+	name_l.add_theme_font_size_override("font_size", 18)
+	name_l.add_theme_color_override("font_color",
+		Color(1.0, 0.88, 0.55) if found else Color(0.65, 0.62, 0.6))
+	v.add_child(name_l)
+	var desc_l := Label.new()
+	desc_l.text = "Relique récupérée" if found else "Relique à débusquer…"
+	desc_l.add_theme_font_size_override("font_size", 14)
+	desc_l.add_theme_color_override("font_color",
+		Color(0.85, 0.83, 0.8, 0.85) if found else Color(0.6, 0.58, 0.56, 0.85))
+	v.add_child(desc_l)
+	return row
+
+## Petit intertitre de section dans les réglages.
+func _section_label(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 15)
+	l.add_theme_color_override("font_color", Color(0.92, 0.65, 0.3))
+	return l
+
+func _setting_row(label_text: String, key: String, default_on: bool = true) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var lbl := Label.new()
 	lbl.text = label_text
-	lbl.add_theme_font_size_override("font_size", 20)
+	lbl.add_theme_font_size_override("font_size", 19)
 	lbl.add_theme_color_override("font_color", CREAM)
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(lbl)
 	var check := CheckButton.new()
-	check.button_pressed = SaveManager.setting_on(key)
+	check.button_pressed = SaveManager.setting_on(key, default_on)
 	check.toggled.connect(func(on: bool) -> void:
 		SaveManager.set_setting(key, on)
 		Music.apply_settings()

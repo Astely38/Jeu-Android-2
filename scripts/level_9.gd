@@ -1,0 +1,411 @@
+extends Node2D
+## Chapitre II — Niveau 9 : « Le Gardien du Puits » (mini-boss).
+## Au bord même du Cœur de l'Ombre, un émissaire barre la route à Eneko : le
+## Grand Masque, un masque d'Oni géant. Une courte approche, un refuge, puis
+## l'arène. Le vaincre n'ouvre PAS encore le Cœur — c'est un mini-boss, pas
+## l'affrontement final.
+
+const ORB_SCENE := preload("res://scenes/orb.tscn")
+const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
+const MINIBOSS_SCENE := preload("res://scenes/grand_mask.tscn")
+
+const GROUND_Y := 550.0
+const SPAWN_Y := 477.0
+const LEVEL_END := 4300.0
+const LEVEL_ID := "level_9"
+
+const VOID := Color(0.1, 0.08, 0.14)
+const VOID_DARK := Color(0.05, 0.04, 0.08)
+const VIOLET := Color(0.55, 0.3, 0.85)
+
+const PLATFORM_THEME := {
+	"top": Color(0.24, 0.16, 0.3),
+	"top_light": Color(0.6, 0.35, 0.85),
+	"body_a": VOID,
+	"body_b": Color(0.08, 0.07, 0.12),
+	"dark": VOID_DARK,
+	"speck": VIOLET,
+}
+
+## Approche (4 plateformes, petits trous) puis la grande dalle de l'arène.
+const PLATFORMS := [
+	Vector2(230, 230), Vector2(760, 210), Vector2(1300, 220),
+	Vector2(1850, 210), Vector2(3000, 820),
+]
+const CHECKPOINT_XS := [1300.0]
+## Orbes de l'approche uniquement — aucune dans l'arène (jamais piégée
+## derrière les barrières spirituelles pendant le combat).
+const ORBS := [
+	Vector2(330, 420), Vector2(560, 385), Vector2(760, 420),
+	Vector2(1030, 385), Vector2(1300, 420), Vector2(1570, 385),
+	Vector2(1850, 420), Vector2(2040, 385),
+]
+
+const ARENA_TRIGGER_X := 2260.0
+const ARENA_MIN_X := 2210.0
+const ARENA_MAX_X := 3790.0
+const BOSS_SPAWN_X := 3300.0
+
+const BOSS_INTRO_LINES := [
+	{ "name": "Léonie", "text": "Arrête-toi, Eneko. Un gardien se dresse entre toi et le Cœur : un Grand Masque, l'un des émissaires de l'Ombre." },
+	{ "name": "Léonie", "text": "Regarde bien : quand sa lueur s'embrase, il fonce en ligne droite. Esquive la ruée d'un pas de côté, puis frappe pendant qu'il reprend son souffle." },
+	{ "name": "???", "text": "Nul ne franchit le Puits. Retourne à ta lumière mourante tant que tu le peux, petit sabreur." },
+	{ "name": "Eneko", "text": "J'ai traversé la cendre et le feu. Un masque de plus ne m'arrêtera pas. En garde." },
+]
+
+var sfx_win: AudioStreamPlayer
+var void_motes: CPUParticles2D
+var mini_boss: CharacterBody2D = null
+var _arena_triggered := false
+var _boss_intro_done := false
+var _barriers: Array = []
+var _pulses: Array = []
+var _heart_glow: Sprite2D
+var _t := 0.0
+
+@onready var player: CharacterBody2D = $Player
+@onready var win_label: CanvasLayer = $WinLabel
+@onready var menu_button: Button = $WinLabel/MenuButton
+@onready var next_button: Button = $WinLabel/NextButton
+@onready var dialogue: CanvasLayer = $Dialogue
+@onready var boss_ui: CanvasLayer = $BossUI
+@onready var boss_bar_fill: Polygon2D = $BossUI/BarFill
+
+func _ready() -> void:
+	_build_decor()
+	Atmosphere.add_foreground(self, Color(0.09, 0.05, 0.14, 0.4))
+	_build_platforms()
+	_build_checkpoints()
+	_build_arena_trigger()
+	_build_kill_zone()
+	_spawn_entities()
+	_spawn_miniboss()
+	_setup_audio()
+	_setup_ambient()
+	player.set_land_dust_color(Color(0.66, 0.42, 0.9, 0.8))
+	win_label.visible = false
+	boss_ui.visible = false
+	Music.play_world(2)
+	SaveManager.set_last_level(LEVEL_ID)
+	# Relique cachée, tapie à gauche de l'apparition.
+	var relic := Relic.new()
+	relic.level_id = LEVEL_ID
+	relic.position = Vector2(60, 466)
+	add_child(relic)
+	Challenge.start_level(LEVEL_ID, ORBS.size())
+	dialogue.finished.connect(_on_dialogue_finished)
+	menu_button.pressed.connect(_on_menu_pressed)
+	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_10", "")
+	next_button.visible = next_scene != ""
+	if next_scene != "":
+		next_button.pressed.connect(func(): Transition.goto(next_scene))
+	# Survol d'introduction : du Grand Masque jusqu'à Eneko.
+	player.intro_pan(Vector2(BOSS_SPAWN_X, 340.0), 2.0)
+
+func _process(delta: float) -> void:
+	_t += delta
+	var beat := 0.5 + 0.5 * sin(_t * 1.5)
+	for pv in _pulses:
+		var node: Polygon2D = pv["node"]
+		node.modulate.a = 0.3 + 0.5 * (0.5 + 0.5 * sin(_t * 1.5 + float(pv["phase"])))
+	if _heart_glow != null:
+		_heart_glow.modulate.a = 0.22 + 0.16 * beat
+		var hs := 9.0 + 1.4 * beat
+		_heart_glow.scale = Vector2(hs, hs)
+
+func _physics_process(_delta: float) -> void:
+	if void_motes != null and is_instance_valid(player):
+		void_motes.position = Vector2(player.position.x, player.position.y - 200.0)
+
+# --- Construction ---------------------------------------------------------
+
+func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
+	var p := Polygon2D.new()
+	p.polygon = points
+	p.color = color
+	p.position = pos
+	parent.add_child(p)
+	return p
+
+## Décor de vide : lueur du Cœur qui bat au fond de l'arène, cristaux
+## corrompus flottants, poussière de vide autour d'Eneko.
+func _build_decor() -> void:
+	var bg: ParallaxBackground = $ParallaxBackground
+	var mist_tex: Texture2D = load("res://assets/mist.svg")
+
+	var sky := ParallaxLayer.new()
+	sky.motion_scale = Vector2(0.05, 0.05)
+	bg.add_child(sky)
+	var aura := Sprite2D.new()
+	aura.texture = mist_tex
+	aura.modulate = Color(0.42, 0.2, 0.6, 0.4)
+	aura.scale = Vector2(16.0, 8.0)
+	aura.position = Vector2(480.0, 520.0)
+	sky.add_child(aura)
+	TextureLab.add_clouds(sky, 4, 40.0, 190.0, LEVEL_END, Color(0.2, 0.12, 0.28, 0.16))
+
+	# Le Cœur de l'Ombre, tout au fond de l'arène : halo qui bat.
+	var deep := ParallaxLayer.new()
+	deep.motion_scale = Vector2(0.12, 0.4)
+	bg.add_child(deep)
+	_heart_glow = Sprite2D.new()
+	_heart_glow.texture = mist_tex
+	_heart_glow.modulate = Color(0.6, 0.2, 0.7, 0.28)
+	_heart_glow.scale = Vector2(9.0, 9.0)
+	_heart_glow.position = Vector2(BOSS_SPAWN_X + 400.0, 230.0)
+	deep.add_child(_heart_glow)
+
+	# Cristaux corrompus flottants qui palpitent.
+	var crystals := ParallaxLayer.new()
+	crystals.motion_scale = Vector2(0.35, 0.7)
+	bg.add_child(crystals)
+	var cx := 260.0
+	var ci := 0
+	while cx < LEVEL_END - 100.0:
+		var cy := 150.0 + float(ci * 61 % 210)
+		var ch := 26.0 + float(ci * 37 % 26)
+		var shard := _poly(crystals, PackedVector2Array([
+			Vector2(0, -ch), Vector2(9, -ch * 0.25), Vector2(4, ch), Vector2(-4, ch), Vector2(-9, -ch * 0.25),
+		]), Color(0.5, 0.28, 0.8, 0.5), Vector2(cx, cy))
+		_pulses.append({"node": shard, "phase": float(ci) * 0.7})
+		cx += 320.0 + float(ci * 47 % 160)
+		ci += 1
+
+	void_motes = CPUParticles2D.new()
+	void_motes.texture = load("res://assets/leaf.svg")
+	void_motes.amount = 26
+	void_motes.lifetime = 6.5
+	void_motes.preprocess = 6.5
+	void_motes.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	void_motes.emission_rect_extents = Vector2(520, 180)
+	void_motes.direction = Vector2(0, 1)
+	void_motes.spread = 180.0
+	void_motes.gravity = Vector2(4, 8)
+	void_motes.initial_velocity_min = 6.0
+	void_motes.initial_velocity_max = 18.0
+	void_motes.scale_amount_min = 0.3
+	void_motes.scale_amount_max = 0.7
+	void_motes.color = Color(0.5, 0.32, 0.72, 0.55)
+	add_child(void_motes)
+
+func _build_platforms() -> void:
+	for pi in PLATFORMS.size():
+		var p: Vector2 = PLATFORMS[pi]
+		var body := StaticBody2D.new()
+		body.position = Vector2(p.x, GROUND_Y)
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(p.y * 2.0, 100.0)
+		shape.shape = rect
+		body.add_child(shape)
+		PlatformPainter.paint(body, p.y, PLATFORM_THEME)
+		# Veines de nuit qui luisent.
+		var vein_count: int = maxi(1, int(p.y / 160.0))
+		for v in vein_count:
+			var vx2: float = -p.y + 80.0 + v * ((p.y * 2.0 - 160.0) / maxf(1.0, float(vein_count)))
+			var e := _poly(body, PackedVector2Array([
+				Vector2(vx2 - 2, 28), Vector2(vx2 + 3, 28),
+				Vector2(vx2 + 6, 94), Vector2(vx2 - 1, 104), Vector2(vx2 - 5, 62),
+			]), Color(0.62, 0.32, 0.88, 0.0))
+			_pulses.append({"node": e, "phase": float((v * 61 + pi * 47) % 628) * 0.01})
+		add_child(body)
+
+func _build_checkpoints() -> void:
+	for x in CHECKPOINT_XS:
+		var cp := Area2D.new()
+		cp.position = Vector2(x, 430.0)
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(60, 120)
+		shape.shape = rect
+		cp.add_child(shape)
+		_poly(cp, PackedVector2Array([
+			Vector2(-3, -60), Vector2(3, -60), Vector2(3, 70), Vector2(-3, 70),
+		]), Color(0.2, 0.16, 0.26))
+		var flag := _poly(cp, PackedVector2Array([
+			Vector2(3, -60), Vector2(40, -50), Vector2(3, -38),
+		]), Color(0.7, 0.4, 0.95))
+		add_child(cp)
+		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
+
+func _build_arena_trigger() -> void:
+	var trigger := Area2D.new()
+	trigger.position = Vector2(ARENA_TRIGGER_X, SPAWN_Y)
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(40, 200)
+	shape.shape = rect
+	trigger.add_child(shape)
+	add_child(trigger)
+	trigger.body_entered.connect(_on_arena_trigger_body_entered)
+
+func _build_kill_zone() -> void:
+	var kz := Area2D.new()
+	kz.position = Vector2(LEVEL_END / 2.0, 700.0)
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(LEVEL_END + 800.0, 100.0)
+	shape.shape = rect
+	kz.add_child(shape)
+	add_child(kz)
+	kz.body_entered.connect(_on_kill_zone_body_entered)
+
+func _spawn_entities() -> void:
+	# Refuge de Léonie juste avant l'arène : soin + point de contrôle.
+	PlatformPainter.build_sanctuary(self, 1850.0, GROUND_Y - 50.0)
+	var leonie := LEONIE_SCENE.instantiate()
+	leonie.position = Vector2(1850.0, SPAWN_Y)
+	leonie.set_lines([
+		{ "name": "Léonie", "text": "Reprends ton souffle, Eneko. Ma lumière te soigne une dernière fois avant l'arène." },
+		{ "name": "Léonie", "text": "Le Grand Masque n'est pas le Cœur — mais il te faudra tout ton art pour passer." },
+	])
+	add_child(leonie)
+	for o in ORBS:
+		var orb := ORB_SCENE.instantiate()
+		orb.position = o
+		add_child(orb)
+
+func _spawn_miniboss() -> void:
+	mini_boss = MINIBOSS_SCENE.instantiate()
+	mini_boss.position = Vector2(BOSS_SPAWN_X, 400.0)
+	mini_boss.set_arena_bounds(ARENA_MIN_X, ARENA_MAX_X)
+	mini_boss.health_changed.connect(_on_miniboss_health_changed)
+	mini_boss.defeated.connect(_on_miniboss_defeated)
+	add_child(mini_boss)
+
+func _setup_ambient() -> void:
+	var amb := AmbientDialogue.new()
+	add_child(amb)
+	amb.add_line(self, 700.0, "Eneko", "L'Ombre est partout, maintenant. Le Cœur ne doit plus être loin.")
+	amb.add_line(self, 1500.0, "Eneko", "Une lueur, là-bas... non, un regard. Quelque chose m'attend dans l'arène.")
+
+func _setup_audio() -> void:
+	var rumble := AudioStreamPlayer.new()
+	rumble.stream = load("res://assets/sfx/wind.wav")
+	rumble.volume_db = -12.0
+	rumble.pitch_scale = 0.6
+	add_child(rumble)
+	rumble.finished.connect(rumble.play)
+	rumble.play()
+	sfx_win = AudioStreamPlayer.new()
+	sfx_win.stream = load("res://assets/sfx/win.wav")
+	sfx_win.volume_db = -4.0
+	add_child(sfx_win)
+
+# --- Déroulement ----------------------------------------------------------
+
+func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> void:
+	if body == player:
+		if not cp.has_meta("lit"):
+			cp.set_meta("lit", true)
+			Atmosphere.spark_burst(self, cp.global_position, Color(0.7, 0.45, 1.0))
+		player.set_checkpoint(Vector2(cp.global_position.x, SPAWN_Y))
+		flag.color = Color(0.4, 0.9, 0.5, 0.95)
+
+func _on_kill_zone_body_entered(body: Node2D) -> void:
+	if body == player:
+		player.fall_damage()
+
+func _on_arena_trigger_body_entered(body: Node2D) -> void:
+	if _arena_triggered or body != player:
+		return
+	_arena_triggered = true
+	player.velocity = Vector2.ZERO
+	player.set_physics_process(false)
+	dialogue.start(BOSS_INTRO_LINES)
+
+func _on_dialogue_finished() -> void:
+	player.set_physics_process(true)
+	if _arena_triggered and not _boss_intro_done:
+		_boss_intro_done = true
+		boss_ui.visible = true
+		Music.play_boss()
+		_raise_barriers()
+		if is_instance_valid(mini_boss):
+			mini_boss.activate()
+
+## Barrières spirituelles qui scellent l'arène pendant le combat.
+func _raise_barriers() -> void:
+	for bx in [ARENA_MIN_X - 10.0, ARENA_MAX_X + 10.0]:
+		var b := StaticBody2D.new()
+		b.position = Vector2(float(bx), GROUND_Y - 50.0)
+		var sh := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(18, 380)
+		sh.shape = rect
+		sh.position = Vector2(0, -190)
+		b.add_child(sh)
+		var col := Polygon2D.new()
+		col.polygon = PackedVector2Array([
+			Vector2(-9, 0), Vector2(9, 0), Vector2(9, -380), Vector2(-9, -380),
+		])
+		col.color = Color(0.7, 0.35, 0.95, 0.3)
+		b.add_child(col)
+		var glow := Sprite2D.new()
+		glow.texture = load("res://assets/mist.svg")
+		glow.modulate = Color(0.7, 0.35, 0.95, 0.22)
+		glow.scale = Vector2(1.6, 5.2)
+		glow.position = Vector2(0, -190)
+		b.add_child(glow)
+		add_child(b)
+		_barriers.append(b)
+
+func _drop_barriers() -> void:
+	for b in _barriers:
+		if is_instance_valid(b):
+			var t := create_tween()
+			t.tween_property(b, "modulate:a", 0.0, 0.8)
+			t.finished.connect(b.queue_free)
+	_barriers.clear()
+
+func _on_miniboss_health_changed(current: int, max_health: int) -> void:
+	boss_bar_fill.scale.x = float(current) / float(max_health)
+
+func _on_miniboss_defeated() -> void:
+	player.set_physics_process(false)
+	boss_ui.visible = false
+	Music.play_world(2)
+	_drop_barriers()
+	sfx_win.play()
+	SaveManager.complete_level(LEVEL_ID, player.orbs)
+	_display_challenge_results()
+	win_label.visible = true
+
+func _display_challenge_results() -> void:
+	var results := Challenge.finish_level()
+	var challenge_stats = win_label.find_child("ChallengeStats", true, false)
+	if challenge_stats == null:
+		return
+	var grade_label = challenge_stats.find_child("Grade", true, false)
+	var orbs_label = challenge_stats.find_child("Orbs", true, false)
+	var damage_label = challenge_stats.find_child("Damage", true, false)
+	var time_label = challenge_stats.find_child("Time", true, false)
+	if grade_label:
+		grade_label.text = "Grade : %s" % Challenge.grade_name(results["grade"])
+		grade_label.add_theme_color_override("font_color", Challenge.grade_color(results["grade"]))
+	if orbs_label:
+		orbs_label.text = "Orbes : %d/%d" % [results["orbs"], results["total_orbs"]]
+	if damage_label:
+		damage_label.text = "Dégâts : %d   •   Esprits vaincus : %d" % [results["damage"], results["kills"]]
+		if int(results["combo"]) >= 2:
+			damage_label.text += "   •   Combo ×%d" % int(results["combo"])
+	if time_label:
+		time_label.text = "Temps : %s" % _format_time(results["time"])
+	var stats_half := 150.0
+	for child in challenge_stats.get_children():
+		if child is Label:
+			stats_half = maxf(stats_half, (child as Label).get_minimum_size().x * 0.5 + 10.0)
+	challenge_stats.offset_left = -stats_half
+	challenge_stats.offset_right = stats_half
+	var stats_bg = win_label.find_child("StatsBG", true, false)
+	if stats_bg != null:
+		stats_bg.offset_left = -stats_half - 30.0
+		stats_bg.offset_right = stats_half + 30.0
+
+func _format_time(seconds: float) -> String:
+	var mins: int = int(seconds) / 60
+	var secs: int = int(seconds) % 60
+	return "%d:%02d" % [mins, secs]
+
+func _on_menu_pressed() -> void:
+	Transition.goto("res://scenes/main_menu.tscn")

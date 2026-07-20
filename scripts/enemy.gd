@@ -21,6 +21,8 @@ var _cur := ""
 
 func _ready() -> void:
 	start_x = position.x
+	if Challenge.kensei:
+		speed *= 1.35
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "walk", "path": ONRE + "Walk.png", "frames": 7, "fps": 9.0, "loop": true},
 		{"name": "dead", "path": ONRE + "Dead.png", "frames": 6, "fps": 10.0, "loop": false},
@@ -28,6 +30,10 @@ func _ready() -> void:
 	_play("walk")
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
+	var sh := ContactShadow.new()
+	sh.width = 26.0
+	add_child(sh)
+	move_child(sh, 0)
 
 ## Le corps d'Eneko n'est jamais un obstacle physique pour cet ennemi :
 ## sans ça, la dépénétration de l'ennemi « colle » Eneko pendant la ruée
@@ -47,6 +53,10 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0
 
+	# Demi-tour au bord d'une plateforme : ne patrouille jamais dans le vide.
+	if is_on_floor() and not _ground_ahead(direction):
+		direction *= -1.0
+
 	velocity.x = direction * speed
 	move_and_slide()
 
@@ -54,6 +64,14 @@ func _physics_process(delta: float) -> void:
 		direction *= -1.0
 
 	anim.flip_h = direction < 0.0
+
+## Y a-t-il du sol juste devant, dans la direction `dir` ?
+func _ground_ahead(dir: float) -> bool:
+	var space := get_world_2d().direct_space_state
+	var from := global_position + Vector2(dir * 26.0, -2.0)
+	var q := PhysicsRayQueryParameters2D.create(from, from + Vector2(0, 52.0), 1)
+	q.exclude = [get_rid()]
+	return not space.intersect_ray(q).is_empty()
 
 func _play(n: String) -> void:
 	if _cur != n:
@@ -71,11 +89,12 @@ func die() -> void:
 	if _dying:
 		return
 	_dying = true
+	Atmosphere.release_soul(get_parent(), global_position + Vector2(0, -22), Color(1.0, 0.86, 0.55))
 	velocity = Vector2.ZERO
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	_play("dead")
-	sfx_die.play()
+	Sfx.varied(sfx_die, 0.9, 1.12)
 	# Flash blanc à l'impact, puis fondu spirituel.
 	anim.modulate = Color(1.8, 1.8, 1.8, 1.0)
 	var tween := create_tween()

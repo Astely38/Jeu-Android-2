@@ -14,6 +14,8 @@ const PROJECTILE_SPEED := 170.0
 var player: Node2D = null
 var _t := 0.0
 var _cooldown := 1.4
+## Cadence de tir effective (raccourcie en mode Kensei).
+var _fire_cd := FIRE_COOLDOWN
 var _dying := false
 var _start_y := 0.0
 var _hover_y := 0.0  # descente progressive vers Eneko quand il approche
@@ -26,6 +28,8 @@ var _base_tint := Color(1, 1, 1)
 
 func _ready() -> void:
 	_start_y = position.y
+	if Challenge.kensei:
+		_fire_cd = 1.7
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "float", "path": ONRE + "Walk.png", "frames": 7, "fps": 7.0, "loop": true},
 		{"name": "dead", "path": ONRE + "Dead.png", "frames": 6, "fps": 10.0, "loop": false},
@@ -66,7 +70,7 @@ func _physics_process(delta: float) -> void:
 
 	_cooldown -= delta
 	if _cooldown <= 0.0 and to_player.length() < FIRE_RANGE and absf(to_player.y) < 260.0:
-		_cooldown = FIRE_COOLDOWN
+		_cooldown = _fire_cd
 		_fire(to_player.normalized())
 
 func _fire(dir: Vector2) -> void:
@@ -91,11 +95,12 @@ func die() -> void:
 	if _dying:
 		return
 	_dying = true
+	Atmosphere.release_soul(get_parent(), global_position, Color(0.6, 0.9, 1.0))
 	velocity = Vector2.ZERO
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	anim.play("dead")
-	sfx_die.play()
+	Sfx.varied(sfx_die, 0.9, 1.12)
 	anim.modulate = Color(1.8, 1.8, 1.8, 1.0)
 	var tween := create_tween()
 	tween.tween_property(anim, "modulate", _base_tint, 0.1)
