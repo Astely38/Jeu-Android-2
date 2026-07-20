@@ -116,7 +116,7 @@ func _ready() -> void:
 	_setup_ambient()
 	player.set_land_dust_color(Color(0.7, 0.85, 0.95, 0.7))
 	win_label.visible = false
-	Music.play_world(2)
+	Music.play_level(LEVEL_ID)
 	SaveManager.set_last_level(LEVEL_ID)
 	# Relique cachée, au-dessus de l'îlot de départ (Double Saut).
 	var relic := Relic.new()

@@ -113,7 +113,7 @@ func _ready() -> void:
 	# Sur l'obsidienne brûlante, Eneko soulève une poussière d'étincelles.
 	player.set_land_dust_color(Color(1.0, 0.6, 0.3, 0.8))
 	win_label.visible = false
-	Music.play_world(2)
+	Music.play_level(LEVEL_ID)
 	SaveManager.set_last_level(LEVEL_ID)
 	# Relique cachée, au-dessus du refuge (Double Saut).
 	var relic := Relic.new()

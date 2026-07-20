@@ -117,7 +117,7 @@ func _ready() -> void:
 	boss_ui.visible = false
 	# Si on vient de mourir pendant le combat, le niveau redémarre : on
 	# revient au thème du monde jusqu'à la prochaine entrée dans l'arène.
-	Music.play_world()
+	Music.play_level(LEVEL_ID)
 	SaveManager.set_last_level(LEVEL_ID)
 	# Relique cachée, tapie à gauche de l'apparition.
 	var relic := Relic.new()
@@ -504,7 +504,7 @@ func _on_dialogue_finished() -> void:
 	if _arena_triggered and not _boss_intro_done:
 		_boss_intro_done = true
 		boss_ui.visible = true
-		Music.play_boss()
+		Music.play_combat()
 		_raise_barriers()
 		if is_instance_valid(boss):
 			boss.activate()
@@ -556,7 +556,7 @@ func _on_boss_phase_changed(_new_phase: int) -> void:
 func _on_boss_defeated() -> void:
 	player.set_physics_process(false)
 	boss_ui.visible = false
-	Music.play_world()
+	Music.play_level(LEVEL_ID)
 	_drop_barriers()
 	_play_victory_cinematic()
 

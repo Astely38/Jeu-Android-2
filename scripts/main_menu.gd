@@ -20,7 +20,7 @@ func _ready() -> void:
 	# Revenir au menu désarme le mode Kensei ; « Continuer » relance donc
 	# toujours en mode normal, la sélection de niveaux le réarme au besoin.
 	Challenge.kensei = false
-	Music.play_world()
+	Music.play_menu()
 	# Clic d'interface : joué à chaque bouton (routé vers le bus « Sons »).
 	_sfx_click = AudioStreamPlayer.new()
 	_sfx_click.stream = load("res://assets/sfx/ui_click.wav")

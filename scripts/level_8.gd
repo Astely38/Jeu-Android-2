@@ -113,7 +113,7 @@ func _ready() -> void:
 	# Sur la pierre de vide, Eneko soulève une poussière d'améthyste.
 	player.set_land_dust_color(Color(0.66, 0.42, 0.9, 0.8))
 	win_label.visible = false
-	Music.play_world(2)
+	Music.play_level(LEVEL_ID)
 	SaveManager.set_last_level(LEVEL_ID)
 	# Relique cachée, en hauteur (Double Saut).
 	var relic := Relic.new()

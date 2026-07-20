@@ -85,7 +85,7 @@ func _ready() -> void:
 	player.set_land_dust_color(Color(0.66, 0.42, 0.9, 0.8))
 	win_label.visible = false
 	boss_ui.visible = false
-	Music.play_world(2)
+	Music.play_level(LEVEL_ID)
 	SaveManager.set_last_level(LEVEL_ID)
 	# Relique cachée, tapie à gauche de l'apparition.
 	var relic := Relic.new()
@@ -319,7 +319,7 @@ func _on_dialogue_finished() -> void:
 	if _arena_triggered and not _boss_intro_done:
 		_boss_intro_done = true
 		boss_ui.visible = true
-		Music.play_boss()
+		Music.play_combat()
 		_raise_barriers()
 		if is_instance_valid(mini_boss):
 			mini_boss.activate()
@@ -364,7 +364,7 @@ func _on_miniboss_health_changed(current: int, max_health: int) -> void:
 func _on_miniboss_defeated() -> void:
 	player.set_physics_process(false)
 	boss_ui.visible = false
-	Music.play_world(2)
+	Music.play_level(LEVEL_ID)
 	_drop_barriers()
 	sfx_win.play()
 	SaveManager.complete_level(LEVEL_ID, player.orbs)

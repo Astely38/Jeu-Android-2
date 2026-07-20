@@ -113,7 +113,7 @@ func _ready() -> void:
 	# Sur le sable noir, Eneko soulève une poussière de cendre grise.
 	player.set_land_dust_color(Color(0.5, 0.46, 0.44, 0.8))
 	win_label.visible = false
-	Music.play_world(2)
+	Music.play_level(LEVEL_ID)
 	SaveManager.set_last_level(LEVEL_ID)
 	# Relique cachée, en hauteur (récompense le Double Saut).
 	var relic := Relic.new()
