@@ -126,3 +126,33 @@ jobs:
           files: build/android/${{ env.EXPORT_NAME }}-v0.${{ github.run_number }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Ne garde que la dernière release : supprime toutes les anciennes releases
+  # « build-* » ET leurs tags. Job séparé sur le runner hôte (et non dans le
+  # conteneur godot-ci) pour disposer de la CLI `gh`. Le GITHUB_TOKEN du CI a
+  # les droits (contents: write), contrairement à un push de suppression manuel.
+  cleanup-releases:
+    name: Nettoyage des anciennes releases
+    needs: export-android
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Supprime les anciennes releases et tags (garde la dernière)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEEP: "1"
+          CURRENT_TAG: build-${{ github.run_number }}
+        run: |
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 500 \
+            --json tagName,createdAt \
+            --jq 'sort_by(.createdAt) | reverse | .[].tagName' > /tmp/tags.txt
+          echo "Releases existantes :"; cat /tmp/tags.txt
+          # On saute les KEEP plus récentes, puis on supprime les « build-* »
+          # restantes (release + tag). On protège explicitement le tag courant.
+          tail -n +$(( KEEP + 1 )) /tmp/tags.txt | grep '^build-' | while read -r tag; do
+            if [ "$tag" = "$CURRENT_TAG" ]; then continue; fi
+            echo "Suppression de $tag (release + tag)"
+            gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          done
+          echo "Nettoyage terminé."
