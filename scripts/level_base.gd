@@ -20,6 +20,20 @@ func _on_kill_zone_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player") and body.has_method("fall_damage"):
 		body.fall_damage()
 
+## Construit la zone de mort (une longue bande sous le niveau qui coûte un
+## cœur à la chute). `level_end` = longueur du niveau ; `y` et `height`
+## couvrent les rares niveaux dont le vide descend plus bas (temple, gouffre).
+func _build_kill_zone(level_end: float, y: float = 700.0, height: float = 100.0) -> void:
+	var kz := Area2D.new()
+	kz.position = Vector2(level_end / 2.0, y)
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(level_end + 800.0, height)
+	shape.shape = rect
+	kz.add_child(shape)
+	add_child(kz)
+	kz.body_entered.connect(_on_kill_zone_body_entered)
+
 ## mm:ss à partir d'un nombre de secondes.
 func _format_time(seconds: float) -> String:
 	var mins: int = int(seconds) / 60

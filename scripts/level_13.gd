@@ -105,7 +105,7 @@ func _ready() -> void:
 	_build_checkpoints()
 	_build_traps()
 	_build_goal()
-	_build_kill_zone()
+	_build_kill_zone(LEVEL_END, 720.0)
 	_build_wall()
 	_spawn_entities()
 	_setup_audio()
@@ -328,19 +328,6 @@ func _build_goal() -> void:
 	Atmosphere.breathe(glow)
 	goal.body_entered.connect(_on_goal_body_entered)
 
-func _build_kill_zone() -> void:
-	var kz := Area2D.new()
-	kz.position = Vector2(LEVEL_END / 2.0, 720.0)
-	var shape := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	rect.size = Vector2(LEVEL_END + 800.0, 100.0)
-	shape.shape = rect
-	kz.add_child(shape)
-	add_child(kz)
-	kz.body_entered.connect(_on_kill_zone_body_entered)
-
-## Le mur-Miroir : un pan de verre argenté qui déferle, la crête brisée en
-## éclats de miroir, ton propre reflet courant à sa surface. Bord droit à x=0.
 func _build_wall() -> void:
 	_wall = Node2D.new()
 	_wall.z_index = 30

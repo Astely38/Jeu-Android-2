@@ -79,7 +79,7 @@ func _ready() -> void:
 	_build_anchors()
 	_build_checkpoints()
 	_build_goal()
-	_build_kill_zone()
+	_build_kill_zone(LEVEL_END, 760.0)
 	_spawn_entities()
 	_setup_audio()
 	_setup_ambient()
@@ -233,17 +233,6 @@ func _build_goal() -> void:
 	add_child(goal)
 	Atmosphere.breathe(glow)
 	goal.body_entered.connect(_on_goal_body_entered)
-
-func _build_kill_zone() -> void:
-	var kz := Area2D.new()
-	kz.position = Vector2(LEVEL_END / 2.0, 760.0)
-	var shape := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	rect.size = Vector2(LEVEL_END + 800.0, 100.0)
-	shape.shape = rect
-	kz.add_child(shape)
-	add_child(kz)
-	kz.body_entered.connect(_on_kill_zone_body_entered)
 
 func _spawn_entities() -> void:
 	# Léonie veille depuis le premier îlot (elle y délivre son enseignement).

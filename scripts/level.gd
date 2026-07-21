@@ -116,7 +116,7 @@ func _ready() -> void:
 	_build_birds()
 	_build_dapples()
 	_build_butterflies()
-	_build_kill_zone()
+	_build_kill_zone(LEVEL_END)
 	_spawn_entities()
 	_setup_audio()
 	_setup_ambient()
@@ -594,17 +594,6 @@ func _setup_ambient() -> void:
 	amb.add_line(self, 2200.0, "Eneko", "J'ai grandi dans ces bambous. Les voir se faner me serre le cœur.")
 	amb.add_line(self, 3900.0, "Eneko", "Chaque esprit tranché est une âme rendue au repos.")
 	amb.add_line(self, 5600.0, "Eneko", "Le torii, enfin. La clairière retrouvera la paix.")
-
-func _build_kill_zone() -> void:
-	var kz := Area2D.new()
-	kz.position = Vector2(LEVEL_END / 2.0, 700.0)
-	var shape := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	rect.size = Vector2(LEVEL_END + 800.0, 100.0)
-	shape.shape = rect
-	kz.add_child(shape)
-	add_child(kz)
-	kz.body_entered.connect(_on_kill_zone_body_entered)
 
 func _spawn_entities() -> void:
 	for x in PATROL_XS:
