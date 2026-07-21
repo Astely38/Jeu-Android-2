@@ -12,12 +12,16 @@ extends CharacterBody2D
 const GRAVITY := 980.0
 const TURN_TIME := 0.62            # délai de volte-face = fenêtre pour frapper le dos
 
-const ARMOR := Color(0.3, 0.32, 0.44)
-const ARMOR_DARK := Color(0.17, 0.18, 0.26)
-const SHIELD := Color(0.5, 0.18, 0.2)
-const SHIELD_HI := Color(0.88, 0.55, 0.32)
-const EDGE := Color(0.72, 0.82, 0.98)
-const EYE := Color(1.0, 0.78, 0.32)
+const ARMOR := Color(0.28, 0.31, 0.52)       # armure indigo spectrale
+const ARMOR_HI := Color(0.48, 0.53, 0.78)    # reflet clair des plaques
+const ARMOR_DARK := Color(0.14, 0.15, 0.27)  # creux / dessous
+const LACE := Color(0.74, 0.22, 0.26)        # laçage rouge (odoshi)
+const GOLD := Color(0.96, 0.79, 0.36)        # ornements dorés (maedate, blason)
+const SHIELD := Color(0.44, 0.13, 0.15)      # laque rouge sombre du pavois
+const SHIELD_HI := Color(0.66, 0.22, 0.24)   # reflet du pavois
+const EDGE := Color(0.8, 0.86, 1.0)          # liseré spectral lumineux
+const EYE := Color(1.0, 0.56, 0.2)           # œil ambre-braise
+const AURA := Color(0.42, 0.48, 0.9)         # halo spectral bleu
 
 var player: Node2D = null
 var _dying := false
@@ -147,53 +151,95 @@ func _build_visual() -> void:
 	_gfx = Node2D.new()
 	add_child(_gfx)
 
-	# Jambes.
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-9, 22), Vector2(-2, 22), Vector2(-2, 4), Vector2(-9, 4)]), ARMOR_DARK)
-	_shape(_gfx, PackedVector2Array([
-		Vector2(2, 22), Vector2(9, 22), Vector2(9, 4), Vector2(2, 4)]), ARMOR_DARK)
+	# Halo spectral (fantôme + lisibilité).
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(AURA.r, AURA.g, AURA.b, 0.3)
+	glow.scale = Vector2(1.9, 2.1)
+	glow.position = Vector2(0, -6)
+	_gfx.add_child(glow)
 
-	# Torse (armure).
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-11, 5), Vector2(11, 5), Vector2(9, -18), Vector2(-9, -18)]), ARMOR)
-	# Ceinture sombre.
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-11, 5), Vector2(11, 5), Vector2(10, 0), Vector2(-10, 0)]), ARMOR_DARK)
+	# Jambes (sous la jupe d'armure).
+	_fill(_gfx, PackedVector2Array([Vector2(-7, 22), Vector2(-2, 22), Vector2(-3, 12), Vector2(-7, 12)]), ARMOR_DARK)
+	_fill(_gfx, PackedVector2Array([Vector2(2, 22), Vector2(7, 22), Vector2(7, 12), Vector2(3, 12)]), ARMOR_DARK)
 
-	# Casque (kabuto) + cornes.
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-9, -18), Vector2(9, -18), Vector2(7, -31), Vector2(0, -37), Vector2(-7, -31)]), ARMOR)
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-2, -33), Vector2(-9, -44), Vector2(-4, -32)]), SHIELD_HI)
-	_shape(_gfx, PackedVector2Array([
-		Vector2(2, -33), Vector2(9, -44), Vector2(4, -32)]), SHIELD_HI)
+	# Jupe d'armure (kusazuri) : plaques lacées de rouge.
+	_shape(_gfx, PackedVector2Array([Vector2(-10, 2), Vector2(10, 2), Vector2(9, 15), Vector2(-9, 15)]), ARMOR)
+	for yy in [6.0, 10.0]:
+		_fill(_gfx, PackedVector2Array([Vector2(-9, yy), Vector2(9, yy), Vector2(9, yy + 1.6), Vector2(-9, yy + 1.6)]), LACE)
 
-	# Yeux luisants sous le casque.
+	# Torse (dō) : armure lamellaire lacée de rouge + reflet central.
+	_shape(_gfx, PackedVector2Array([Vector2(-11, 3), Vector2(11, 3), Vector2(9, -17), Vector2(-9, -17)]), ARMOR)
+	for yy in [-13.0, -8.0, -3.0]:
+		_fill(_gfx, PackedVector2Array([Vector2(-9, yy), Vector2(9, yy), Vector2(9, yy + 1.8), Vector2(-9, yy + 1.8)]), LACE)
+	_fill(_gfx, PackedVector2Array([Vector2(-2, -16), Vector2(2, -16), Vector2(2, 2), Vector2(-2, 2)]), ARMOR_HI)
+
+	# Épaulières (sode).
+	for s in [-1.0, 1.0]:
+		_shape(_gfx, PackedVector2Array([
+			Vector2(s * 8, -16), Vector2(s * 16, -14), Vector2(s * 15, -3), Vector2(s * 8, -5)]), ARMOR_HI)
+
+	# Gorge sombre.
+	_fill(_gfx, PackedVector2Array([Vector2(-6, -17), Vector2(6, -17), Vector2(5, -22), Vector2(-5, -22)]), ARMOR_DARK)
+
+	# Casque (kabuto) : dôme + bord relevé.
+	_shape(_gfx, PackedVector2Array([
+		Vector2(-9, -22), Vector2(9, -22), Vector2(8, -33), Vector2(0, -39), Vector2(-8, -33)]), ARMOR)
+	_fill(_gfx, PackedVector2Array([Vector2(-10, -22), Vector2(10, -22), Vector2(8, -25), Vector2(-8, -25)]), ARMOR_HI)
+	# Cornes dorées (kuwagata) en V + maedate frontal.
+	_shape(_gfx, PackedVector2Array([Vector2(-3, -34), Vector2(-13, -47), Vector2(-6, -33)]), GOLD)
+	_shape(_gfx, PackedVector2Array([Vector2(3, -34), Vector2(13, -47), Vector2(6, -33)]), GOLD)
+	_fill(_gfx, PackedVector2Array([Vector2(-3, -33), Vector2(3, -33), Vector2(2, -40), Vector2(-2, -40)]), GOLD)
+
+	# Masque menpo sombre + yeux ambre-braise.
+	_fill(_gfx, PackedVector2Array([Vector2(-7, -30), Vector2(7, -30), Vector2(6, -22), Vector2(-6, -22)]), ARMOR_DARK)
 	for s in [-1.0, 1.0]:
 		var eye := Polygon2D.new()
-		eye.polygon = PackedVector2Array([
-			Vector2(s * 2, -24), Vector2(s * 6, -24), Vector2(s * 6, -21), Vector2(s * 2, -21)])
+		var ep := PackedVector2Array()
+		for i in 8:
+			var a := i * TAU / 8.0
+			ep.append(Vector2(cos(a) * 2.3, sin(a) * 1.6))
+		eye.polygon = ep
+		eye.position = Vector2(s * 4.0, -26.0)
 		eye.color = EYE
 		_gfx.add_child(eye)
 
-	# Grand pavois DEVANT (côté +x ; le flip par scale.x le fait passer du
-	# côté du regard). C'est l'élément clé : il montre le côté protégé.
+	# Grand pavois DEVANT (côté +x ; le flip par scale.x le porte du côté du
+	# regard). C'est l'élément clé : il montre le côté protégé.
 	_shield = Node2D.new()
-	_shield.position = Vector2(13, -7)
+	_shield.position = Vector2(14, -8)
 	_gfx.add_child(_shield)
 	_shape(_shield, PackedVector2Array([
-		Vector2(0, -27), Vector2(8, -24), Vector2(11, 0), Vector2(8, 24), Vector2(0, 27)]), SHIELD)
-	# Renfort vertical + blason.
-	_shape(_shield, PackedVector2Array([
-		Vector2(3, -24), Vector2(6, -24), Vector2(6, 24), Vector2(3, 24)]), SHIELD_HI)
+		Vector2(0, -30), Vector2(7, -27), Vector2(10, 0), Vector2(7, 27), Vector2(0, 30)]), SHIELD)
+	_fill(_shield, PackedVector2Array([
+		Vector2(2, -25), Vector2(4, -24), Vector2(6, 0), Vector2(4, 24), Vector2(2, 25)]), SHIELD_HI)
+	# Renforts dorés haut et bas.
+	_fill(_shield, PackedVector2Array([Vector2(1, -22), Vector2(8, -20), Vector2(8, -18), Vector2(1, -20)]), GOLD)
+	_fill(_shield, PackedVector2Array([Vector2(1, 20), Vector2(8, 18), Vector2(8, 20), Vector2(1, 22)]), GOLD)
+	# Blason (mon) doré cerclé.
 	var mon := Polygon2D.new()
 	var mp := PackedVector2Array()
-	for i in 12:
-		var a := i * TAU / 12.0
-		mp.append(Vector2(5 + cos(a) * 4.5, cos(a) * 0.0 + sin(a) * 4.5))
+	for i in 14:
+		var a := i * TAU / 14.0
+		mp.append(Vector2(5.0 + cos(a) * 5.0, sin(a) * 5.0))
 	mon.polygon = mp
-	mon.color = SHIELD_HI
+	mon.color = GOLD
 	_shield.add_child(mon)
+	var mon_in := Polygon2D.new()
+	var mpi := PackedVector2Array()
+	for i in 14:
+		var a := i * TAU / 14.0
+		mpi.append(Vector2(5.0 + cos(a) * 2.4, sin(a) * 2.4))
+	mon_in.polygon = mpi
+	mon_in.color = SHIELD
+	_shield.add_child(mon_in)
+
+## Polygone plein sans liseré (détails internes : lamelles, reflets, dorures).
+func _fill(parent: Node, pts: PackedVector2Array, color: Color) -> void:
+	var p := Polygon2D.new()
+	p.polygon = pts
+	p.color = color
+	parent.add_child(p)
 
 func _shape(parent: Node, pts: PackedVector2Array, fill: Color) -> void:
 	var p := Polygon2D.new()
