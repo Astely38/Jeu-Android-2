@@ -50,13 +50,13 @@ const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
 const PATROL_XS := [1500.0, 4600.0]
 const SHADOW_XS := [850.0, 3300.0, 5780.0]
 ## Deux Ombres d'élite ici — le plus profond du périple : deux orbes dorées.
-const ELITE_XS := [3920.0, 6420.0]
+const ELITE_XS := [3920.0]
 ## Masques d'Oni : au-dessus de plateformes dégagées (jamais d'un trou).
-const MASK_XS := [2080.0, 4540.0, 5160.0]
+const MASK_XS := [2080.0, 4540.0]
 ## Corbeaux-tengu en vol (x, altitude) : ils patrouillent puis plongent.
-const KARASU_XS := [Vector2(1900.0, 345.0), Vector2(3950.0, 350.0), Vector2(6250.0, 340.0)]
+const KARASU_XS := [Vector2(1900.0, 345.0)]
 ## Onis au pavois (au sol) : à contourner à la ruée pour frapper le dos.
-const SHIELD_ONI_XS := [3150.0, 5900.0]
+const SHIELD_ONI_XS := [3150.0]
 const TRAP_XS := [700.0, 1350.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]
 ## Monolithes de vide dressés qui bordent le puits (décor, sans collision).
 const MONOLITH_XS := [500.0, 2500.0, 3920.0, 5160.0, 6600.0]

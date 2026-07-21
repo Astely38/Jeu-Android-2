@@ -7,6 +7,7 @@ extends LevelBase
 
 const ORB_SCENE := preload("res://scenes/orb.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
+const KARASU_SCENE := preload("res://scenes/karasu.tscn")
 
 const GROUND_Y := 550.0
 const SPAWN_Y := 477.0
@@ -53,6 +54,13 @@ const ISLAND_ORBS := [
 	Vector2(230, 440), Vector2(1350, 440), Vector2(2470, 440),
 	Vector2(3590, 440), Vector2(4710, 440), Vector2(5830, 440),
 	Vector2(6900, 440),
+]
+## Karasu-tengu : sentinelles ailées suspendues au-dessus du gouffre, entre les
+## îlots. Elles patrouillent en vol puis plongent sur Eneko pendant qu'il
+## s'élance d'anneau en anneau — la seule menace qui atteigne le Fil Spirituel.
+const KARASU_XS := [
+	Vector2(830, 250), Vector2(1795, 250), Vector2(2915, 250),
+	Vector2(4035, 250), Vector2(5155, 250), Vector2(6275, 250),
 ]
 
 const LEONIE_LINES := [
@@ -242,6 +250,12 @@ func _spawn_entities() -> void:
 		var orb := ORB_SCENE.instantiate()
 		orb.position = Vector2(a.x, a.y + 42.0)
 		add_child(orb)
+	# Karasu-tengu en vol au-dessus des gouffres : menace aérienne pendant le
+	# franchissement au Fil Spirituel.
+	for k in KARASU_XS:
+		var karasu := KARASU_SCENE.instantiate()
+		karasu.position = k
+		add_child(karasu)
 
 func _setup_ambient() -> void:
 	var amb := AmbientDialogue.new()

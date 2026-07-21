@@ -52,9 +52,9 @@ const SHADOW_XS := [1470.0, 3300.0, 5780.0]
 const ELITE_XS := [5160.0]
 ## Masques d'Oni : au-dessus de plateformes dégagées (jamais d'un trou). Plus
 ## nombreux ici — on est proche de la source.
-const MASK_XS := [2080.0, 4540.0, 6420.0]
+const MASK_XS := [2080.0, 4540.0]
 ## Corbeaux-tengu en vol (x, altitude) : ils patrouillent puis plongent.
-const KARASU_XS := [Vector2(4150.0, 350.0), Vector2(6050.0, 340.0)]
+const KARASU_XS := [Vector2(4150.0, 350.0)]
 const TRAP_XS := [700.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]
 ## Arêtes d'obsidienne dressées qui bordent la faille (décor, sans collision).
 const SPUR_XS := [500.0, 2500.0, 3920.0, 5160.0, 6600.0]

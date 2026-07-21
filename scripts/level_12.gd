@@ -12,6 +12,7 @@ const MASK_SCENE := preload("res://scenes/split_shade.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 const CRUMBLE_SCENE := preload("res://scenes/crumble_platform.tscn")
 const LIFT_SCENE := preload("res://scenes/lift_platform.tscn")
+const KARASU_SCENE := preload("res://scenes/karasu.tscn")
 
 const GROUND_Y := 550.0
 const SPAWN_Y := 477.0
@@ -78,7 +79,14 @@ const HIGH_ORBS := [
 ## Masques d'Oni : fauteurs de trouble sur les îlots de repos (jamais au
 ## milieu d'un gantelet). Ombre : une seule, gardienne d'un îlot.
 const MASK_XS := [3900.0, 5300.0]
-const SHADOW_XS := [1500.0]
+const SHADOW_XS := [1500.0, 6720.0]
+## Karasu-tengu : ils patrouillent en vol AU-DESSUS des gantelets effondrables
+## et plongent sur Eneko en pleine traversée — la seule menace qui l'atteigne
+## là où le sol se dérobe.
+const KARASU_XS := [
+	Vector2(860, 360), Vector2(2050, 300), Vector2(3290, 360),
+	Vector2(4615, 340), Vector2(6015, 340),
+]
 ## Stèles-miroir décoratives.
 const STELE_XS := [500.0, 2680.0, 3900.0, 6600.0]
 
@@ -329,6 +337,10 @@ func _spawn_entities() -> void:
 		var m := MASK_SCENE.instantiate()
 		m.position = Vector2(x, SPAWN_Y - 70.0)
 		add_child(m)
+	for k in KARASU_XS:
+		var karasu := KARASU_SCENE.instantiate()
+		karasu.position = k
+		add_child(karasu)
 	# Refuge de Léonie sur l'îlot central.
 	PlatformPainter.build_sanctuary(self, REFUGE_X, GROUND_Y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()

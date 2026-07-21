@@ -10,6 +10,8 @@ extends LevelBase
 const ORB_SCENE := preload("res://scenes/orb.tscn")
 const MASK_SCENE := preload("res://scenes/split_shade.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
+const PATROL_SCENE := preload("res://scenes/enemy.tscn")
+const KARASU_SCENE := preload("res://scenes/karasu.tscn")
 const SAMURAI := "res://assets/character/samurai/"
 
 const GROUND_Y := 550.0
@@ -45,6 +47,15 @@ const CHECKPOINT_XS := [1900.0, 3900.0, 5600.0]
 ## Obstacles à esquiver EN COURANT (jamais des passages obligés).
 const TRAP_XS := [1500.0, 3350.0, 4600.0]
 const MASK_XS := [2680.0, 5160.0]
+## Esprits Onre postés sur les plateformes : obstacles à trancher ou franchir
+## d'un bond SANS ralentir (le Reflet mord dès qu'on s'attarde).
+const PATROL_XS := [850.0, 3300.0, 4540.0]
+## Karasu-tengu qui plongent d'en haut pendant la fuite : ils forcent le pas
+## de côté sans jamais bloquer la course.
+const KARASU_XS := [
+	Vector2(1150, 290), Vector2(2380, 290), Vector2(3610, 290),
+	Vector2(4850, 290), Vector2(6100, 290),
+]
 const STELE_XS := [500.0, 3000.0, 5400.0, 6700.0]
 ## Traînée d'orbes à cueillir dans la fuite.
 const ORBS := [
@@ -398,6 +409,14 @@ func _spawn_entities() -> void:
 		var m := MASK_SCENE.instantiate()
 		m.position = Vector2(x, SPAWN_Y - 70.0)
 		add_child(m)
+	for x in PATROL_XS:
+		var e := PATROL_SCENE.instantiate()
+		e.position = Vector2(x, SPAWN_Y)
+		add_child(e)
+	for k in KARASU_XS:
+		var karasu := KARASU_SCENE.instantiate()
+		karasu.position = k
+		add_child(karasu)
 	for o in ORBS:
 		var orb := ORB_SCENE.instantiate()
 		orb.position = o
