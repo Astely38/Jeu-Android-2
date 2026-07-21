@@ -16,7 +16,9 @@ spectral sombre) qui poursuit Eneko, et le **Yūrei tireur** (niveaux 3 à 5), e
 crache des **orbes corrompus** — esquivables d'une ruée ou **tranchables au sabre**. Au Chapitre II
 surgit aussi le **Karasu-tengu** (corbeau-démon) : il patrouille en vol, se **cabre** pour annoncer
 son attaque, puis **plonge en piqué** sur Eneko avant de remonter — une menace venue du ciel qu'on
-esquive d'un pas de côté. Les **orbes
+esquive d'un pas de côté. L'**Oni au pavois** (guerrier spectral) avance **bouclier en avant** :
+les coups de sabre de face **ricochent**, il ne tombe qu'en le frappant **dans le dos** — on le
+contourne d'une **ruée** (invincible, elle le traverse) avant qu'il ne se retourne. Les **orbes
 spirituels** comptent pour le grade de fin de niveau et, tous les 5 ramassés, **rendent un cœur**. Décor peint : montagnes
 enneigées, collines, nuages, nappes de brume, bambous noueux, fleurs sauvages et **pétales de
 cerisier** portés par le vent. Effets sonores et vent ambiant inclus.

@@ -10,6 +10,7 @@ const ORB_SCENE := preload("res://scenes/orb.tscn")
 const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const MASK_SCENE := preload("res://scenes/split_shade.tscn")
+const SHIELD_ONI_SCENE := preload("res://scenes/shield_oni.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 
 const GROUND_Y := 550.0
@@ -47,6 +48,8 @@ const PATROL_XS := [900.0, 2080.0, 3850.0, 6300.0, 7040.0]
 const SHADOW_XS := [1470.0, 3300.0, 4540.0, 5780.0]
 const ELITE_XS := [5160.0]
 const MASK_XS := [2080.0, 4540.0, 6420.0]
+## Onis au pavois (au sol) : à contourner à la ruée pour frapper le dos.
+const SHIELD_ONI_XS := [3300.0, 5160.0]
 const TRAP_XS := [700.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]
 ## Stèles-miroir dressées qui bordent le royaume (décor, sans collision).
 const STELE_XS := [500.0, 2500.0, 3920.0, 5160.0, 6600.0]
@@ -414,6 +417,10 @@ func _spawn_entities() -> void:
 		var m := MASK_SCENE.instantiate()
 		m.position = Vector2(x, SPAWN_Y - 70.0)
 		add_child(m)
+	for x in SHIELD_ONI_XS:
+		var so := SHIELD_ONI_SCENE.instantiate()
+		so.position = Vector2(x, SPAWN_Y)
+		add_child(so)
 	PlatformPainter.build_sanctuary(self, 2680.0, GROUND_Y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()
 	leonie.position = Vector2(2680.0, SPAWN_Y)
