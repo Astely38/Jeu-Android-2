@@ -147,6 +147,33 @@ def make_footstep():
     normalize(buf, 0.55)  # volume discret : un pas ne doit pas couvrir le jeu
     write_wav("assets/sfx/footstep.wav", buf, sr)
 
+def make_land():
+    """Réception de saut : impact FRANC dont toute l'énergie est dès le premier
+    échantillon (pas de montée d'attaque, sinon le son semble arriver en
+    retard). Smack sec + corps sourd qui descend + traîne de gravier."""
+    sr = 44100
+    dur = 0.22
+    n = int(dur * sr)
+    buf = [0.0] * n
+    # Smack d'attaque : bouffée de bruit forte et très courte, dès i = 0.
+    for i in range(int(0.007 * sr)):
+        buf[i] += random.uniform(-1, 1) * 0.95 * math.exp(-320.0 * i / sr)
+    # Corps sourd : sinus grave qui glisse vers le bas, decay rapide.
+    for i in range(n):
+        t = i / sr
+        f = 98.0 * math.exp(-22.0 * t) + 46.0
+        buf[i] += math.sin(2.0 * math.pi * f * t) * 0.7 * math.exp(-23.0 * t)
+    # Gravier soulevé : bruit passe-bas qui retombe.
+    prev = 0.0
+    for i in range(n):
+        t = i / sr
+        white = random.uniform(-1.0, 1.0)
+        prev = prev + 0.18 * (white - prev)
+        buf[i] += prev * 0.28 * math.exp(-28.0 * t)
+    normalize(buf, 0.85)  # réception franche et bien présente
+    write_wav("assets/sfx/land.wav", buf, sr)
+
 if __name__ == "__main__":
     make_clink()
     make_footstep()
+    make_land()
