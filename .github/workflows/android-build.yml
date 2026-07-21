@@ -96,8 +96,32 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: "Build #${{ github.run_number }} (v0.${{ github.run_number }})"
-          body: "Version 0.${{ github.run_number }} (versionCode ${{ github.run_number }}) — build ${{ steps.signing.outputs.mode }} depuis le commit ${{ github.sha }}."
+          name: "Eneko v0.${{ github.run_number }}"
+          body: |
+            ![Eneko, la Voie du Sabre](https://raw.githubusercontent.com/Astely38/Jeu-Android-2/main/docs/banner.png)
+
+            ## Eneko, la Voie du Sabre — v0.${{ github.run_number }}
+
+            Un jeune samouraï, le sabre de son grand-père au poing, traverse forêts
+            de bambous, temples oubliés et reflets brisés pour rallumer la Flamme
+            d'Aube. **15 niveaux, 3 chapitres**, un niveau secret et des combats de boss.
+
+            ### 📥 Installer sur Android
+            1. Sur ton téléphone, télécharge **`eneko-v0.${{ github.run_number }}.apk`** ci-dessous (section *Assets*).
+            2. Ouvre le fichier ; autorise l'installation depuis une « source inconnue » si demandé.
+            3. Lance **Eneko, la Voie du Sabre** et bonne aventure !
+
+            ### 🎮 Au programme
+            - 15 niveaux en 3 chapitres — difficulté croissante (facile → moyen → difficile)
+            - Sabre, **ruée** invincible, double saut, esprits, corbeaux-démons et Oni au pavois
+            - Orbes à récolter, **reliques** cachées, **succès**, grades et chrono par niveau
+            - Musiques d'ambiance, effets sonores et décors peints à la main
+
+            ### 🕹️ Contrôles tactiles
+            Gauche / Droite · **Ruée** · Saut (maintenir = plus haut) · Attaque au sabre
+
+            ---
+            *Version 0.${{ github.run_number }} (versionCode ${{ github.run_number }}) — build **${{ steps.signing.outputs.mode }}**, commit ${{ github.sha }}.*
           prerelease: true
           files: build/android/${{ env.EXPORT_NAME }}-v0.${{ github.run_number }}.apk
         env:

@@ -1,5 +1,7 @@
 # Jeu-Android-2
 
+![Eneko, la Voie du Sabre](docs/banner.png)
+
 ## Eneko, la Voie du Sabre
 
 Petit platformer 2D fait avec [Godot 4](https://godotengine.org/). Eneko — un jeune samouraï aux
