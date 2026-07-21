@@ -353,12 +353,4 @@ func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> v
 		flag.color = Color(0.35, 0.8, 0.4)
 
 func _on_goal_body_entered(body: Node2D) -> void:
-	if body == player:
-		player.set_physics_process(false)
-		sfx_win.play()
-		SaveManager.complete_level(LEVEL_ID, player.orbs)
-		_display_challenge_results()
-		win_label.visible = true
-
-func _on_dialogue_finished() -> void:
-	player.set_physics_process(true)
+	_reach_goal(body, LEVEL_ID, sfx_win)

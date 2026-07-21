@@ -34,6 +34,29 @@ func _build_kill_zone(level_end: float, y: float = 700.0, height: float = 100.0)
 	add_child(kz)
 	kz.body_entered.connect(_on_kill_zone_body_entered)
 
+## Fin d'un échange de dialogue : rend la main au joueur. Les niveaux-boss
+## surchargent cette méthode pour, en plus, déclencher l'arène.
+func _on_dialogue_finished() -> void:
+	var p := get_node_or_null("Player")
+	if p != null:
+		p.set_physics_process(true)
+
+## Victoire : Eneko atteint le torii. Fige le jeu, joue le carillon de fin,
+## retient la progression et affiche le bilan. Les valeurs propres au niveau
+## (identifiant, son de victoire) sont passées en argument par l'appelant —
+## aucune dépendance cachée, donc aucun risque d'oublier de les fournir.
+func _reach_goal(body: Node2D, id: String, win_sound: AudioStreamPlayer = null) -> void:
+	if not body.is_in_group("player"):
+		return
+	body.set_physics_process(false)
+	if win_sound != null:
+		win_sound.play()
+	SaveManager.complete_level(id, body.orbs)
+	_display_challenge_results()
+	var win_label := get_node_or_null("WinLabel")
+	if win_label != null:
+		win_label.visible = true
+
 ## mm:ss à partir d'un nombre de secondes.
 func _format_time(seconds: float) -> String:
 	var mins: int = int(seconds) / 60

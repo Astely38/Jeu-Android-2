@@ -788,17 +788,9 @@ func _on_trap_body_entered(body: Node2D) -> void:
 		body.take_damage(1, body.global_position + Vector2(0, 40))
 
 func _on_goal_body_entered(body: Node2D) -> void:
-	if body == player:
-		player.set_physics_process(false)
-		sfx_win.play()
-		SaveManager.complete_level(LEVEL_ID, player.orbs)
-		_display_challenge_results()
-		win_label.visible = true
+	_reach_goal(body, LEVEL_ID, sfx_win)
 
 func _on_leonie_talk(lines: Array) -> void:
 	player.velocity = Vector2.ZERO
 	player.set_physics_process(false)
 	dialogue.start(lines)
-
-func _on_dialogue_finished() -> void:
-	player.set_physics_process(true)
