@@ -11,6 +11,7 @@ var _t := 0.0
 var _options: Control
 var _achievements_panel: Control
 var _prologue: Control
+var _credits: Control
 var _sfx_click: AudioStreamPlayer
 
 func _ready() -> void:
@@ -305,12 +306,105 @@ func _open_options() -> void:
 	box.add_child(_setting_row("Flashs lumineux", "flash"))
 	box.add_child(_setting_row("Mode détente (+2 cœurs)", "assist", false))
 
+	var credits := Button.new()
+	credits.text = "Crédits"
+	credits.add_theme_font_size_override("font_size", 18)
+	_style_button(credits, Color(0.6, 0.5, 0.45))
+	credits.pressed.connect(_open_credits)
+	box.add_child(credits)
+
 	var close := Button.new()
 	close.text = "Fermer"
 	close.add_theme_font_size_override("font_size", 20)
 	_style_button(close, Color(0.92, 0.65, 0.3))
 	close.pressed.connect(func() -> void: _options.visible = false)
 	box.add_child(close)
+
+## ------------------------------------------------------------------- Crédits
+
+## Écran de crédits (générique) : moteur, musiques, auteur. Ouvert depuis les
+## Réglages, fermé d'une croix ou du bouton du bas.
+func _open_credits() -> void:
+	if _credits != null:
+		_credits.visible = true
+		return
+	_credits = Control.new()
+	_credits.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_credits)
+
+	var dim := ColorRect.new()
+	dim.color = Color(0.02, 0.02, 0.06, 0.92)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_credits.add_child(dim)
+
+	var title := Label.new()
+	title.text = "Crédits"
+	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.45))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(130, 20)
+	title.size = Vector2(700, 40)
+	_credits.add_child(title)
+
+	var close := Button.new()
+	close.text = "✕"
+	close.add_theme_font_size_override("font_size", 24)
+	close.position = Vector2(872, 14)
+	close.custom_minimum_size = Vector2(52, 44)
+	_style_button(close, Color(0.55, 0.3, 0.3))
+	close.pressed.connect(func() -> void: _credits.visible = false)
+	_credits.add_child(close)
+
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(130, 72)
+	scroll.custom_minimum_size = Vector2(700, 400)
+	scroll.size = Vector2(700, 400)
+	UiScroll.make_touch_friendly(scroll)
+	_credits.add_child(scroll)
+
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	box.custom_minimum_size = Vector2(668, 0)
+	scroll.add_child(box)
+
+	box.add_child(_credit_section("Eneko, la Voie du Sabre"))
+	box.add_child(_credit_line("Un jeu de plateforme et de sabre, forgé pièce à pièce."))
+	box.add_child(_credit_section("Conception & développement"))
+	box.add_child(_credit_line("Astely38"))
+	box.add_child(_credit_section("Moteur"))
+	box.add_child(_credit_line("Godot Engine 4.6 — godotengine.org (licence MIT)"))
+	box.add_child(_credit_section("Musique"))
+	box.add_child(_credit_line("Musiques libres de droit — Pixabay (pixabay.com)"))
+	box.add_child(_credit_section("Effets sonores & visuels"))
+	box.add_child(_credit_line("Générés et peints à la main pour le jeu."))
+	box.add_child(_credit_section("Merci"))
+	box.add_child(_credit_line("À toi, qui as suivi Eneko jusqu'au Sanctuaire. Que la Flamme d'Aube te garde."))
+
+	var done := Button.new()
+	done.text = "Fermer"
+	done.add_theme_font_size_override("font_size", 22)
+	done.custom_minimum_size = Vector2(668, 48)
+	_style_button(done, Color(0.92, 0.65, 0.3))
+	done.pressed.connect(func() -> void: _credits.visible = false)
+	box.add_child(done)
+
+func _credit_section(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 21)
+	l.add_theme_color_override("font_color", Color(1.0, 0.82, 0.4))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return l
+
+func _credit_line(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 17)
+	l.add_theme_color_override("font_color", Color(0.92, 0.9, 0.85))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(668, 0)
+	return l
 
 ## ----------------------------------------------------------------- Prologue
 

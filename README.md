@@ -33,10 +33,10 @@ la prise en main. Le bouton du haut ouvre une **pause** (Reprendre / Recommencer
 menu) au lieu de quitter directement. La sélection de niveaux affiche le **meilleur grade** et
 le **meilleur temps** de chaque niveau terminé.
 
-**Sauvegarde locale** (JSON, `user://save.json`) : niveaux terminés/débloqués et meilleur score
-d'orbes par niveau. Le menu principal propose **Continuer** (reprend le dernier niveau joué, visible
-dès qu'une sauvegarde existe) et **Niveaux** (écran de sélection listant les 5 niveaux prévus —
-les niveaux 3 à 5 apparaissent encore en "à venir").
+**Sauvegarde locale** (JSON, `user://save.json`) : niveaux terminés/débloqués, meilleur score
+d'orbes par niveau, reliques trouvées et succès débloqués. Le menu principal propose **Continuer**
+(reprend le dernier niveau joué, visible dès qu'une sauvegarde existe) et **Niveaux** (écran de
+sélection des 15 niveaux, affichant meilleur grade et meilleur temps de chacun).
 
 **Niveau 2 — Le Temple Oublié** : ascension nocturne d'une tour en ruine sous un **ciel étoilé**,
 jusqu'à la **lune** qui veille sur le sanctuaire. Torches aux **flammes animées** et halos pulsants,
@@ -81,17 +81,26 @@ colline, montagnes, rivière aux reflets dorés et pétales portés par le vent.
 
 ### Structure du projet
 
+Le jeu compte désormais **15 niveaux répartis en 3 chapitres** (plus un niveau
+secret et les affrontements de boss), avec une courbe de difficulté voulue
+**Chapitre 1 facile → Chapitre 2 moyen → Chapitre 3 difficile**.
+
 ```
-/scenes   main_menu, level_select, player, enemy, shadow, undead, leonie, orb, boss
-/levels   level_1 ("La Clairière des Bambous"), level_2 ("Le Temple Oublié"),
-          level_3 ("Le Village des Ombres"), level_4 ("La Montagne des Brumes"),
-          level_5 ("Le Sanctuaire Final")
-/scripts  logique GDScript (player, enemy, shadow, undead, leonie, boss, level, level_2, level_3,
-          level_4, level_5, main_menu, level_select, challenge)
+/scenes   main_menu, level_select, player, enemy, shadow, undead, leonie, orb,
+          karasu, shield_oni, reflet, boss, crumble_platform, lift_platform, …
+/scripts  logique GDScript : player, ennemis (enemy, shadow, undead, karasu,
+          shield_oni, split_shade, grand_mask, spirit…), leonie, boss, reflet,
+          level_base + level_2…level_15 + level_secret, main_menu, level_select,
+          challenge, music_manager, achievements, atmosphere
 /scripts/save  SaveManager (autoload, sauvegarde JSON)
 /ui       boîte de dialogue
-/assets   sprites (SVG + pixel art), sons (assets/sfx)
+/assets   sprites (SVG + pixel art), musiques (assets/music), sons (assets/sfx)
 ```
+
+Le **menu principal** propose **Continuer**, **Niveaux** (sélection des 15
+niveaux), une **Galerie** (succès et reliques cachées), un **Prologue**
+rejouable, des **Réglages** (audio, vibrations, accessibilité) et un écran de
+**Crédits**.
 
 Le jeu démarre sur le **menu principal**. Les collisions du sol reposent sur des `StaticBody2D`
 (fiables) ; une migration vers un `TileMap` peint est prévue une fois que le rendu pourra être

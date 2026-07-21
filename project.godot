@@ -6,6 +6,9 @@ config/name="Eneko, la Voie du Sabre"
 config/version="dev"
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
+boot_splash/bg_color=Color(0.101961, 0.062745, 0.184314, 1)
+boot_splash/image="res://icon.svg"
+boot_splash/use_filter=true
 config/icon="res://icon.svg"
 
 [display]
