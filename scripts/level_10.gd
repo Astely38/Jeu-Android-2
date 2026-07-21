@@ -1,4 +1,4 @@
-extends Node2D
+extends LevelBase
 ## Chapitre II — Niveau 10 : « Le Cœur de l'Ombre » (BOSS FINAL du chapitre).
 ## Au plus profond du Puits, Eneko affronte enfin la source de toute l'Ombre :
 ## une masse de nuit battante, protégée d'un bouclier, qui ne s'expose qu'en
@@ -273,10 +273,6 @@ func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> v
 		player.set_checkpoint(Vector2(cp.global_position.x, SPAWN_Y))
 		flag.color = Color(0.4, 0.9, 0.5, 0.95)
 
-func _on_kill_zone_body_entered(body: Node2D) -> void:
-	if body == player:
-		player.fall_damage()
-
 func _on_arena_trigger_body_entered(body: Node2D) -> void:
 	if _arena_triggered or body != player:
 		return
@@ -402,6 +398,3 @@ func _show_chapter_recap(results: Dictionary) -> void:
 		"hook": "La source est tarie... et pourtant, très loin dans le noir, un dernier écho a répondu à l'implosion du Cœur. Léonie l'a entendu, elle aussi. L'Ombre n'était-elle qu'un reflet ? La Voie du Sabre continue.",
 		"next_scene": SaveManager.LEVEL_SCENES.get("level_11", ""),
 	})
-
-func _on_menu_pressed() -> void:
-	Transition.goto("res://scenes/main_menu.tscn")

@@ -1,4 +1,4 @@
-extends Node2D
+extends LevelBase
 ## Niveau 5 : « Le Sanctuaire Final ».
 ## Une courte approche à travers un sanctuaire de marbre pâle et d'or, puis
 ## une arène où Eneko affronte seul le Gardien Corrompu — le boss final.
@@ -495,10 +495,6 @@ func _on_checkpoint_body_entered(body: Node2D, cp: Area2D, flag: Polygon2D) -> v
 		player.set_checkpoint(Vector2(cp.global_position.x, SPAWN_Y))
 		flag.color = Color(0.4, 0.9, 0.5, 0.95)
 
-func _on_kill_zone_body_entered(body: Node2D) -> void:
-	if body == player:
-		player.fall_damage()
-
 func _on_dialogue_finished() -> void:
 	player.set_physics_process(true)
 	if _arena_triggered and not _boss_intro_done:
@@ -603,6 +599,3 @@ func _show_endgame_recap(results: Dictionary) -> void:
 		"hook": "Dans son dernier souffle, le Gardien a murmuré : « Je n'étais que le premier à tomber... L'Ombre a une source, par-delà la mer de brume. Et elle s'éveille. » La Voie du Sabre ne fait que commencer.",
 		"next_scene": SaveManager.LEVEL_SCENES.get("level_6", ""),
 	})
-
-func _on_menu_pressed() -> void:
-	Transition.goto("res://scenes/main_menu.tscn")
