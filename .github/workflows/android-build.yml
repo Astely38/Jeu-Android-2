@@ -7,6 +7,11 @@ on:
 env:
   GODOT_VERSION: 4.6.3
   EXPORT_NAME: eneko
+  # Secrets de signature release (facultatifs) : si le keystore n'est pas
+  # configuré, le build retombe automatiquement sur une APK debug.
+  ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+  ANDROID_KEYSTORE_USER: ${{ secrets.ANDROID_KEYSTORE_USER }}
+  ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
 
 permissions:
   contents: write
@@ -54,10 +59,32 @@ jobs:
           grep '^version/' export_presets.cfg
           grep '^config/version' project.godot
 
-      - name: Build debug APK
+      # Décode le keystore (secret base64) et expose les variables que Godot lit
+      # pour signer en release. Sans secret, on reste en debug.
+      - name: Prépare la signature release (si le keystore est configuré)
+        id: signing
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > /tmp/release.keystore
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/tmp/release.keystore" >> "$GITHUB_ENV"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=$ANDROID_KEYSTORE_USER" >> "$GITHUB_ENV"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "mode=release" >> "$GITHUB_OUTPUT"
+            echo "Keystore détecté → APK signée en RELEASE."
+          else
+            echo "mode=debug" >> "$GITHUB_OUTPUT"
+            echo "Aucun keystore configuré → APK DEBUG (repli)."
+          fi
+
+      - name: Build APK
         run: |
           mkdir -v -p build/android
-          godot --headless --verbose --export-debug "Android" "$(readlink -f build)/android/${EXPORT_NAME}-v0.${GITHUB_RUN_NUMBER}.apk"
+          OUT="$(readlink -f build)/android/${EXPORT_NAME}-v0.${GITHUB_RUN_NUMBER}.apk"
+          if [ "${{ steps.signing.outputs.mode }}" = "release" ]; then
+            godot --headless --verbose --export-release "Android" "$OUT"
+          else
+            godot --headless --verbose --export-debug "Android" "$OUT"
+          fi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -70,7 +97,7 @@ jobs:
         with:
           tag_name: build-${{ github.run_number }}
           name: "Build #${{ github.run_number }} (v0.${{ github.run_number }})"
-          body: "Version 0.${{ github.run_number }} (versionCode ${{ github.run_number }}) — build automatique depuis le commit ${{ github.sha }}."
+          body: "Version 0.${{ github.run_number }} (versionCode ${{ github.run_number }}) — build ${{ steps.signing.outputs.mode }} depuis le commit ${{ github.sha }}."
           prerelease: true
           files: build/android/${{ env.EXPORT_NAME }}-v0.${{ github.run_number }}.apk
         env:
