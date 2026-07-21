@@ -10,6 +10,16 @@ extends Node2D
 ## et un niveau qui n'a pas tel nœud (ex. un niveau-boss sans WinLabel) est
 ## simplement ignoré sans erreur.
 
+## Crée un Polygon2D coloré et l'attache à `parent` (raccourci de décor
+## commun à tous les niveaux).
+func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
+	var p := Polygon2D.new()
+	p.polygon = points
+	p.color = color
+	p.position = pos
+	parent.add_child(p)
+	return p
+
 ## Bouton « Retour au menu » de l'écran de victoire / pause.
 func _on_menu_pressed() -> void:
 	Transition.goto("res://scenes/main_menu.tscn")

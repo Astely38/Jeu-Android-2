@@ -187,14 +187,6 @@ func _build_glass_floor() -> void:
 		x += 128.0
 		i += 1
 
-func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
-	var p := Polygon2D.new()
-	p.polygon = points
-	p.color = color
-	p.position = pos
-	parent.add_child(p)
-	return p
-
 func _rect_points(half_w: float, top: float, bottom: float) -> PackedVector2Array:
 	return PackedVector2Array([
 		Vector2(-half_w, top), Vector2(half_w, top),

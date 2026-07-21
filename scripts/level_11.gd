@@ -145,14 +145,6 @@ func _physics_process(_delta: float) -> void:
 
 # --- Construction ---------------------------------------------------------
 
-func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
-	var p := Polygon2D.new()
-	p.polygon = points
-	p.color = color
-	p.position = pos
-	parent.add_child(p)
-	return p
-
 ## Ciel d'argent (posé par le .tscn), lune pâle, mer de verre à l'horizon qui
 ## reflète, silhouette du Reflet au loin, stèles, et poussière de verre.
 func _build_decor() -> void:

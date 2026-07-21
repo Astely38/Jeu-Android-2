@@ -265,14 +265,6 @@ func _build_frost_trail() -> void:
 	frost_trail.color = Color(0.86, 0.92, 1.0, 0.22)
 	add_child(frost_trail)
 
-func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
-	var p := Polygon2D.new()
-	p.polygon = points
-	p.color = color
-	p.position = pos
-	parent.add_child(p)
-	return p
-
 func _rect_points(half_w: float, top: float, bottom: float) -> PackedVector2Array:
 	return PackedVector2Array([
 		Vector2(-half_w, top), Vector2(half_w, top),

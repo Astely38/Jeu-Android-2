@@ -228,14 +228,6 @@ func _stand_y(idx: int) -> Vector2:
 func _surface_y(idx: int) -> float:
 	return PLATFORMS[idx].y - 50.0
 
-func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
-	var p := Polygon2D.new()
-	p.polygon = points
-	p.color = color
-	p.position = pos
-	parent.add_child(p)
-	return p
-
 func _attach_player_glow() -> void:
 	var glow := Sprite2D.new()
 	glow.texture = load("res://assets/mist.svg")

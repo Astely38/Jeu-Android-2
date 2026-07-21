@@ -94,14 +94,6 @@ func _ready() -> void:
 
 # --- Construction du niveau ---------------------------------------------
 
-func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
-	var p := Polygon2D.new()
-	p.polygon = points
-	p.color = color
-	p.position = pos
-	parent.add_child(p)
-	return p
-
 ## Aube au-dessus des nuages : grand soleil levant, îles lointaines qui
 ## flottent, dernières étoiles, et une mer de nuages sous les îles.
 func _build_decor() -> void:
