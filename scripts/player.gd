@@ -34,6 +34,9 @@ const DASH_SPEED := 560.0
 const DASH_TIME := 0.2
 const DASH_GHOST_EXTRA := 0.18
 const DASH_COOLDOWN := 0.9
+## Cadence des pas en course (au sol) : un bruit de pas discret toutes les
+## STEP_INTERVAL secondes tant qu'Eneko court.
+const STEP_INTERVAL := 0.28
 
 ## Fil Spirituel : Eneko lance un fil vers un ancrage lumineux (nœuds du
 ## groupe « spirit_anchor ») et s'y hisse d'un trait. Portée, vitesse de
@@ -82,9 +85,12 @@ var _kb_jump_prev := false
 var _was_on_floor := false
 var _fall_speed := 0.0
 var _shake := 0.0
-## Bruitages créés en code : atterrissage, impact sur un ennemi.
+## Bruitages créés en code : atterrissage, impact sur un ennemi, pas.
 var _sfx_land: AudioStreamPlayer
 var _sfx_hit: AudioStreamPlayer
+var _sfx_step: AudioStreamPlayer
+## Compte à rebours vers le prochain bruit de pas (voir STEP_INTERVAL).
+var _step_timer := 0.0
 var _dash_timer := 0.0
 var _dash_cd := 0.0
 ## Fil Spirituel : état de la traction en cours.
@@ -150,6 +156,7 @@ func _ready() -> void:
 	add_child(GuardianWisp.new())  # le feu follet de Léonie veille sur Eneko
 	_sfx_land = _make_sfx("res://assets/sfx/land.wav", -6.0)
 	_sfx_hit = _make_sfx("res://assets/sfx/enemy_hit.wav", -4.0)
+	_sfx_step = _make_sfx("res://assets/sfx/footstep.wav", -10.0)
 	# Cœurs supplémentaires (mode détente) puis vie de départ au maximum.
 	_ensure_hearts()
 	health = _max_health()
@@ -320,6 +327,17 @@ func _physics_process(delta: float) -> void:
 
 	if _dust != null:
 		_dust.emitting = is_on_floor() and absf(velocity.x) > 40.0
+
+	# Bruit de pas : cadencé pendant la course au sol (jamais en ruée — qui
+	# sort par un return plus haut — ni pendant une attaque). Le compteur est
+	# remis à zéro à l'arrêt pour qu'un pas parte dès la reprise de course.
+	if is_on_floor() and absf(velocity.x) > 40.0 and not attacking:
+		_step_timer -= delta
+		if _step_timer <= 0.0:
+			_step_timer = STEP_INTERVAL
+			Sfx.varied(_sfx_step, 0.88, 1.14)
+	else:
+		_step_timer = 0.0
 
 	# Coyote time, buffer de saut et impact d'atterrissage.
 	_jump_buffer = maxf(0.0, _jump_buffer - delta)

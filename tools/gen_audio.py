@@ -122,5 +122,31 @@ def make_clink():
     normalize(buf, 0.8)
     write_wav("assets/sfx/clink.wav", buf, sr)
 
+def make_footstep():
+    """Pas d'Eneko : bruit de sol court et mat (terre/herbe). Discret, il est
+    joué en boucle à la cadence de la course avec une variation de hauteur."""
+    sr = 44100
+    dur = 0.13
+    n = int(dur * sr)
+    buf = [0.0] * n
+    # Corps mat : sinus basse fréquence qui glisse vers le grave, decay rapide.
+    for i in range(n):
+        t = i / sr
+        f = 150.0 * math.exp(-38.0 * t) + 58.0
+        buf[i] += math.sin(2.0 * math.pi * f * t) * 0.55 * math.exp(-46.0 * t)
+    # Grattement de surface : courte bouffée de bruit passe-bas.
+    prev = 0.0
+    for i in range(n):
+        t = i / sr
+        white = random.uniform(-1.0, 1.0)
+        prev = prev + 0.22 * (white - prev)  # passe-bas un pôle
+        buf[i] += prev * 0.4 * math.exp(-58.0 * t)
+    # Micro-transitoire d'attaque (le contact du pied).
+    for i in range(int(0.004 * sr)):
+        buf[i] += random.uniform(-1, 1) * 0.5 * math.exp(-500.0 * i / sr)
+    normalize(buf, 0.55)  # volume discret : un pas ne doit pas couvrir le jeu
+    write_wav("assets/sfx/footstep.wav", buf, sr)
+
 if __name__ == "__main__":
     make_clink()
+    make_footstep()
