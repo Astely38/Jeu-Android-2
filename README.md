@@ -13,7 +13,10 @@ En chemin, **Léonie**, la gardienne kitsune, **soigne Eneko** (tous les cœurs 
 doré) et parle dans une **bulle flottante non bloquante** — le joueur garde la main. Trois
 types d'ennemis : l'esprit **Onre** qui patrouille sa plateforme, l'**Ombre corrompue** (guerrier
 spectral sombre) qui poursuit Eneko, et le **Yūrei tireur** (niveaux 3 à 5), esprit flottant qui
-crache des **orbes corrompus** — esquivables d'une ruée ou **tranchables au sabre**. Les **orbes
+crache des **orbes corrompus** — esquivables d'une ruée ou **tranchables au sabre**. Au Chapitre II
+surgit aussi le **Karasu-tengu** (corbeau-démon) : il patrouille en vol, se **cabre** pour annoncer
+son attaque, puis **plonge en piqué** sur Eneko avant de remonter — une menace venue du ciel qu'on
+esquive d'un pas de côté. Les **orbes
 spirituels** comptent pour le grade de fin de niveau et, tous les 5 ramassés, **rendent un cœur**. Décor peint : montagnes
 enneigées, collines, nuages, nappes de brume, bambous noueux, fleurs sauvages et **pétales de
 cerisier** portés par le vent. Effets sonores et vent ambiant inclus.

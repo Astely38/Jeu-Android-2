@@ -10,6 +10,7 @@ const ORB_SCENE := preload("res://scenes/orb.tscn")
 const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SHADOW_SCENE := preload("res://scenes/shadow.tscn")
 const MASK_SCENE := preload("res://scenes/split_shade.tscn")
+const KARASU_SCENE := preload("res://scenes/karasu.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 
 const GROUND_Y := 550.0    # centre vertical des plateformes
@@ -51,6 +52,8 @@ const SHADOW_XS := [850.0, 3300.0, 5780.0]
 const ELITE_XS := [3920.0, 6420.0]
 ## Masques d'Oni : au-dessus de plateformes dégagées (jamais d'un trou).
 const MASK_XS := [2080.0, 4540.0, 5160.0]
+## Corbeaux-tengu en vol (x, altitude) : ils patrouillent puis plongent.
+const KARASU_XS := [Vector2(1900.0, 345.0), Vector2(3950.0, 350.0), Vector2(6250.0, 340.0)]
 const TRAP_XS := [700.0, 1350.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]
 ## Monolithes de vide dressés qui bordent le puits (décor, sans collision).
 const MONOLITH_XS := [500.0, 2500.0, 3920.0, 5160.0, 6600.0]
@@ -501,6 +504,10 @@ func _spawn_entities() -> void:
 		var m := MASK_SCENE.instantiate()
 		m.position = Vector2(x, SPAWN_Y - 70.0)
 		add_child(m)
+	for k in KARASU_XS:
+		var kr := KARASU_SCENE.instantiate()
+		kr.position = k
+		add_child(kr)
 	# Refuge : la lueur de Léonie veille sur la plateforme du milieu.
 	PlatformPainter.build_sanctuary(self, 2680.0, GROUND_Y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()
