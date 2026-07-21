@@ -20,10 +20,15 @@ const RECOVER_SPEED := 165.0
 const COOLDOWN := 1.5
 const DIVE_MAX_DROP := 320.0          # profondeur maximale du piqué avant remontée
 
-const FEATHER := Color(0.12, 0.1, 0.16)
-const FEATHER_HI := Color(0.26, 0.22, 0.33)
-const BEAK := Color(0.95, 0.78, 0.25)
-const EYE := Color(1.0, 0.28, 0.22)
+## Palette pensée pour RESSORTIR sur les fonds sombres du Chapitre II :
+## plumes violet-ardoise (pas noires), liseré spectral lumineux et halo.
+const FEATHER := Color(0.26, 0.2, 0.36)       # plumes violet-ardoise
+const FEATHER_HI := Color(0.48, 0.36, 0.64)   # reflet violet clair (dos, tête)
+const BELLY := Color(0.66, 0.56, 0.82)        # poitrail clair (contraste)
+const EDGE := Color(0.85, 0.76, 1.0)          # liseré spectral qui détache la silhouette
+const BEAK := Color(1.0, 0.62, 0.2)           # bec orange vif
+const EYE := Color(1.0, 0.34, 0.26)           # œil rouge braise
+const AURA := Color(0.7, 0.42, 0.98)          # halo violet
 
 enum { PATROL, TELEGRAPH, DIVE, RECOVER }
 
@@ -40,8 +45,8 @@ var _dive_vec := Vector2.ZERO
 var _flap := 1.0                      # amplitude du battement d'ailes selon l'état
 
 var _gfx: Node2D
-var _wing_l: Polygon2D
-var _wing_r: Polygon2D
+var _wing_l: Node2D
+var _wing_r: Node2D
 
 @onready var hitbox: Area2D = $Hitbox
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
@@ -184,61 +189,100 @@ func _build_visual() -> void:
 	_gfx = Node2D.new()
 	add_child(_gfx)
 
+	# Halo spectral marqué : signale le corbeau même dans les zones sombres.
 	var glow := Sprite2D.new()
 	glow.texture = load("res://assets/mist.svg")
-	glow.modulate = Color(0.5, 0.22, 0.5, 0.26)
-	glow.scale = Vector2(1.7, 1.1)
+	glow.modulate = Color(AURA.r, AURA.g, AURA.b, 0.42)
+	glow.scale = Vector2(2.2, 1.5)
 	_gfx.add_child(glow)
 
-	# Ailes (derrière le corps) : elles battent en tournant autour de l'épaule.
-	_wing_l = Polygon2D.new()
-	_wing_l.polygon = PackedVector2Array([
-		Vector2(0, 0), Vector2(-28, -10), Vector2(-32, 4), Vector2(-6, 8),
-	])
-	_wing_l.color = FEATHER
-	_wing_l.position = Vector2(-3, -2)
+	# Queue en éventail (tout au fond).
+	_shape(_gfx, PackedVector2Array([
+		Vector2(-8, -5), Vector2(-22, -11), Vector2(-19, 0), Vector2(-22, 11), Vector2(-8, 5),
+	]), FEATHER)
+
+	# Aile arrière (plus haute, plus sombre) : bat autour de l'épaule.
+	_wing_l = _make_wing(Vector2(-2, -4), FEATHER)
 	_gfx.add_child(_wing_l)
 
-	_wing_r = Polygon2D.new()
-	_wing_r.polygon = PackedVector2Array([
-		Vector2(0, 0), Vector2(28, -10), Vector2(32, 4), Vector2(6, 8),
-	])
-	_wing_r.color = FEATHER
-	_wing_r.position = Vector2(3, -2)
-	_gfx.add_child(_wing_r)
-
 	# Corps profilé (pointe vers la droite au repos ; flip par scale.x).
-	var body := Polygon2D.new()
-	body.polygon = PackedVector2Array([
-		Vector2(-9, -6), Vector2(5, -8), Vector2(16, -2), Vector2(5, 8), Vector2(-9, 6),
+	_shape(_gfx, PackedVector2Array([
+		Vector2(-9, -7), Vector2(4, -9), Vector2(17, -2), Vector2(4, 9), Vector2(-9, 7),
+	]), FEATHER_HI)
+	# Poitrail clair pour contraster.
+	var belly := Polygon2D.new()
+	belly.polygon = PackedVector2Array([
+		Vector2(-2, 0), Vector2(13, -1), Vector2(15, -2), Vector2(6, 9), Vector2(-6, 7),
 	])
-	body.color = FEATHER_HI
-	_gfx.add_child(body)
+	belly.color = BELLY
+	_gfx.add_child(belly)
 
-	# Queue en éventail.
-	var tail := Polygon2D.new()
-	tail.polygon = PackedVector2Array([
-		Vector2(-9, -5), Vector2(-20, -9), Vector2(-18, 0), Vector2(-20, 9), Vector2(-9, 5),
-	])
-	tail.color = FEATHER
-	_gfx.add_child(tail)
+	# Crête de plumes sur la tête (silhouette de tengu).
+	for cp in [Vector2(2, -9), Vector2(-2, -11), Vector2(-5, -10)]:
+		_shape(_gfx, PackedVector2Array([
+			Vector2(cp.x, cp.y), Vector2(cp.x - 5, cp.y - 6), Vector2(cp.x + 2, cp.y - 1),
+		]), FEATHER_HI)
 
-	# Bec.
-	var beak := Polygon2D.new()
-	beak.polygon = PackedVector2Array([Vector2(14, -3), Vector2(25, 0), Vector2(14, 3)])
-	beak.color = BEAK
-	_gfx.add_child(beak)
+	# Bec orange vif, proéminent.
+	_shape(_gfx, PackedVector2Array([
+		Vector2(13, -4), Vector2(27, 0), Vector2(13, 3),
+	]), BEAK)
 
-	# Œil luisant.
+	# Œil rouge braise + halo.
+	var eye_halo := Polygon2D.new()
+	var hp := PackedVector2Array()
+	for i in 10:
+		var a := i * TAU / 10.0
+		hp.append(Vector2(cos(a) * 4.4, sin(a) * 4.4))
+	eye_halo.polygon = hp
+	eye_halo.position = Vector2(8, -3)
+	eye_halo.color = Color(EYE.r, EYE.g, EYE.b, 0.35)
+	_gfx.add_child(eye_halo)
 	var eye := Polygon2D.new()
 	var ep := PackedVector2Array()
 	for i in 8:
 		var a := i * TAU / 8.0
-		ep.append(Vector2(cos(a) * 2.4, sin(a) * 2.4))
+		ep.append(Vector2(cos(a) * 2.5, sin(a) * 2.5))
 	eye.polygon = ep
 	eye.position = Vector2(8, -3)
 	eye.color = EYE
 	_gfx.add_child(eye)
+
+	# Aile avant (plus claire, devant le corps) : bat en opposition.
+	_wing_r = _make_wing(Vector2(2, -1), FEATHER_HI)
+	_gfx.add_child(_wing_r)
+
+## Construit une aile sur un pivot d'épaule : membrane dentelée cernée du
+## liseré lumineux, avec quelques plumes primaires en bout.
+func _make_wing(pivot: Vector2, fill: Color) -> Node2D:
+	var w := Node2D.new()
+	w.position = pivot
+	_shape(w, PackedVector2Array([
+		Vector2(0, 0), Vector2(-10, -12), Vector2(-26, -14), Vector2(-34, -4),
+		Vector2(-24, 2), Vector2(-6, 6),
+	]), fill)
+	for tx in [-33.0, -26.0, -19.0]:
+		_shape(w, PackedVector2Array([
+			Vector2(tx, -4), Vector2(tx - 5, 3), Vector2(tx + 3, 3),
+		]), fill)
+	return w
+
+## Polygone plein cerné d'un liseré spectral (Line2D). C'est ce contour clair
+## qui détache le corbeau des décors sombres du Chapitre II.
+func _shape(parent: Node, pts: PackedVector2Array, fill: Color) -> void:
+	var p := Polygon2D.new()
+	p.polygon = pts
+	p.color = fill
+	parent.add_child(p)
+	var l := Line2D.new()
+	l.points = pts
+	l.closed = true
+	l.width = 1.8
+	l.default_color = EDGE
+	l.joint_mode = Line2D.LINE_JOINT_ROUND
+	l.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	l.end_cap_mode = Line2D.LINE_CAP_ROUND
+	parent.add_child(l)
 
 func _animate() -> void:
 	if _gfx == null:
