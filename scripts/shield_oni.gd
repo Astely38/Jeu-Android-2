@@ -13,8 +13,8 @@ const GRAVITY := 980.0
 const TURN_TIME := 0.62            # délai de volte-face = fenêtre pour frapper le dos
 
 const ONI := "res://assets/enemies/shield_oni/"
-## Le sprite fait face à GAUCHE par défaut, bouclier en avant côté regard —
-## d'où le flip inversé par rapport aux autres ennemis (voir _animate()).
+## Le sprite fait face à DROITE par défaut (bouclier tenu du côté droit),
+## comme les autres ennemis — flip_h standard, voir _animate().
 const BASE_TINT := Color(0.8, 0.82, 1.05)   # pousse la teinte vers le spectral indigo
 const FLASH_TINT := Color(2.2, 2.2, 2.4)    # éclat du pavois au ricochet
 const AURA := Color(0.42, 0.48, 0.9)        # halo spectral bleu
@@ -163,9 +163,7 @@ func _die_for_real() -> void:
 # --- Visuel -----------------------------------------------------------------
 
 func _animate(move_dir: float) -> void:
-	# Le sprite fait face à gauche par défaut (bouclier en avant côté regard) :
-	# il faut donc le retourner quand _face pointe vers la DROITE.
-	anim.flip_h = _face > 0.0
+	anim.flip_h = _face < 0.0
 	_play("walk" if absf(move_dir) > 0.01 else "idle")
 	# Balancement de marche.
 	if absf(velocity.x) > 5.0:

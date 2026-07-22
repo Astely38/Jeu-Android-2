@@ -55,13 +55,17 @@ func _ready() -> void:
 	_apply_chapter_speed.call_deferred()
 	z_index = 6
 	_build_glow()
+	# Walk/Run sont ré-empaquetées en cellules 128px (comme Idle/Attack/Dead) :
+	# des cellules plus étroites feraient « sauter » la largeur du sprite à
+	# chaque changement d'animation (AnimatedSprite2D centre chaque frame sur
+	# son origine).
 	anim.sprite_frames = SpriteSheet.build([
 		{"name": "idle", "path": KARASU + "Idle.png", "frames": 4, "fps": 6.0, "loop": true,
 			"frame_w": 128, "frame_h": 128, "cols": 2},
 		{"name": "walk", "path": KARASU + "Walk.png", "frames": 9, "fps": 10.0, "loop": true,
-			"frame_w": 64, "frame_h": 128, "cols": 8},
+			"frame_w": 128, "frame_h": 128, "cols": 8},
 		{"name": "run", "path": KARASU + "Run.png", "frames": 9, "fps": 15.0, "loop": true,
-			"frame_w": 64, "frame_h": 128, "cols": 8},
+			"frame_w": 128, "frame_h": 128, "cols": 8},
 		{"name": "attack", "path": KARASU + "Attack_1.png", "frames": 10, "fps": 15.0, "loop": false,
 			"frame_w": 128, "frame_h": 128, "cols": 4},
 		{"name": "dead", "path": KARASU + "Dead.png", "frames": 10, "fps": 13.0, "loop": false,
