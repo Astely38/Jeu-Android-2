@@ -211,6 +211,24 @@ func _build_decor() -> void:
 		gx += 150.0
 		gi += 1
 
+	# Éclats de miroir dressés, en profondeur de champ — le même repère
+	# visuel qui ancre les autres niveaux du royaume-miroir (Ch.3).
+	var shards := ParallaxLayer.new()
+	shards.motion_scale = Vector2(0.32, 0.6)
+	bg.add_child(shards)
+	var sx := 140.0
+	var sidx := 0
+	while sx < LEVEL_END + 300.0:
+		var sh_h := 240.0 + float(sidx * 53 % 170)
+		var sh_w := 38.0 + float(sidx * 29 % 30)
+		var tip := Vector2(0, -sh_h)
+		_poly(shards, PackedVector2Array([
+			Vector2(-sh_w * 0.4, 0), tip, Vector2(sh_w * 0.4, 0),
+			Vector2(sh_w * 0.15, -sh_h * 0.32),
+		]), Color(0.15, 0.19, 0.27, 0.45), Vector2(sx, 560))
+		sx += 320.0 + float(sidx * 41 % 210)
+		sidx += 1
+
 	glass_motes = CPUParticles2D.new()
 	glass_motes.texture = load("res://assets/leaf.svg")
 	glass_motes.amount = 30
