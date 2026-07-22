@@ -4,7 +4,7 @@
 [ext_resource type="AudioStream" path="res://assets/sfx/karasu_die.wav" id="2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
-size = Vector2(26, 20)
+size = Vector2(34, 28)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
 size = Vector2(36, 26)

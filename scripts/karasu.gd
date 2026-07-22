@@ -14,7 +14,7 @@ extends CharacterBody2D
 @export var detect_x := 250.0         # portée horizontale de déclenchement du piqué
 
 const DIVE_SPEED := 430.0
-const TELEGRAPH_TIME := 0.5
+const TELEGRAPH_TIME := 0.8
 const DIVE_TIME := 0.7
 const RECOVER_SPEED := 165.0
 const COOLDOWN := 1.5
