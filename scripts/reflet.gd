@@ -42,6 +42,7 @@ var _exposed := false
 var _expose_t := 0.0
 var _throw_t := 1.2
 var _wind := 0.0
+var _volley := 0
 var _dying := false
 var _t := 0.0
 var _hurt_flash := 0.0
@@ -125,12 +126,33 @@ func _physics_process(delta: float) -> void:
 func _throw_blades() -> void:
 	if _player == null or not is_instance_valid(_player):
 		return
+	_volley += 1
 	var muzzle: Vector2 = global_position + Vector2(0, -6)
 	var base := (_player.global_position - muzzle).normalized()
-	var n: int = int(BLADE_COUNT[phase - 1])
+	if _pick_pattern() == "fan":
+		# Large éventail : les lames balaient un arc autour d'Eneko — on ne
+		# l'esquive plus d'un simple pas de côté, il faut se placer ENTRE elles.
+		var fan_n := 3 if phase == 2 else 5
+		var arc := 1.1 if phase == 2 else 1.5
+		_spawn_blades(muzzle, base, fan_n, arc)
+	else:
+		# Tir visé serré, droit sur Eneko (esquive latérale ou renvoi au sabre).
+		var n: int = int(BLADE_COUNT[phase - 1])
+		_spawn_blades(muzzle, base, n, 0.2 * float(maxi(1, n - 1)))
+
+## Détermine le motif du prochain tir selon la phase : la phase 1 vise toujours,
+## les phases 2-3 alternent tir visé et éventail (l'éventail est plus large et
+## plus fourni en phase 3).
+func _pick_pattern() -> String:
+	if phase == 1:
+		return "aimed"
+	return "fan" if _volley % 2 == 0 else "aimed"
+
+## Lance n lames-miroir réparties sur un arc `arc` (radians) centré sur `base`.
+func _spawn_blades(muzzle: Vector2, base: Vector2, n: int, arc: float) -> void:
 	for i in n:
-		var off := (float(i) - float(n - 1) * 0.5) * 0.2
-		var dir := base.rotated(off)
+		var frac := 0.0 if n <= 1 else (float(i) / float(n - 1) - 0.5)
+		var dir := base.rotated(frac * arc)
 		var b := BLADE_SCRIPT.new()
 		b.setup(muzzle, muzzle + dir * 100.0, self, _player)
 		get_parent().add_child(b)
@@ -205,7 +227,7 @@ func _face_player() -> void:
 	if _anim != null and _player != null and is_instance_valid(_player):
 		_anim.flip_h = _player.global_position.x < global_position.x
 
-func _animate(_delta: float) -> void:
+func _animate(delta: float) -> void:
 	# Anneau-bouclier : visible tant qu'il n'est pas exposé ; éclat au ricochet.
 	if _shield_ring != null:
 		_shield_ring.visible = not _exposed and not _dying
@@ -226,6 +248,17 @@ func _animate(_delta: float) -> void:
 	if _anim.animation != want:
 		_anim.play(want)
 	_prev_x = global_position.x
+	# Posture : DEBOUT normalement ; À TERRE (couché, vulnérable) quand il est
+	# exposé — il bascule au sol sous le choc de sa lame renvoyée, puis se
+	# relève quand le bouclier se reforme.
+	var want_rot := 0.0
+	var want_pos := Vector2(0, -40)
+	if _exposed:
+		var fall := 1.0 if _anim.flip_h else -1.0
+		want_rot = deg_to_rad(86.0) * fall
+		want_pos = Vector2(fall * 22.0, -12.0)
+	_anim.rotation = lerp_angle(_anim.rotation, want_rot, minf(1.0, delta * 9.0))
+	_anim.position = _anim.position.lerp(want_pos, minf(1.0, delta * 9.0))
 	# Teinte miroir : bleu froid ; plus clair quand exposé (vulnérable),
 	# éclat rouge quand il encaisse un coup.
 	var tint := Color(0.55, 0.74, 1.0)
