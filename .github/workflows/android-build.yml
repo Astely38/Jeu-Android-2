@@ -155,4 +155,20 @@ jobs:
             echo "Suppression de $tag (release + tag)"
             gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
           done
+          echo "Releases nettoyées."
+
+      # Deuxième passe : supprime les tags « build-* » orphelins (sans release
+      # associée, donc invisibles pour la passe ci-dessus), en gardant le tag
+      # courant. Rend la liste des tags aussi propre que celle des releases.
+      - name: Supprime les tags build-* orphelins restants
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_TAG: build-${{ github.run_number }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/git/refs/tags" --paginate --jq '.[].ref' \
+            | sed 's#refs/tags/##' | grep '^build-' | while read -r tag; do
+              if [ "$tag" = "$CURRENT_TAG" ]; then continue; fi
+              echo "Suppression du tag orphelin $tag"
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$tag" || true
+            done
           echo "Nettoyage terminé."
