@@ -217,6 +217,8 @@ func _run_state(delta: float) -> void:
 			_spawn_shockwave(1.0)
 			Atmosphere.spark_burst(get_parent(), global_position + Vector2(0, 90), Color(0.7, 0.3, 0.95))
 			Sfx.varied(sfx_die, 0.7, 0.85)
+			if player != null and is_instance_valid(player) and player.has_method("add_shake"):
+				player.add_shake(6.0)
 			_state = "stunned"; _state_t = 0.0
 		"stunned":
 			# EXPOSÉ : bouclier baissé, l'œil pend, vulnérable au sabre.
@@ -357,10 +359,22 @@ func die() -> bool:
 	if phase < 3 and health <= P3_HEALTH:
 		phase = 3
 		phase_changed.emit(3)
+		_shatter(Color(0.95, 0.4, 0.5))
 	elif phase < 2 and health <= P2_HEALTH:
 		phase = 2
 		phase_changed.emit(2)
+		_shatter(Color(0.75, 0.35, 0.95))
 	return false
+
+## Éclat de nuit à chaque changement de phase : une gerbe plus dense que le
+## simple ricochet, et une secousse pour marquer le palier.
+func _shatter(tint: Color) -> void:
+	var parent := get_parent()
+	if parent != null:
+		Atmosphere.death_burst(parent, global_position, tint)
+		Atmosphere.spark_burst(parent, global_position, tint)
+	if player != null and is_instance_valid(player) and player.has_method("add_shake"):
+		player.add_shake(6.0)
 
 func _die_for_real() -> void:
 	_dying = true
@@ -369,7 +383,15 @@ func _die_for_real() -> void:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	Sfx.varied(sfx_die, 0.7, 0.9)
-	Atmosphere.spark_burst(get_parent(), global_position, Color(0.9, 0.4, 1.0))
+	# Implosion : la masse de nuit se déchire en plusieurs gerbes décalées
+	# avant de s'effondrer sur elle-même.
+	var parent := get_parent()
+	Atmosphere.spark_burst(parent, global_position, Color(0.9, 0.4, 1.0))
+	Atmosphere.death_burst(parent, global_position + Vector2(0, -20), Color(0.85, 0.5, 1.0))
+	Atmosphere.death_burst(parent, global_position + Vector2(-30, 10), Color(0.6, 0.2, 0.5))
+	Atmosphere.death_burst(parent, global_position + Vector2(30, -10), Color(0.75, 0.35, 0.95))
+	if player != null and is_instance_valid(player) and player.has_method("add_shake"):
+		player.add_shake(8.0)
 	defeated.emit()
 	# Effondrement : la masse s'affaisse, l'œil se ferme, tout s'efface dans
 	# une implosion de lumière.

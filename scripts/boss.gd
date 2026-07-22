@@ -318,8 +318,8 @@ func _on_slam_impact() -> void:
 	Sfx.varied(_sfx_slam, 0.95, 1.06)
 	SaveManager.vibrate(60)
 	var pl := get_tree().get_first_node_in_group("player")
-	if pl != null:
-		pl.set("_shake", 9.0)
+	if pl != null and pl.has_method("add_shake"):
+		pl.add_shake(9.0)
 	_spawn_wave(-1.0)
 	_spawn_wave(1.0)
 	if phase >= 3:
@@ -452,8 +452,8 @@ func _parry() -> void:
 	var tw := create_tween()
 	tw.tween_property(anim, "modulate", _base_tint, 0.4)
 	var pl := get_tree().get_first_node_in_group("player")
-	if pl != null:
-		pl.set("_shake", 5.0)
+	if pl != null and pl.has_method("add_shake"):
+		pl.add_shake(5.0)
 
 func _play(n: String) -> void:
 	if _cur != n:
@@ -539,6 +539,16 @@ func _die_for_real() -> void:
 	body_shape.set_deferred("disabled", true)
 	_play("dead")
 	sfx_die.play()
+	# Chute du Gardien : la corruption qui l'habitait se libère en une gerbe
+	# de braises sombres, et le sol tremble sous son effondrement.
+	var parent := get_parent()
+	if parent != null:
+		Atmosphere.death_burst(parent, global_position + Vector2(0, -40), Color(0.85, 0.3, 0.35))
+		Atmosphere.death_burst(parent, global_position + Vector2(-18, -20), Color(0.6, 0.2, 0.5))
+		Atmosphere.spark_burst(parent, global_position + Vector2(0, -30), Color(1.0, 0.55, 0.3))
+	var pl := get_tree().get_first_node_in_group("player")
+	if pl != null and pl.has_method("add_shake"):
+		pl.add_shake(8.0)
 	set_physics_process(false)  # fige l'aura et le corps pendant le fondu
 	var tween := create_tween()
 	tween.tween_property(anim, "modulate:a", 0.0, 1.0)

@@ -272,6 +272,9 @@ func _spawn_adds() -> void:
 	if parent == null:
 		return
 	Atmosphere.spark_burst(parent, global_position, Color(1.0, 0.5, 0.3))
+	var pl := get_tree().get_first_node_in_group("player")
+	if pl != null and pl.has_method("add_shake"):
+		pl.add_shake(5.0)
 	for s in [-1.0, 1.0]:
 		var m := SMALL_MASK.instantiate()
 		m.small = true
@@ -286,7 +289,12 @@ func _die_for_real() -> void:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	Sfx.varied(sfx_die, 0.8, 1.0)
-	Atmosphere.spark_burst(get_parent(), global_position, Color(1.0, 0.55, 0.3))
+	var parent := get_parent()
+	Atmosphere.spark_burst(parent, global_position, Color(1.0, 0.55, 0.3))
+	Atmosphere.death_burst(parent, global_position + Vector2(0, -10), Color(0.95, 0.6, 0.35))
+	var pl := get_tree().get_first_node_in_group("player")
+	if pl != null and pl.has_method("add_shake"):
+		pl.add_shake(6.0)
 	defeated.emit()
 	# Dissolution : le grand masque se disloque vers le haut en s'effaçant.
 	if _mask != null:
