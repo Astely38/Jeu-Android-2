@@ -43,6 +43,11 @@ var _expose_t := 0.0
 var _throw_t := 1.2
 var _wind := 0.0
 var _volley := 0
+## Point figé où le Reflet s'effondre, calculé UNE SEULE FOIS à l'instant où
+## son bouclier se brise (voir on_blade_reflected). Sans ça, sa cible étant
+## recalculée chaque frame sur la position du joueur, il « suit » Eneko même
+## couché au sol — ce qui casse toute lisibilité de la mise à terre.
+var _expose_target := Vector2.ZERO
 var _dying := false
 var _t := 0.0
 var _hurt_flash := 0.0
@@ -87,19 +92,10 @@ func _physics_process(delta: float) -> void:
 
 	if _exposed:
 		_expose_t -= delta
-		# Brisé, le Reflet s'effondre À PORTÉE de sabre d'Eneko — mais À CÔTÉ,
-		# jamais superposé : il se pose juste devant le héros, du côté où il se
-		# trouve déjà, pour rester tranchable sans lui rentrer dans le corps.
-		# Sans ce rapprochement, miroité à l'autre bout de l'arène, il resterait
-		# injoignable le temps de l'exposition (le joueur ne pourrait le frapper).
-		var side := signf(global_position.x - _player.global_position.x)
-		if side == 0.0:
-			side = -1.0 if (_anim != null and _anim.flip_h) else 1.0
-		var reach_x := clampf(_player.global_position.x + side * EXPOSE_REACH,
-			_arena_min + 40.0, _arena_max - 40.0)
-		global_position.x = lerpf(global_position.x, reach_x, minf(1.0, delta * 4.6))
-		global_position.y = lerpf(global_position.y, EXPOSED_Y, minf(1.0, delta * 7.0))
-		_face_player()
+		# Brisé, le Reflet s'effondre sur un point FIGÉ dès l'instant où son
+		# bouclier a cédé (voir on_blade_reflected) — il ne suit plus Eneko une
+		# fois à terre, sans quoi la mise à terre perdrait toute lisibilité.
+		global_position = global_position.lerp(_expose_target, minf(1.0, delta * 7.0))
 		if _expose_t <= 0.0:
 			_exposed = false
 			# Le bouclier se reforme : il redevient solide (et miroite au loin).
@@ -167,6 +163,23 @@ func on_blade_reflected() -> void:
 	_wind = 0.0
 	_throw_t = float(THROW_CD[phase - 1])
 	_hurt_flash = 0.3
+	# Point d'effondrement calculé UNE FOIS, à portée de sabre d'Eneko — mais À
+	# CÔTÉ, jamais superposé : juste devant le héros, du côté où il se trouve
+	# déjà. Figé ici (pas recalculé chaque frame), sans quoi le Reflet couché
+	# suivrait Eneko au lieu de rester immobile à terre.
+	if _player != null and is_instance_valid(_player):
+		var side := signf(global_position.x - _player.global_position.x)
+		if side == 0.0:
+			side = -1.0 if (_anim != null and _anim.flip_h) else 1.0
+		var reach_x := clampf(_player.global_position.x + side * EXPOSE_REACH,
+			_arena_min + 40.0, _arena_max - 40.0)
+		_expose_target = Vector2(reach_x, EXPOSED_Y)
+		# Même convention que _face_player() : flip_h vrai quand le joueur est
+		# à gauche du point d'atterrissage (reach_x = player.x + side*REACH).
+		if _anim != null:
+			_anim.flip_h = side > 0.0
+	else:
+		_expose_target = Vector2(global_position.x, EXPOSED_Y)
 	# Déphasé le temps de l'exposition : il ne BLOQUE plus Eneko (il ne le
 	# pousse plus) mais reste tranchable (le sabre touche la couche 3).
 	set_collision_layer_value(2, false)
@@ -235,7 +248,10 @@ func _animate(delta: float) -> void:
 		_shield_ring.modulate.a = minf(1.0, base + _shield_flash * 2.0)
 	if _anim == null or _dying:
 		return
-	_face_player()
+	# Orientation figée pendant l'exposition (voir on_blade_reflected) : ne PAS
+	# re-suivre le joueur ici, sans quoi le Reflet couché pivoterait avec lui.
+	if not _exposed:
+		_face_player()
 	# Choix de l'animation d'Eneko selon l'état.
 	var want := "idle"
 	if not _exposed:
