@@ -18,14 +18,6 @@ commercial**. Merci à l'auteur d'origine du pack pixel art. Si tu comptes
 distribuer ou vendre le jeu, vérifie/complète la licence exacte du pack
 auprès de son auteur avant publication.
 
-Les sprites du Karasu-tengu (`assets/enemies/karasu/`) proviennent du pack
-**TENGU** de **hogehogehoge** (itch.io : https://hogehogehoge.itch.io/tengu) —
-licence vérifiée par l'auteur du projet avant intégration.
-
-Les sprites du Shield Oni (`assets/enemies/shield_oni/`) proviennent du pack
-**Free Knight Character Sprites** de **CraftPix.net**
-(https://craftpix.net/, licence : https://craftpix.net/file-licenses/).
-
 Les frames du pack **Pixel DarkNinja** (`assets/enemies/dark_ninja/`), par
 **Zhen** (https://zhen.itch.io) — libre usage personnel et commercial,
 crédit apprécié mais non obligatoire — sont stockées pour un futur boss ;
