@@ -29,7 +29,7 @@ position = Vector2(480, 270)
 texture = SubResource("tex_sky")
 
 [node name="Player" parent="." instance=ExtResource("2")]
-position = Vector2(100, 477)
+position = Vector2(100, 527)
 
 [node name="Dialogue" parent="." instance=ExtResource("3")]
 

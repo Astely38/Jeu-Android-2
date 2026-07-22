@@ -13,7 +13,10 @@ const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SANS_VISAGE_SCENE := preload("res://scenes/sans_visage.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 
-const SPAWN_Y_OFFSET := 73.0  # entre la surface du sol et la position d'apparition
+## Entre la surface du sol (déjà le bord praticable ici, contrairement aux
+## autres niveaux où GROUND_Y désigne le CENTRE de la plateforme) et la
+## position d'apparition d'un personnage.
+const SPAWN_Y_OFFSET := 23.0
 const LEVEL_END := 7100.0
 const GOAL_X := 6950.0
 const LEVEL_ID := "level_16"
@@ -85,11 +88,12 @@ func _ready() -> void:
 	_build_decor()
 	Atmosphere.add_foreground(self, Color(0.05, 0.04, 0.07, 0.35))
 	_build_terrain()
+	_build_bounds()
 	_build_checkpoints()
 	_build_glitch_rifts()
 	_build_rock_slides()
 	_build_goal()
-	_build_kill_zone(LEVEL_END, 900.0)
+	_build_kill_zone(LEVEL_END, 750.0, 400.0)
 	_spawn_entities()
 	_setup_audio()
 	_setup_ambient()
@@ -175,9 +179,24 @@ func _build_terrain() -> void:
 		else:
 			SlopePainter.build(self, a.x, a.y, b.x, b.y, PLATFORM_THEME)
 
+## Murs invisibles aux deux extrémités du relief : le profil ne définit rien
+## au-delà, un joueur qui déborderait (recul, poussée d'un piège) tomberait
+## sinon dans le vide sans que le filet de la zone de mort n'intervienne à
+## temps. Bien plus hauts que le relief pour ne jamais être sautés.
+func _build_bounds() -> void:
+	for edge_x in [PROFILE[0].x - 40.0, PROFILE[PROFILE.size() - 1].x + 40.0]:
+		var wall := StaticBody2D.new()
+		wall.position = Vector2(edge_x, 0.0)
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(80.0, 4000.0)
+		shape.shape = rect
+		wall.add_child(shape)
+		add_child(wall)
+
 func _build_checkpoints() -> void:
 	for x in CHECKPOINT_XS:
-		var y := _surface_y(x) - 120.0
+		var y := _surface_y(x) - 70.0
 		var cp := Area2D.new()
 		cp.position = Vector2(x, y)
 		var shape := CollisionShape2D.new()
@@ -194,25 +213,34 @@ func _build_checkpoints() -> void:
 		add_child(cp)
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
 
-## Faille glitchée : déchirure immobile dans le sol, cerclée de bandes qui
-## clignotent entre les deux teintes de corruption du chapitre.
+## Faille glitchée : déchirure immobile, flush au sol, cerclée d'un liseré
+## lumineux et de bandes qui clignotent entre les deux teintes de corruption
+## du chapitre — pensée pour rester lisible même sur fond sombre.
 func _build_glitch_rifts() -> void:
 	for x in GLITCH_RIFT_XS:
 		var y := _surface_y(x)
 		var rift := Area2D.new()
-		rift.position = Vector2(x, y - 26.0)
+		rift.position = Vector2(x, y - 14.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
 		rect.size = Vector2(60, 30)
 		shape.shape = rect
 		rift.add_child(shape)
-		_poly(rift, PackedVector2Array([
+		var pts := PackedVector2Array([
 			Vector2(-30, 14), Vector2(30, 14), Vector2(24, -12), Vector2(-24, -12),
-		]), Color(0.02, 0.02, 0.03))
+		])
+		_poly(rift, pts, Color(0.03, 0.02, 0.05))
+		# Liseré lumineux : détache la faille du fond, même immobile.
+		var outline := Line2D.new()
+		outline.points = pts
+		outline.closed = true
+		outline.width = 2.2
+		outline.default_color = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.8)
+		rift.add_child(outline)
 		for k in 3:
 			var ox := -18.0 + float(k) * 18.0
 			var band := _poly(rift, PackedVector2Array([
-				Vector2(ox - 4, 10), Vector2(ox + 4, 10), Vector2(ox + 6, -8), Vector2(ox - 6, -8),
+				Vector2(ox - 5, 11), Vector2(ox + 5, 11), Vector2(ox + 7, -10), Vector2(ox - 7, -10),
 			]), Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.0))
 			_glitches.append({"node": band, "phase": float(k) * 1.3 + x * 0.01})
 		add_child(rift)
@@ -233,7 +261,7 @@ func _build_rock_slides() -> void:
 func _build_goal() -> void:
 	var y := _surface_y(GOAL_X)
 	var goal := Area2D.new()
-	goal.position = Vector2(GOAL_X, y - 120.0)
+	goal.position = Vector2(GOAL_X, y - 70.0)
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
 	rect.size = Vector2(60, 140)

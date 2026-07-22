@@ -27,11 +27,21 @@ var _warn_poly: Polygon2D
 func _ready() -> void:
 	_t = phase
 	fall_dir = fall_dir.normalized()
+	z_index = 4
 	# Surplomb fissuré : silhouette de roche instable, au-dessus de la pente.
-	var rock := Color(0.24, 0.22, 0.28)
-	_poly(PackedVector2Array([
+	# Un peu plus claire que le fond et cerclée d'un liseré, pour ne jamais se
+	# fondre dans le décor sombre du chapitre — reste lisible même au repos.
+	var rock := Color(0.34, 0.31, 0.4)
+	var rock_pts := PackedVector2Array([
 		Vector2(-22, 8), Vector2(-10, -14), Vector2(6, -10), Vector2(20, 6), Vector2(10, 10),
-	]), rock)
+	])
+	_poly(rock_pts, rock)
+	var outline := Line2D.new()
+	outline.points = rock_pts
+	outline.closed = true
+	outline.width = 1.8
+	outline.default_color = Color(tint.r, tint.g, tint.b, 0.7)
+	add_child(outline)
 	_warn_poly = _poly(PackedVector2Array([
 		Vector2(-6, -2), Vector2(-1, -10), Vector2(3, -3), Vector2(8, -8), Vector2(4, 4), Vector2(-2, 6),
 	]), Color(tint.r, tint.g, tint.b, 0.0))
