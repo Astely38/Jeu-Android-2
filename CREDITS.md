@@ -18,6 +18,10 @@ commercial**. Merci à l'auteur d'origine du pack pixel art. Si tu comptes
 distribuer ou vendre le jeu, vérifie/complète la licence exacte du pack
 auprès de son auteur avant publication.
 
+Les sprites du Karasu-tengu (`assets/enemies/karasu/`) proviennent du pack
+**TENGU** de **hogehogehoge** (itch.io : https://hogehogehoge.itch.io/tengu) —
+licence vérifiée par l'auteur du projet avant intégration.
+
 ## Musique
 
 Pistes d'ambiance au thème japonais provenant de **Pixabay**

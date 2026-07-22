@@ -20,15 +20,10 @@ const RECOVER_SPEED := 165.0
 const COOLDOWN := 1.5
 const DIVE_MAX_DROP := 320.0          # profondeur maximale du piqué avant remontée
 
-## Palette pensée pour RESSORTIR sur les fonds sombres du Chapitre II :
-## plumes violet-ardoise (pas noires), liseré spectral lumineux et halo.
-const FEATHER := Color(0.26, 0.2, 0.36)       # plumes violet-ardoise
-const FEATHER_HI := Color(0.48, 0.36, 0.64)   # reflet violet clair (dos, tête)
-const BELLY := Color(0.66, 0.56, 0.82)        # poitrail clair (contraste)
-const EDGE := Color(0.85, 0.76, 1.0)          # liseré spectral qui détache la silhouette
-const BEAK := Color(1.0, 0.62, 0.2)           # bec orange vif
-const EYE := Color(1.0, 0.34, 0.26)           # œil rouge braise
-const AURA := Color(0.7, 0.42, 0.98)          # halo violet
+const KARASU := "res://assets/enemies/karasu/"
+## Halo spectral discret derrière le corbeau : le détache des fonds sombres
+## des chapitres où il rôde, sans avoir à repeindre le sprite lui-même.
+const AURA := Color(0.7, 0.42, 0.98)
 
 enum { PATROL, TELEGRAPH, DIVE, RECOVER }
 
@@ -42,12 +37,9 @@ var _fly_y := 0.0
 var _state_t := 0.0
 var _cd := 0.0
 var _dive_vec := Vector2.ZERO
-var _flap := 1.0                      # amplitude du battement d'ailes selon l'état
+var _cur := ""
 
-var _gfx: Node2D
-var _wing_l: Node2D
-var _wing_r: Node2D
-
+@onready var anim: AnimatedSprite2D = $Anim
 @onready var hitbox: Area2D = $Hitbox
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
 @onready var sfx_die: AudioStreamPlayer = $SfxDie
@@ -62,7 +54,21 @@ func _ready() -> void:
 	# facteur après avoir posé ses ennemis, voir Challenge.start_level).
 	_apply_chapter_speed.call_deferred()
 	z_index = 6
-	_build_visual()
+	_build_glow()
+	anim.sprite_frames = SpriteSheet.build([
+		{"name": "idle", "path": KARASU + "Idle.png", "frames": 4, "fps": 6.0, "loop": true,
+			"frame_w": 128, "frame_h": 128, "cols": 2},
+		{"name": "walk", "path": KARASU + "Walk.png", "frames": 9, "fps": 10.0, "loop": true,
+			"frame_w": 64, "frame_h": 128, "cols": 8},
+		{"name": "run", "path": KARASU + "Run.png", "frames": 9, "fps": 15.0, "loop": true,
+			"frame_w": 64, "frame_h": 128, "cols": 8},
+		{"name": "attack", "path": KARASU + "Attack_1.png", "frames": 10, "fps": 15.0, "loop": false,
+			"frame_w": 128, "frame_h": 128, "cols": 4},
+		{"name": "dead", "path": KARASU + "Dead.png", "frames": 10, "fps": 13.0, "loop": false,
+			"frame_w": 128, "frame_h": 128, "cols": 4},
+	])
+	anim.scale = Vector2(0.62, 0.62)
+	_play("walk")
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
 	# Ombre au sol : trahit la position du corbeau et aide à anticiper le piqué.
@@ -80,6 +86,14 @@ func _ignore_player_body() -> void:
 	if pl is PhysicsBody2D:
 		add_collision_exception_with(pl)
 
+func _build_glow() -> void:
+	var glow := Sprite2D.new()
+	glow.texture = load("res://assets/mist.svg")
+	glow.modulate = Color(AURA.r, AURA.g, AURA.b, 0.42)
+	glow.scale = Vector2(2.2, 1.5)
+	glow.z_index = -1
+	add_child(glow)
+
 func _physics_process(delta: float) -> void:
 	if _dying:
 		return
@@ -91,7 +105,6 @@ func _physics_process(delta: float) -> void:
 
 	match _state:
 		PATROL:
-			_flap = 1.0
 			velocity.x = _dir * speed
 			if absf(position.x - _start_x) >= patrol_distance:
 				_dir = -signf(position.x - _start_x)
@@ -99,35 +112,36 @@ func _physics_process(delta: float) -> void:
 			var target_y := _fly_y + sin(_t * 2.4) * 5.0
 			velocity.y = (target_y - position.y) * 3.0
 			move_and_slide()
+			_play("walk")
 			_try_trigger()
 		TELEGRAPH:
-			_flap = 0.25
 			velocity = velocity.lerp(Vector2.ZERO, 0.25)
 			move_and_slide()
+			_play("idle")
 			if _state_t >= TELEGRAPH_TIME:
 				_begin_dive()
 		DIVE:
-			_flap = 0.0
 			velocity = _dive_vec
 			move_and_slide()
+			_play("attack")
 			var reached: bool = player != null and is_instance_valid(player) \
 				and global_position.distance_to(player.global_position) < 24.0
 			if _state_t >= DIVE_TIME or reached or position.y > _fly_y + DIVE_MAX_DROP:
 				_enter(RECOVER)
 		RECOVER:
-			_flap = 0.7
 			if player != null and is_instance_valid(player):
 				_dir = signf(player.global_position.x - position.x)
 				if _dir == 0.0:
 					_dir = 1.0
 			velocity = Vector2(_dir * speed * 0.4, -RECOVER_SPEED)
 			move_and_slide()
+			_play("run")
 			if position.y <= _fly_y + 6.0:
 				position.y = _fly_y
 				_cd = COOLDOWN
 				_enter(PATROL)
 
-	_animate()
+	anim.flip_h = _dir < 0.0
 
 ## Déclenche l'attaque si Eneko est à portée horizontale ET plus bas (on plonge
 ## toujours vers le sol), hors temps de recharge.
@@ -154,6 +168,11 @@ func _enter(s: int) -> void:
 	_state = s
 	_state_t = 0.0
 
+func _play(n: String) -> void:
+	if _cur != n:
+		_cur = n
+		anim.play(n)
+
 func _on_hitbox_body_entered(body: Node2D) -> void:
 	if _dying:
 		return
@@ -173,132 +192,12 @@ func die() -> bool:
 	if parent != null:
 		Atmosphere.spark_burst(parent, global_position, Color(0.35, 0.28, 0.42))
 		Atmosphere.death_burst(parent, global_position, Color(0.85, 0.76, 1.0))
-	if _gfx != null:
-		var tw := _gfx.create_tween()
-		tw.set_parallel(true)
-		tw.tween_property(_gfx, "modulate:a", 0.0, 0.35)
-		tw.tween_property(_gfx, "position:y", 44.0, 0.35)
-		tw.tween_property(_gfx, "rotation", _dir * 2.0, 0.35)
-		tw.chain().tween_callback(queue_free)
-	else:
-		queue_free()
+	velocity = Vector2.ZERO
+	_play("dead")
+	var tw := create_tween()
+	tw.tween_interval(0.25)
+	tw.set_parallel(true)
+	tw.tween_property(anim, "modulate:a", 0.0, 0.35)
+	tw.tween_property(anim, "position:y", anim.position.y + 44.0, 0.35)
+	tw.chain().tween_callback(queue_free)
 	return true
-
-# --- Visuel ---------------------------------------------------------------
-
-func _build_visual() -> void:
-	_gfx = Node2D.new()
-	add_child(_gfx)
-
-	# Halo spectral marqué : signale le corbeau même dans les zones sombres.
-	var glow := Sprite2D.new()
-	glow.texture = load("res://assets/mist.svg")
-	glow.modulate = Color(AURA.r, AURA.g, AURA.b, 0.42)
-	glow.scale = Vector2(2.2, 1.5)
-	_gfx.add_child(glow)
-
-	# Queue en éventail (tout au fond).
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-8, -5), Vector2(-22, -11), Vector2(-19, 0), Vector2(-22, 11), Vector2(-8, 5),
-	]), FEATHER)
-
-	# Aile arrière (plus haute, plus sombre) : bat autour de l'épaule.
-	_wing_l = _make_wing(Vector2(-2, -4), FEATHER)
-	_gfx.add_child(_wing_l)
-
-	# Corps profilé (pointe vers la droite au repos ; flip par scale.x).
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-9, -7), Vector2(4, -9), Vector2(17, -2), Vector2(4, 9), Vector2(-9, 7),
-	]), FEATHER_HI)
-	# Poitrail clair pour contraster.
-	var belly := Polygon2D.new()
-	belly.polygon = PackedVector2Array([
-		Vector2(-2, 0), Vector2(13, -1), Vector2(15, -2), Vector2(6, 9), Vector2(-6, 7),
-	])
-	belly.color = BELLY
-	_gfx.add_child(belly)
-
-	# Crête de plumes sur la tête (silhouette de tengu).
-	for cp in [Vector2(2, -9), Vector2(-2, -11), Vector2(-5, -10)]:
-		_shape(_gfx, PackedVector2Array([
-			Vector2(cp.x, cp.y), Vector2(cp.x - 5, cp.y - 6), Vector2(cp.x + 2, cp.y - 1),
-		]), FEATHER_HI)
-
-	# Bec orange vif, proéminent.
-	_shape(_gfx, PackedVector2Array([
-		Vector2(13, -4), Vector2(27, 0), Vector2(13, 3),
-	]), BEAK)
-
-	# Œil rouge braise + halo.
-	var eye_halo := Polygon2D.new()
-	var hp := PackedVector2Array()
-	for i in 10:
-		var a := i * TAU / 10.0
-		hp.append(Vector2(cos(a) * 4.4, sin(a) * 4.4))
-	eye_halo.polygon = hp
-	eye_halo.position = Vector2(8, -3)
-	eye_halo.color = Color(EYE.r, EYE.g, EYE.b, 0.35)
-	_gfx.add_child(eye_halo)
-	var eye := Polygon2D.new()
-	var ep := PackedVector2Array()
-	for i in 8:
-		var a := i * TAU / 8.0
-		ep.append(Vector2(cos(a) * 2.5, sin(a) * 2.5))
-	eye.polygon = ep
-	eye.position = Vector2(8, -3)
-	eye.color = EYE
-	_gfx.add_child(eye)
-
-	# Aile avant (plus claire, devant le corps) : bat en opposition.
-	_wing_r = _make_wing(Vector2(2, -1), FEATHER_HI)
-	_gfx.add_child(_wing_r)
-
-## Construit une aile sur un pivot d'épaule : membrane dentelée cernée du
-## liseré lumineux, avec quelques plumes primaires en bout.
-func _make_wing(pivot: Vector2, fill: Color) -> Node2D:
-	var w := Node2D.new()
-	w.position = pivot
-	_shape(w, PackedVector2Array([
-		Vector2(0, 0), Vector2(-10, -12), Vector2(-26, -14), Vector2(-34, -4),
-		Vector2(-24, 2), Vector2(-6, 6),
-	]), fill)
-	for tx in [-33.0, -26.0, -19.0]:
-		_shape(w, PackedVector2Array([
-			Vector2(tx, -4), Vector2(tx - 5, 3), Vector2(tx + 3, 3),
-		]), fill)
-	return w
-
-## Polygone plein cerné d'un liseré spectral (Line2D). C'est ce contour clair
-## qui détache le corbeau des décors sombres du Chapitre II.
-func _shape(parent: Node, pts: PackedVector2Array, fill: Color) -> void:
-	var p := Polygon2D.new()
-	p.polygon = pts
-	p.color = fill
-	parent.add_child(p)
-	var l := Line2D.new()
-	l.points = pts
-	l.closed = true
-	l.width = 1.8
-	l.default_color = EDGE
-	l.joint_mode = Line2D.LINE_JOINT_ROUND
-	l.begin_cap_mode = Line2D.LINE_CAP_ROUND
-	l.end_cap_mode = Line2D.LINE_CAP_ROUND
-	parent.add_child(l)
-
-func _animate() -> void:
-	if _gfx == null:
-		return
-	_gfx.scale.x = _dir if _dir != 0.0 else 1.0
-	# Battement d'ailes (rapide en vol, figé en piqué).
-	var beat := sin(_t * 22.0) * _flap
-	if _wing_l != null:
-		_wing_l.rotation = -0.45 - beat * 0.8
-	if _wing_r != null:
-		_wing_r.rotation = 0.45 + beat * 0.8
-	# Tangage du corps : se cabre au télégraphe, pique en plongée.
-	var want_rot := 0.0
-	if _state == TELEGRAPH:
-		want_rot = -0.35
-	elif _state == DIVE:
-		want_rot = 0.55
-	_gfx.rotation = lerpf(_gfx.rotation, want_rot, 0.25)
