@@ -66,18 +66,18 @@ func _ready() -> void:
 			"frame_w": 128, "frame_h": 128, "cols": 8},
 		{"name": "run", "path": KARASU + "Run.png", "frames": 9, "fps": 15.0, "loop": true,
 			"frame_w": 128, "frame_h": 128, "cols": 8},
-		{"name": "attack", "path": KARASU + "Attack_1.png", "frames": 10, "fps": 15.0, "loop": false,
+		{"name": "attack", "path": KARASU + "Attack_1.png", "frames": 10, "fps": 15.0, "loop": true,
 			"frame_w": 128, "frame_h": 128, "cols": 4},
 		{"name": "dead", "path": KARASU + "Dead.png", "frames": 10, "fps": 13.0, "loop": false,
 			"frame_w": 128, "frame_h": 128, "cols": 4},
 	])
-	anim.scale = Vector2(0.62, 0.62)
+	anim.scale = Vector2(0.85, 0.85)
 	_play("walk")
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
 	# Ombre au sol : trahit la position du corbeau et aide à anticiper le piqué.
 	var sh := ContactShadow.new()
-	sh.width = 30.0
+	sh.width = 36.0
 	sh.max_drop = 700.0
 	add_child(sh)
 	move_child(sh, 0)
@@ -93,10 +93,11 @@ func _ignore_player_body() -> void:
 func _build_glow() -> void:
 	var glow := Sprite2D.new()
 	glow.texture = load("res://assets/mist.svg")
-	glow.modulate = Color(AURA.r, AURA.g, AURA.b, 0.42)
-	glow.scale = Vector2(2.2, 1.5)
+	glow.modulate = Color(AURA.r, AURA.g, AURA.b, 0.6)
+	glow.scale = Vector2(2.4, 1.7)
 	glow.z_index = -1
 	add_child(glow)
+	Atmosphere.breathe(glow, 0.25, 2.0)
 
 func _physics_process(delta: float) -> void:
 	if _dying:

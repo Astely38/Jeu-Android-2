@@ -45,12 +45,13 @@ func _ready() -> void:
 		{"name": "walk", "path": ONI + "Walk.png", "frames": 8, "fps": 10.0, "loop": true},
 		{"name": "dead", "path": ONI + "Dead.png", "frames": 6, "fps": 10.0, "loop": false},
 	])
+	anim.scale = Vector2(1.25, 1.25)
 	anim.modulate = BASE_TINT
 	_play("idle")
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
 	var sh := ContactShadow.new()
-	sh.width = 34.0
+	sh.width = 40.0
 	add_child(sh)
 	move_child(sh, 0)
 
@@ -67,11 +68,12 @@ func _ignore_player_body() -> void:
 func _build_glow() -> void:
 	var glow := Sprite2D.new()
 	glow.texture = load("res://assets/mist.svg")
-	glow.modulate = Color(AURA.r, AURA.g, AURA.b, 0.3)
-	glow.scale = Vector2(1.9, 2.1)
-	glow.position = Vector2(0, -6)
+	glow.modulate = Color(AURA.r, AURA.g, AURA.b, 0.6)
+	glow.scale = Vector2(2.3, 2.5)
+	glow.position = Vector2(0, -17)
 	glow.z_index = -1
 	add_child(glow)
+	Atmosphere.breathe(glow, 0.25, 2.0)
 
 func _physics_process(delta: float) -> void:
 	if _dying:
@@ -157,7 +159,7 @@ func _die_for_real() -> void:
 	tw.set_parallel(true)
 	tw.tween_property(anim, "modulate:a", 0.0, 0.5)
 	tw.tween_property(anim, "rotation", _face * 0.6, 0.5)
-	tw.tween_property(anim, "position:y", 10.0, 0.5)
+	tw.tween_property(anim, "position:y", anim.position.y + 10.0, 0.5)
 	tw.chain().tween_callback(queue_free)
 
 # --- Visuel -----------------------------------------------------------------
