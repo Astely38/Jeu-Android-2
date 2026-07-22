@@ -6,7 +6,7 @@ extends Node
 const SAVE_PATH := "user://save.json"
 
 ## Ordre de progression des niveaux.
-const LEVEL_ORDER := ["level_1", "level_2", "level_3", "level_4", "level_5", "level_6", "level_7", "level_8", "level_9", "level_10", "level_11", "level_12", "level_13", "level_14", "level_15"]
+const LEVEL_ORDER := ["level_1", "level_2", "level_3", "level_4", "level_5", "level_6", "level_7", "level_8", "level_9", "level_10", "level_11", "level_12", "level_13", "level_14", "level_15", "level_16"]
 
 const LEVEL_NAMES := {
 	"level_1": "La Clairière des Bambous",
@@ -24,6 +24,7 @@ const LEVEL_NAMES := {
 	"level_13": "III · La Poursuite du Reflet",
 	"level_14": "III · Le Gouffre aux Anneaux",
 	"level_15": "III · Le Reflet",
+	"level_16": "IV · Le Versant Aveugle",
 	"level_secret": "✦ Le Jardin Céleste",
 }
 
@@ -45,6 +46,7 @@ const LEVEL_SCENES := {
 	"level_13": "res://levels/level_13.tscn",
 	"level_14": "res://levels/level_14.tscn",
 	"level_15": "res://levels/level_15.tscn",
+	"level_16": "res://levels/level_16.tscn",
 	"level_secret": "res://levels/level_secret.tscn",
 }
 
