@@ -255,8 +255,11 @@ func _animate(delta: float) -> void:
 	var want_pos := Vector2(0, -40)
 	if _exposed:
 		var fall := 1.0 if _anim.flip_h else -1.0
-		want_rot = deg_to_rad(86.0) * fall
-		want_pos = Vector2(fall * 22.0, -12.0)
+		want_rot = deg_to_rad(88.0) * fall
+		# Couché AU SOL : le sprite (normalement calé à -40, torse en l'air) est
+		# descendu près du contact-sol pour que le corps repose sur la plateforme
+		# au lieu de flotter à mi-hauteur.
+		want_pos = Vector2(fall * 26.0, 16.0)
 	_anim.rotation = lerp_angle(_anim.rotation, want_rot, minf(1.0, delta * 9.0))
 	_anim.position = _anim.position.lerp(want_pos, minf(1.0, delta * 9.0))
 	# Teinte miroir : bleu froid ; plus clair quand exposé (vulnérable),
