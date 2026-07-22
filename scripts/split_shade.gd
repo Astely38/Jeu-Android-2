@@ -184,6 +184,7 @@ func die() -> bool:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	Sfx.varied(sfx_die, 0.85, 1.05)
+	Atmosphere.death_burst(get_parent(), global_position + Vector2(0, -6), Color(1.0, 0.55, 0.35))
 	# Dissolution : le masque se disloque vers le haut en s'effaçant.
 	if _mask != null:
 		var tw := _mask.create_tween()

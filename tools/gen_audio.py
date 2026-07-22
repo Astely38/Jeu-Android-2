@@ -173,7 +173,69 @@ def make_land():
     normalize(buf, 0.85)  # réception franche et bien présente
     write_wav("assets/sfx/land.wav", buf, sr)
 
+def make_karasu_die():
+    """Mort du Karasu-tengu : cri de corbeau rauque et descendant, teinté
+    spectral (souffle aigu qui s'éteint). Court et perçant."""
+    sr = 44100
+    dur = 0.34
+    n = int(dur * sr)
+    buf = [0.0] * n
+    for i in range(n):
+        t = i / sr
+        # Hauteur qui plonge : le cri qui « casse » vers le grave.
+        f = 760.0 * math.exp(-3.4 * t) + 300.0
+        s = 0.0
+        for h, amp in [(1, 1.0), (2, 0.5), (3, 0.62), (4, 0.28), (5, 0.36)]:
+            s += math.sin(2.0 * math.pi * f * h * t) * amp
+        s /= 2.8
+        # Rasp du corbeau : trémolo rapide de l'amplitude.
+        rasp = 0.58 + 0.42 * math.sin(2.0 * math.pi * 74.0 * t)
+        env = math.exp(-6.8 * t) * (1.0 - math.exp(-140.0 * t))
+        buf[i] += s * rasp * env * 0.9
+    # Souffle spectral : bruit passe-haut qui s'efface.
+    prev = 0.0
+    for i in range(n):
+        t = i / sr
+        white = random.uniform(-1.0, 1.0)
+        prev = prev + 0.5 * (white - prev)
+        buf[i] += (white - prev) * 0.32 * math.exp(-7.5 * t)
+    normalize(buf, 0.8)
+    write_wav("assets/sfx/karasu_die.wav", buf, sr)
+
+def make_oni_die():
+    """Chute de l'Oni au pavois : fracas métallique de l'armure + choc sourd
+    au sol, puis les plaques qui retombent. Lourd et grave."""
+    sr = 44100
+    dur = 0.5
+    n = int(dur * sr)
+    buf = [0.0] * n
+    # Fracas métallique inharmonique (armure/pavois), decay moyen.
+    for f, a in [(430, 1.0), (645, 0.7), (1015, 0.55), (1560, 0.4), (2280, 0.22)]:
+        for i in range(n):
+            t = i / sr
+            buf[i] += math.sin(2.0 * math.pi * f * t) * a * math.exp(-9.0 * t) * 0.5
+    # Choc sourd : corps grave qui glisse vers le bas.
+    for i in range(n):
+        t = i / sr
+        f = 112.0 * math.exp(-16.0 * t) + 42.0
+        buf[i] += math.sin(2.0 * math.pi * f * t) * 0.8 * math.exp(-13.0 * t)
+    # Transitoire métallique d'attaque.
+    for i in range(int(0.006 * sr)):
+        buf[i] += random.uniform(-1, 1) * 0.7 * math.exp(-360.0 * i / sr)
+    # Plaques qui retombent : bruit grave différé.
+    prev = 0.0
+    for i in range(n):
+        t = i / sr
+        white = random.uniform(-1.0, 1.0)
+        prev = prev + 0.15 * (white - prev)
+        gate = 1.0 if t > 0.06 else 0.3
+        buf[i] += prev * 0.22 * math.exp(-6.0 * t) * gate
+    normalize(buf, 0.85)
+    write_wav("assets/sfx/oni_die.wav", buf, sr)
+
 if __name__ == "__main__":
     make_clink()
     make_footstep()
     make_land()
+    make_karasu_die()
+    make_oni_die()

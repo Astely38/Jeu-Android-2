@@ -73,6 +73,53 @@ static func spark_burst(host: Node, at: Vector2, tint: Color) -> void:
 	b.global_position = at
 	b.finished.connect(b.queue_free)
 
+## Éclatement à la mort d'un ennemi : une brève onde de choc claire + une volée
+## de petits éclats angulaires projetés tout autour, teintés à la couleur de
+## l'esprit. Vient RENFORCER release_soul/spark_burst pour un coup de grâce plus
+## « croustillant ». Posé sur le niveau (host) : survit à la disparition du corps.
+static func death_burst(host: Node, at: Vector2, tint: Color) -> void:
+	if host == null or not is_instance_valid(host):
+		return
+	# Onde de choc : anneau clair qui s'étend et s'efface vite.
+	var ring := Line2D.new()
+	ring.width = 3.0
+	ring.default_color = Color(1.0, 1.0, 1.0, 0.7)
+	ring.closed = true
+	var rp := PackedVector2Array()
+	for i in 20:
+		var a := i * TAU / 20.0
+		rp.append(Vector2(cos(a) * 8.0, sin(a) * 8.0))
+	ring.points = rp
+	ring.z_index = 24
+	host.add_child(ring)
+	ring.global_position = at
+	var gt := host.create_tween()
+	gt.set_parallel(true)
+	gt.tween_property(ring, "scale", Vector2(3.2, 3.2), 0.25)
+	gt.tween_property(ring, "modulate:a", 0.0, 0.25)
+	gt.chain().tween_callback(ring.queue_free)
+	# Éclats angulaires projetés dans toutes les directions.
+	var n := 7
+	for i in n:
+		var ang := TAU * float(i) / float(n) + randf() * 0.6
+		var shard := Polygon2D.new()
+		var s := randf_range(2.5, 4.5)
+		shard.polygon = PackedVector2Array([
+			Vector2(-s, -s * 0.5), Vector2(s * 1.4, 0.0), Vector2(-s, s * 0.5),
+		])
+		shard.color = Color(tint.r, tint.g, tint.b, 0.95)
+		shard.z_index = 24
+		shard.rotation = ang
+		host.add_child(shard)
+		shard.global_position = at
+		var target := at + Vector2(cos(ang), sin(ang)) * randf_range(26.0, 52.0)
+		var st := host.create_tween()
+		st.set_parallel(true)
+		st.tween_property(shard, "global_position", target, 0.32).set_ease(Tween.EASE_OUT)
+		st.tween_property(shard, "rotation", ang + randf_range(-2.0, 2.0), 0.32)
+		st.tween_property(shard, "modulate:a", 0.0, 0.32)
+		st.chain().tween_callback(shard.queue_free)
+
 ## Fait « respirer » un nœud (halo de portail, aura…) : une boucle douce de
 ## son alpha et de son échelle autour de leurs valeurs actuelles. Purement
 ## visuel — n'affecte pas le jeu. À appeler une fois le nœud DANS l'arbre.

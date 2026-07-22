@@ -167,6 +167,7 @@ func die() -> void:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	Sfx.varied(sfx_die, 0.9, 1.12)
+	Atmosphere.death_burst(get_parent(), global_position + Vector2(0, -16), Color(0.7, 0.9, 1.0))
 	var tween := create_tween()
 	tween.tween_property(body_node, "modulate:a", 0.0, 0.7)
 	tween.finished.connect(queue_free)

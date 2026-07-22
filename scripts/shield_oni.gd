@@ -135,6 +135,7 @@ func _die_for_real() -> void:
 	body_shape.set_deferred("disabled", true)
 	Sfx.varied(sfx_die, 0.85, 1.05)
 	Atmosphere.release_soul(get_parent(), global_position + Vector2(0, -22), Color(0.7, 0.8, 1.0))
+	Atmosphere.death_burst(get_parent(), global_position + Vector2(0, -18), Color(0.6, 0.7, 1.0))
 	if _gfx != null:
 		var tw := _gfx.create_tween()
 		tw.set_parallel(true)

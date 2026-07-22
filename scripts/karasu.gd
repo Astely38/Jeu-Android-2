@@ -172,6 +172,7 @@ func die() -> bool:
 	var parent := get_parent()
 	if parent != null:
 		Atmosphere.spark_burst(parent, global_position, Color(0.35, 0.28, 0.42))
+		Atmosphere.death_burst(parent, global_position, Color(0.85, 0.76, 1.0))
 	if _gfx != null:
 		var tw := _gfx.create_tween()
 		tw.set_parallel(true)
