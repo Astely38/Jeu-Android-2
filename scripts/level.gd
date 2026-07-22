@@ -535,49 +535,17 @@ func _on_secret_portal_body_entered(body: Node2D) -> void:
 	Transition.goto("res://levels/level_secret.tscn")
 
 ## Panneaux d'apprentissage en bois plantés au long de la première clairière :
-## ils enseignent les commandes au bon moment, sans bloquer le jeu.
+## ils enseignent les commandes au bon moment, sans bloquer le jeu. Postés
+## juste avant que la mécanique ne serve (premier ennemi, premier checkpoint).
 func _build_tutorial_signs() -> void:
 	var signs := [
 		{"x": 150.0, "text": "◄  ►   Se déplacer"},
-		{"x": 470.0, "text": "▲   Sauter"},
+		{"x": 470.0, "text": "▲  Sauter (maintenir = plus haut)"},
 		{"x": 1270.0, "text": "Épée   Trancher les esprits"},
-		{"x": 1500.0, "text": "Ruée   Traverse les ennemis"},
+		{"x": 1500.0, "text": "Ruée   Invincible, traverse les ennemis"},
 	]
 	for s in signs:
-		_build_sign(float(s["x"]), String(s["text"]))
-
-func _build_sign(x: float, text: String) -> void:
-	var surf := GROUND_Y - 50.0
-	var post := Node2D.new()
-	post.position = Vector2(x, surf)
-	add_child(post)
-	var wood := Color(0.44, 0.3, 0.17)
-	var wood_dark := Color(0.32, 0.21, 0.12)
-	# Poteau planté dans le sol.
-	_poly(post, PackedVector2Array([
-		Vector2(-4, 0), Vector2(4, 0), Vector2(4, -72), Vector2(-4, -72),
-	]), wood_dark)
-	# Planche gravée, cerclée d'un liseré plus sombre.
-	_poly(post, PackedVector2Array([
-		Vector2(-104, -72), Vector2(104, -72), Vector2(104, -108), Vector2(-104, -108),
-	]), wood)
-	_poly(post, PackedVector2Array([
-		Vector2(-104, -72), Vector2(104, -72), Vector2(104, -76), Vector2(-104, -76),
-	]), wood_dark)
-	_poly(post, PackedVector2Array([
-		Vector2(-104, -104), Vector2(104, -104), Vector2(104, -108), Vector2(-104, -108),
-	]), wood_dark)
-	var lbl := Label.new()
-	lbl.text = text
-	lbl.size = Vector2(208, 36)
-	lbl.position = Vector2(-104, -108)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 15)
-	lbl.add_theme_color_override("font_color", Color(0.99, 0.93, 0.8))
-	lbl.add_theme_color_override("font_outline_color", Color(0.18, 0.1, 0.05))
-	lbl.add_theme_constant_override("outline_size", 4)
-	post.add_child(lbl)
+		TutorialSign.build(self, float(s["x"]), GROUND_Y - 50.0, String(s["text"]))
 
 ## Répliques d'ambiance d'Eneko au fil de la clairière (non bloquantes).
 func _setup_ambient() -> void:

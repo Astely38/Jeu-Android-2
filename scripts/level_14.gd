@@ -86,6 +86,7 @@ func _ready() -> void:
 	_build_platforms()
 	_build_anchors()
 	_build_checkpoints()
+	_build_tutorial_signs()
 	_build_goal()
 	_build_kill_zone(LEVEL_END, 760.0)
 	_spawn_entities()
@@ -194,6 +195,11 @@ func _build_anchors() -> void:
 		var a := SpiritAnchor.new()
 		a.position = p
 		add_child(a)
+
+## Léonie explique déjà le Fil Spirituel en dialogue ; cette pancarte précise
+## juste le bouton dédié (facile à manquer, jamais nommé explicitement).
+func _build_tutorial_signs() -> void:
+	TutorialSign.build(self, 450.0, GROUND_Y - 50.0, "Fil   Bouton dédié, vise un anneau")
 
 func _build_checkpoints() -> void:
 	for x in CHECKPOINT_XS:

@@ -125,6 +125,7 @@ func _ready() -> void:
 	_build_checkpoints()
 	_build_traps()
 	_build_lifts()
+	_build_tutorial_signs()
 	_build_goal()
 	_build_kill_zone(LEVEL_END)
 	_spawn_entities()
@@ -571,6 +572,18 @@ func _build_crumbles() -> void:
 		pad.half_width = c.y
 		pad.position = Vector2(c.x, GROUND_Y - 44.0)
 		add_child(pad)
+
+## Trois mécaniques inédites apparaissent dans ce niveau (ponts de corde,
+## rafales de vent, dalles effondrables) : une pancarte plantée juste avant
+## chacune, la première fois qu'elle sert.
+func _build_tutorial_signs() -> void:
+	var signs := [
+		{"x": 180.0, "text": "Rafale de vent — suis le sens de la neige"},
+		{"x": 1350.0, "text": "Pont de corde — praticable"},
+		{"x": 3445.0, "text": "Dalle friable — ne pas s'arrêter"},
+	]
+	for s in signs:
+		TutorialSign.build(self, float(s["x"]), GROUND_Y - 50.0, String(s["text"]))
 
 func _build_checkpoints() -> void:
 	for x in CHECKPOINT_XS:

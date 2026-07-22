@@ -104,6 +104,7 @@ func _ready() -> void:
 	_build_bridges()
 	_build_hazards()
 	_build_checkpoints()
+	_build_tutorial_signs()
 	_build_traps()
 	_build_goal()
 	_build_kill_zone(LEVEL_END)
@@ -426,6 +427,11 @@ func _build_hazards() -> void:
 	dart.phase = 0.6
 	dart.tint = Color(1.0, 0.55, 0.2)
 	add_child(dart)
+
+## Premier niveau du Chapitre II : rappelle le Double Saut, gagné à la toute
+## fin du Chapitre I et facile à oublier après le générique de victoire.
+func _build_tutorial_signs() -> void:
+	TutorialSign.build(self, 180.0, GROUND_Y - 50.0, "▲▲  Saut en l'air — Double Saut")
 
 func _build_checkpoints() -> void:
 	for x in CHECKPOINT_XS:
