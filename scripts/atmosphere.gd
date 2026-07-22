@@ -135,10 +135,10 @@ static func breathe(node: Node2D, amount := 0.14, period := 2.4) -> void:
 	tw.parallel().tween_property(node, "scale", base_s, period * 0.5).set_trans(Tween.TRANS_SINE)
 
 ## Ajoute un plan de silhouettes sombres en avant-plan (feuillages suspendus
-## en haut, herbes en bas), défilant plus vite que le décor pour créer de la
-## profondeur. Basé sur Parallax2D (Node2D) : il respecte le z-index, donc il
-## passe DEVANT le jeu mais reste SOUS l'interface (CanvasLayer). `tint` donne
-## la teinte sombre propre au niveau (feuillage, pierre, brume…).
+## en haut), défilant plus vite que le décor pour créer de la profondeur.
+## Basé sur Parallax2D (Node2D) : il respecte le z-index, donc il passe DEVANT
+## le jeu mais reste SOUS l'interface (CanvasLayer). `tint` donne la teinte
+## sombre propre au niveau (feuillage, pierre, brume…).
 static func add_foreground(host: Node, tint: Color) -> void:
 	var fg := Parallax2D.new()
 	fg.scroll_scale = Vector2(1.55, 1.02)
@@ -148,9 +148,6 @@ static func add_foreground(host: Node, tint: Color) -> void:
 	# Deux touffes de feuillage suspendues au haut de l'écran.
 	for tx in [220.0, 900.0]:
 		_frond_cluster(fg, Vector2(float(tx), -12.0), tint)
-	# Herbes sombres qui montent du bas de l'écran.
-	for bx in [560.0, 1230.0]:
-		_grass_clump(fg, Vector2(float(bx), 560.0), tint)
 
 static func _poly(parent: Node, points: PackedVector2Array, color: Color, pos: Vector2) -> void:
 	var p := Polygon2D.new()
@@ -177,16 +174,3 @@ static func _frond_cluster(parent: Node, top: Vector2, tint: Color) -> void:
 		]), tint, top)
 		ly += 34.0
 		kk += 1
-
-## Bouquet d'herbes/silhouettes sombres montant du bas de l'écran.
-static func _grass_clump(parent: Node, base: Vector2, tint: Color) -> void:
-	var b := 0
-	while b < 9:
-		var bx := -70.0 + float(b) * 18.0
-		var bh := 90.0 + float((b * 37) % 70)
-		var lean := (float(b % 3) - 1.0) * 16.0
-		_poly(parent, PackedVector2Array([
-			Vector2(bx - 8, 0), Vector2(bx + 8, 0),
-			Vector2(bx + lean + 3, -bh), Vector2(bx + lean - 3, -bh),
-		]), tint, base)
-		b += 1
