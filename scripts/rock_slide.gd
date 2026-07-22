@@ -77,10 +77,22 @@ func _release() -> void:
 		for k in 6:
 			var a := k * TAU / 6.0
 			poly.append(Vector2(cos(a) * r, sin(a) * r * 0.8))
+		# Halo : détache l'éclat du fond sombre du chapitre pendant sa chute.
+		var glow := Sprite2D.new()
+		glow.texture = load("res://assets/mist.svg")
+		glow.modulate = Color(0.8, 0.7, 0.95, 0.4)
+		glow.scale = Vector2.ONE * (r / 14.0)
+		shard.add_child(glow)
 		var body := Polygon2D.new()
 		body.polygon = poly
-		body.color = Color(tint.r, tint.g, tint.b, 0.95)
+		body.color = Color(tint.r + 0.12, tint.g + 0.1, tint.b + 0.14, 0.98)
 		shard.add_child(body)
+		var edge := Line2D.new()
+		edge.points = poly
+		edge.closed = true
+		edge.width = 1.4
+		edge.default_color = Color(0.85, 0.78, 1.0, 0.85)
+		shard.add_child(edge)
 		var shape := CollisionShape2D.new()
 		var circle := CircleShape2D.new()
 		circle.radius = r

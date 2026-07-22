@@ -17,10 +17,11 @@ const FADE_TIME := 0.35
 const HOLLOW_TIME := 1.5
 const FORM_TIME := 0.35
 
-const ROBE := Color(0.14, 0.12, 0.18)
-const ROBE_HI := Color(0.22, 0.19, 0.27)
-const FACE := Color(0.86, 0.84, 0.88)
-const EDGE := Color(0.6, 0.55, 0.7)
+const ROBE := Color(0.2, 0.17, 0.28)
+const ROBE_HI := Color(0.34, 0.29, 0.45)
+const FACE := Color(0.9, 0.88, 0.96)
+const EDGE := Color(0.72, 0.64, 0.9)
+const AURA := Color(0.62, 0.5, 0.95)  # halo spectral violet, marque sa position
 
 enum { SOLID, FADING, HOLLOW, FORMING }
 
@@ -33,6 +34,7 @@ var _t := 0.0
 
 var _gfx: Node2D
 var _face_poly: Polygon2D
+var _aura: Sprite2D
 
 @onready var hitbox: Area2D = $Hitbox
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
@@ -145,6 +147,18 @@ func die() -> bool:
 ## Silhouette robée simple, capuche vide et visage pâle et VIERGE (ovale
 ## uni, sans traits) — « il n'a plus de visage à emprunter ».
 func _build_visual() -> void:
+	# Halo spectral, INDÉPENDANT de l'opacité du corps : il reste discrètement
+	# visible même quand l'esprit est creux, pour qu'on repère toujours où il
+	# se trouve (et qu'on sache quand le frapper de nouveau). Enfant direct,
+	# derrière le corps.
+	_aura = Sprite2D.new()
+	_aura.texture = load("res://assets/mist.svg")
+	_aura.modulate = Color(AURA.r, AURA.g, AURA.b, 0.5)
+	_aura.scale = Vector2(1.7, 2.0)
+	_aura.position = Vector2(0, -6)
+	_aura.z_index = -1
+	add_child(_aura)
+
 	_gfx = Node2D.new()
 	add_child(_gfx)
 
@@ -206,12 +220,20 @@ func _animate() -> void:
 	# Opacité selon l'état : plein en SOLID, creux et scintillant en HOLLOW,
 	# transition télégraphiée (le joueur voit venir chaque bascule).
 	var target_a := 1.0
+	# Le halo suit l'état : franc quand l'esprit est SOLIDE (donc dangereux et
+	# frappable), faible mais jamais nul quand il est creux (repérable).
+	var aura_a := 0.55
 	match _state:
 		FADING:
-			target_a = 1.0 - (_state_t / FADE_TIME) * 0.78
+			target_a = 1.0 - (_state_t / FADE_TIME) * 0.7
+			aura_a = 0.55 - (_state_t / FADE_TIME) * 0.3
 		HOLLOW:
 			# Vacillement fantomatique pendant toute la phase creuse.
-			target_a = 0.2 + 0.08 * sin(_t * 16.0)
+			target_a = 0.28 + 0.08 * sin(_t * 16.0)
+			aura_a = 0.22 + 0.06 * sin(_t * 10.0)
 		FORMING:
-			target_a = 0.22 + (_state_t / FORM_TIME) * 0.78
+			target_a = 0.3 + (_state_t / FORM_TIME) * 0.7
+			aura_a = 0.25 + (_state_t / FORM_TIME) * 0.3
 	_gfx.modulate.a = target_a
+	if _aura != null:
+		_aura.modulate.a = aura_a

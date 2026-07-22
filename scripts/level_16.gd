@@ -93,7 +93,11 @@ func _ready() -> void:
 	_build_glitch_rifts()
 	_build_rock_slides()
 	_build_goal()
-	_build_kill_zone(LEVEL_END, 750.0, 400.0)
+	# Filet de sécurité PURE défense : le relief est continu (aucun trou) et
+	# borné par des murs aux deux bouts, donc une chute est en principe
+	# impossible. On place quand même la zone bien SOUS le point le plus bas
+	# du sol (la vallée, y=690) pour ne jamais frapper un joueur au sol.
+	_build_kill_zone(LEVEL_END, 950.0, 200.0)
 	_spawn_entities()
 	_setup_audio()
 	_setup_ambient()
@@ -226,6 +230,15 @@ func _build_glitch_rifts() -> void:
 		rect.size = Vector2(60, 30)
 		shape.shape = rect
 		rift.add_child(shape)
+		# Lueur qui sourd de la faille : signale le danger de loin, sur le sol.
+		var glow := Sprite2D.new()
+		glow.texture = load("res://assets/mist.svg")
+		glow.modulate = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.35)
+		glow.scale = Vector2(1.4, 1.0)
+		glow.position = Vector2(0, -4)
+		glow.z_index = -1
+		rift.add_child(glow)
+		Atmosphere.breathe(glow, 0.2, 1.6)
 		var pts := PackedVector2Array([
 			Vector2(-30, 14), Vector2(30, 14), Vector2(24, -12), Vector2(-24, -12),
 		])
@@ -239,9 +252,12 @@ func _build_glitch_rifts() -> void:
 		rift.add_child(outline)
 		for k in 3:
 			var ox := -18.0 + float(k) * 18.0
+			# Alpha de base 1.0 : _process pilote entièrement modulate (teinte +
+			# alpha pulsée). Avec un alpha de base à 0, la bande resterait
+			# invisible (0 × modulate.a = 0).
 			var band := _poly(rift, PackedVector2Array([
 				Vector2(ox - 5, 11), Vector2(ox + 5, 11), Vector2(ox + 7, -10), Vector2(ox - 7, -10),
-			]), Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.0))
+			]), GLITCH_A)
 			_glitches.append({"node": band, "phase": float(k) * 1.3 + x * 0.01})
 		add_child(rift)
 		rift.body_entered.connect(_on_trap_body_entered)
@@ -281,7 +297,7 @@ func _build_goal() -> void:
 		var oy := -60.0 + float(k) * 40.0
 		var band := _poly(goal, PackedVector2Array([
 			Vector2(-30, oy), Vector2(30, oy), Vector2(28, oy + 14), Vector2(-28, oy + 14),
-		]), Color(GLITCH_B.r, GLITCH_B.g, GLITCH_B.b, 0.0))
+		]), GLITCH_B)
 		_glitches.append({"node": band, "phase": float(k) * 0.9})
 	add_child(goal)
 	Atmosphere.breathe(glow)
@@ -370,7 +386,7 @@ func _build_decor() -> void:
 		var col := GLITCH_A if gi % 2 == 0 else GLITCH_B
 		var band := _poly(sky, PackedVector2Array([
 			Vector2(-gw, -2), Vector2(gw, -2), Vector2(gw, 2), Vector2(-gw, 2),
-		]), Color(col.r, col.g, col.b, 0.0), Vector2(gx, gy))
+		]), col, Vector2(gx, gy))
 		_glitches.append({"node": band, "phase": float(gi) * 1.7})
 		gx += 260.0 + float(gi * 47 % 220)
 		gi += 1
