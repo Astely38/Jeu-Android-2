@@ -22,10 +22,96 @@ const CHAPTER_NAMES := {
 }
 
 func _ready() -> void:
+	_build_scenery()
 	_style_button($BackButton, Color(0.6, 0.5, 0.45))
 	$BackButton.pressed.connect(_on_back_pressed)
 	_build_list()
 	UiScroll.make_touch_friendly($Scroll)
+	_build_petals()
+
+func _poly(parent: Node, points: PackedVector2Array, color: Color, pos := Vector2.ZERO) -> Polygon2D:
+	var p := Polygon2D.new()
+	p.polygon = points
+	p.color = color
+	p.position = pos
+	parent.add_child(p)
+	return p
+
+## Toile de fond peinte, dans la même veine crépusculaire que le menu
+## principal : lointaine chaîne de montagnes et torii de pierre, cadrés
+## surtout aux marges pour ne jamais gêner la lecture de la liste.
+func _build_scenery() -> void:
+	var sc := Node2D.new()
+	add_child(sc)
+	move_child(sc, 1)  # au-dessus du dégradé, sous le titre et la liste
+
+	# Lueur de lune, discrète, en haut à droite (jamais couverte par le titre).
+	var moon_glow := Sprite2D.new()
+	moon_glow.texture = load("res://assets/mist.svg")
+	moon_glow.modulate = Color(0.75, 0.8, 0.95, 0.3)
+	moon_glow.scale = Vector2(4.0, 4.0)
+	moon_glow.position = Vector2(880.0, 40.0)
+	sc.add_child(moon_glow)
+	var moon_pts := PackedVector2Array()
+	for i in 18:
+		var a := i * TAU / 18.0
+		moon_pts.append(Vector2(cos(a) * 16.0, sin(a) * 16.0))
+	_poly(sc, moon_pts, Color(0.92, 0.94, 1.0, 0.5), Vector2(880, 40))
+
+	# Chaîne de montagnes lointaine, tout en bas — juste une frange visible
+	# derrière le bouton Retour et le bord de la liste.
+	var mx := -40.0
+	var mi := 0
+	while mx < 1000.0:
+		var mh := 60.0 + float(mi * 53 % 50)
+		_poly(sc, PackedVector2Array([
+			Vector2(-140, 0), Vector2(0, -mh), Vector2(140, 0),
+		]), Color(0.22, 0.15, 0.28, 0.55), Vector2(mx, 560.0))
+		mx += 200.0 + float(mi * 37 % 90)
+		mi += 1
+
+	# Torii de pierre en silhouette, tout en bas à gauche.
+	var torii := Node2D.new()
+	torii.position = Vector2(70.0, 552.0)
+	torii.modulate = Color(1, 1, 1, 0.4)
+	sc.add_child(torii)
+	var red := Color(0.42, 0.14, 0.12)
+	_poly(torii, PackedVector2Array([
+		Vector2(-30, 0), Vector2(-24, 0), Vector2(-25, -64), Vector2(-31, -64),
+	]), red)
+	_poly(torii, PackedVector2Array([
+		Vector2(24, 0), Vector2(30, 0), Vector2(31, -64), Vector2(25, -64),
+	]), red)
+	_poly(torii, PackedVector2Array([
+		Vector2(-35, -50), Vector2(35, -50), Vector2(35, -44), Vector2(-35, -44),
+	]), red)
+	_poly(torii, PackedVector2Array([
+		Vector2(-40, -68), Vector2(40, -68), Vector2(44, -62), Vector2(-44, -62),
+	]), Color(0.34, 0.11, 0.09))
+
+## Pétales portés par le vent, en surcouche légère sur toute l'interface —
+## le même souffle que le menu principal, pour relier visuellement les deux
+## écrans. Faible densité : ne doit jamais nuire à la lecture de la liste.
+func _build_petals() -> void:
+	var petals := CPUParticles2D.new()
+	petals.texture = load("res://assets/leaf.svg")
+	petals.amount = 10
+	petals.lifetime = 12.0
+	petals.preprocess = 12.0
+	petals.position = Vector2(480, -20)
+	petals.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	petals.emission_rect_extents = Vector2(500, 10)
+	petals.direction = Vector2(0.25, 1.0)
+	petals.spread = 15.0
+	petals.gravity = Vector2(5, 12)
+	petals.initial_velocity_min = 16.0
+	petals.initial_velocity_max = 32.0
+	petals.angular_velocity_min = -50.0
+	petals.angular_velocity_max = 50.0
+	petals.scale_amount_min = 0.4
+	petals.scale_amount_max = 0.7
+	petals.color = Color(0.95, 0.74, 0.78, 0.55)
+	add_child(petals)
 
 func _build_list() -> void:
 	var list: VBoxContainer = $Scroll/List
