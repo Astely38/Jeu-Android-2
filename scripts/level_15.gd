@@ -129,6 +129,40 @@ func _build_decor() -> void:
 		moon_pts.append(Vector2(cos(a) * 52.0, sin(a) * 52.0))
 	_poly(sky, moon_pts, Color(0.88, 0.93, 1.0, 0.85), Vector2(600, 150))
 	TextureLab.add_clouds(sky, 4, 70.0, 210.0, LEVEL_END, Color(0.6, 0.7, 0.85, 0.14))
+	# Rayons de lune dramatiques, balayant l'arène du duel final.
+	var rays := GodRays.new()
+	rays.ray_count = 9
+	rays.half_spread = 1.0
+	rays.length = 1450.0
+	rays.color = Color(0.75, 0.85, 1.0, 0.05)
+	rays.position = Vector2(600, 150)
+	sky.add_child(rays)
+
+	# Éclats de miroir dressés, en silhouette : ancrent le "royaume-miroir"
+	# en profondeur de champ, de l'approche jusqu'à l'arène du Reflet.
+	var shards := ParallaxLayer.new()
+	shards.motion_scale = Vector2(0.32, 0.6)
+	bg.add_child(shards)
+	var sx := 120.0
+	var si := 0
+	while sx < LEVEL_END + 300.0:
+		var sh_h := 260.0 + float(si * 53 % 190)
+		var sh_w := 42.0 + float(si * 29 % 32)
+		var tip := Vector2(0, -sh_h)
+		var pts := PackedVector2Array([
+			Vector2(-sh_w * 0.4, 0), tip, Vector2(sh_w * 0.4, 0),
+			Vector2(sh_w * 0.15, -sh_h * 0.32),
+		])
+		var col := Color(0.16, 0.2, 0.28, 0.5) if si % 2 == 0 else Color(0.1, 0.13, 0.19, 0.55)
+		_poly(shards, pts, col, Vector2(sx, 560))
+		# Liseré clair qui capte la lueur lunaire sur l'arête du tesson.
+		var edge := _poly(shards, PackedVector2Array([
+			Vector2(-2, 0), tip + Vector2(-1, 5), tip + Vector2(2, 3), Vector2(2, 0),
+		]), Color(0.75, 0.88, 1.0, 0.0), Vector2(sx, 560))
+		_shimmers.append({"node": edge, "phase": float(si) * 0.7})
+		sx += 340.0 + float(si * 41 % 230)
+		si += 1
+
 	# Mer de verre.
 	var sea := ParallaxLayer.new()
 	sea.motion_scale = Vector2(0.25, 0.6)
@@ -137,6 +171,35 @@ func _build_decor() -> void:
 		Vector2(-200, 470), Vector2(LEVEL_END + 400, 470),
 		Vector2(LEVEL_END + 400, 640), Vector2(-200, 640),
 	]), Color(0.12, 0.16, 0.22, 0.6))
+	# Craquelures figées à la surface de la mer de verre, qui scintillent.
+	var cx := 60.0
+	var ci := 0
+	while cx < LEVEL_END:
+		var crack := PackedVector2Array([Vector2(0, 0)])
+		var ang := -0.3 + float(ci % 5) * 0.15
+		var seglen := 26.0
+		for seg in 4:
+			var last: Vector2 = crack[crack.size() - 1]
+			ang += randf_range(-0.5, 0.5)
+			crack.append(last + Vector2(cos(ang), sin(ang) * 0.4) * seglen)
+		var cracks_line := Line2D.new()
+		cracks_line.points = crack
+		cracks_line.width = 1.6
+		cracks_line.default_color = Color(0.8, 0.92, 1.0, 0.35)
+		cracks_line.position = Vector2(cx, 500.0 + float(ci % 3) * 20.0)
+		sea.add_child(cracks_line)
+		# Scintillement indépendant (Line2D n'est pas un Polygon2D : ne rejoint
+		# pas le tableau _shimmers, typé Polygon2D).
+		var ctw := cracks_line.create_tween().set_loops()
+		ctw.tween_property(cracks_line, "modulate:a", 0.75, 1.4 + float(ci % 3) * 0.3) \
+			.set_trans(Tween.TRANS_SINE)
+		ctw.tween_property(cracks_line, "modulate:a", 0.2, 1.4 + float(ci % 3) * 0.3) \
+			.set_trans(Tween.TRANS_SINE)
+		cx += 260.0 + float(ci * 37 % 200)
+		ci += 1
+	# Brume rasante au ras de la mer de verre.
+	TextureLab.add_ground_mist(self, 7, 500.0, LEVEL_END, Color(0.62, 0.76, 0.92, 0.12))
+
 	glass_motes = CPUParticles2D.new()
 	glass_motes.texture = load("res://assets/leaf.svg")
 	glass_motes.amount = 26

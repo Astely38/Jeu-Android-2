@@ -119,6 +119,64 @@ func _build_decor() -> void:
 	aura.position = Vector2(480.0, 500.0)
 	sky.add_child(aura)
 	TextureLab.add_clouds(sky, 4, 40.0, 190.0, LEVEL_END, Color(0.2, 0.12, 0.28, 0.18))
+	# Rayons d'ombre : la lumière elle-même semble avalée par le Puits.
+	var shadow_rays := GodRays.new()
+	shadow_rays.ray_count = 8
+	shadow_rays.half_spread = 0.95
+	shadow_rays.length = 1300.0
+	shadow_rays.color = Color(0.28, 0.1, 0.4, 0.07)
+	shadow_rays.position = Vector2(480.0, 260.0)
+	sky.add_child(shadow_rays)
+
+	# Parois du Puits : silhouettes de roche déchiquetée qui cadrent la scène
+	# en haut et en bas — on est tout au fond, loin sous la surface.
+	var walls := ParallaxLayer.new()
+	walls.motion_scale = Vector2(0.12, 0.3)
+	bg.add_child(walls)
+	var wx := 0.0
+	var wi := 0
+	while wx < LEVEL_END + 200.0:
+		var wh := 90.0 + float(wi * 43 % 70)
+		_poly(walls, PackedVector2Array([
+			Vector2(-120, 0), Vector2(-40, -wh), Vector2(40, -wh * 0.7), Vector2(120, 0),
+		]), Color(0.06, 0.04, 0.09, 0.85), Vector2(wx, -20.0))
+		var wh2 := 70.0 + float(wi * 59 % 60)
+		_poly(walls, PackedVector2Array([
+			Vector2(-110, 0), Vector2(-30, wh2), Vector2(50, wh2 * 0.6), Vector2(130, 0),
+		]), Color(0.06, 0.04, 0.09, 0.85), Vector2(wx + 90.0, 640.0))
+		wx += 260.0 + float(wi * 37 % 140)
+		wi += 1
+
+	# Tentacules d'ombre qui rampent le long des parois, ondulant lentement —
+	# écho du Cœur lui-même, tapi tout au fond.
+	var tendril_layer := ParallaxLayer.new()
+	tendril_layer.motion_scale = Vector2(0.2, 0.4)
+	bg.add_child(tendril_layer)
+	var tx := 150.0
+	var ti := 0
+	while tx < LEVEL_END:
+		var from_top: bool = ti % 2 == 0
+		var base_y := 20.0 if from_top else 610.0
+		var dir := 1.0 if from_top else -1.0
+		var pts := PackedVector2Array([Vector2(0, 0)])
+		var tang := PI * 0.5 * dir + randf_range(-0.3, 0.3)
+		for seg in 5:
+			var last: Vector2 = pts[pts.size() - 1]
+			tang += randf_range(-0.4, 0.4)
+			pts.append(last + Vector2(cos(tang), sin(tang)) * 24.0)
+		var tendril := Line2D.new()
+		tendril.points = pts
+		tendril.width = 5.0
+		tendril.default_color = Color(0.35, 0.15, 0.45, 0.4)
+		tendril.position = Vector2(tx, base_y)
+		tendril_layer.add_child(tendril)
+		var ttw := tendril.create_tween().set_loops()
+		ttw.tween_property(tendril, "rotation", deg_to_rad(6.0), 2.6 + float(ti % 3) * 0.4) \
+			.set_trans(Tween.TRANS_SINE)
+		ttw.tween_property(tendril, "rotation", deg_to_rad(-6.0), 2.6 + float(ti % 3) * 0.4) \
+			.set_trans(Tween.TRANS_SINE)
+		tx += 380.0 + float(ti * 53 % 220)
+		ti += 1
 
 	var crystals := ParallaxLayer.new()
 	crystals.motion_scale = Vector2(0.35, 0.7)
@@ -134,6 +192,9 @@ func _build_decor() -> void:
 		_pulses.append({"node": shard, "phase": float(ci) * 0.7})
 		cx += 300.0 + float(ci * 47 % 150)
 		ci += 1
+
+	# Brume violette rasante, tout au fond du Puits.
+	TextureLab.add_ground_mist(self, 6, 555.0, LEVEL_END, Color(0.4, 0.2, 0.55, 0.14))
 
 	void_motes = CPUParticles2D.new()
 	void_motes.texture = load("res://assets/leaf.svg")

@@ -213,6 +213,27 @@ func _build_decor() -> void:
 		Vector2(LEVEL_END + 400, 640), Vector2(-200, 640),
 	]), Color(0.12, 0.16, 0.22, 0.6))
 
+	# Éclats de miroir dressés, en silhouette, défilant plus vite que la mer
+	# de verre — donne de la vitesse au décor pendant la fuite.
+	var shards := ParallaxLayer.new()
+	shards.motion_scale = Vector2(0.4, 0.65)
+	bg.add_child(shards)
+	var sx := 100.0
+	var si := 0
+	while sx < LEVEL_END + 300.0:
+		var sh_h := 220.0 + float(si * 53 % 150)
+		var sh_w := 36.0 + float(si * 29 % 28)
+		var tip := Vector2(0, -sh_h)
+		_poly(shards, PackedVector2Array([
+			Vector2(-sh_w * 0.4, 0), tip, Vector2(sh_w * 0.4, 0),
+			Vector2(sh_w * 0.15, -sh_h * 0.32),
+		]), Color(0.14, 0.18, 0.25, 0.45), Vector2(sx, 560))
+		sx += 300.0 + float(si * 41 % 200)
+		si += 1
+
+	# Brume rasante au ras de la mer de verre.
+	TextureLab.add_ground_mist(self, 6, 500.0, LEVEL_END, Color(0.6, 0.74, 0.9, 0.1))
+
 	glass_motes = CPUParticles2D.new()
 	glass_motes.texture = load("res://assets/leaf.svg")
 	glass_motes.amount = 28

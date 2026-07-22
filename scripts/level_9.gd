@@ -136,6 +136,25 @@ func _build_decor() -> void:
 	sky.add_child(aura)
 	TextureLab.add_clouds(sky, 4, 40.0, 190.0, LEVEL_END, Color(0.2, 0.12, 0.28, 0.16))
 
+	# Parois du Puits qui se resserrent à mesure qu'on descend : on approche
+	# du fond, là où le Cœur bat.
+	var walls := ParallaxLayer.new()
+	walls.motion_scale = Vector2(0.12, 0.3)
+	bg.add_child(walls)
+	var wx := 0.0
+	var wi := 0
+	while wx < LEVEL_END + 200.0:
+		var wh := 80.0 + float(wi * 43 % 60)
+		_poly(walls, PackedVector2Array([
+			Vector2(-120, 0), Vector2(-40, -wh), Vector2(40, -wh * 0.7), Vector2(120, 0),
+		]), Color(0.06, 0.04, 0.09, 0.85), Vector2(wx, -20.0))
+		var wh2 := 60.0 + float(wi * 59 % 50)
+		_poly(walls, PackedVector2Array([
+			Vector2(-110, 0), Vector2(-30, wh2), Vector2(50, wh2 * 0.6), Vector2(130, 0),
+		]), Color(0.06, 0.04, 0.09, 0.85), Vector2(wx + 90.0, 640.0))
+		wx += 280.0 + float(wi * 37 % 150)
+		wi += 1
+
 	# Le Cœur de l'Ombre, tout au fond de l'arène : halo qui bat.
 	var deep := ParallaxLayer.new()
 	deep.motion_scale = Vector2(0.12, 0.4)
@@ -162,6 +181,9 @@ func _build_decor() -> void:
 		_pulses.append({"node": shard, "phase": float(ci) * 0.7})
 		cx += 320.0 + float(ci * 47 % 160)
 		ci += 1
+
+	# Brume violette rasante.
+	TextureLab.add_ground_mist(self, 5, 555.0, LEVEL_END, Color(0.4, 0.2, 0.55, 0.13))
 
 	void_motes = CPUParticles2D.new()
 	void_motes.texture = load("res://assets/leaf.svg")

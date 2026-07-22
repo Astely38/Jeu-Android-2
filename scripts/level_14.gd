@@ -141,6 +141,35 @@ func _build_decor() -> void:
 		moon_pts.append(Vector2(cos(a) * 46.0, sin(a) * 46.0))
 	_poly(sky, moon_pts, Color(0.88, 0.93, 1.0, 0.85), Vector2(720, 120))
 	TextureLab.add_clouds(sky, 5, 70.0, 210.0, LEVEL_END, Color(0.6, 0.7, 0.85, 0.14))
+	var rays := GodRays.new()
+	rays.ray_count = 8
+	rays.half_spread = 0.9
+	rays.length = 1300.0
+	rays.color = Color(0.7, 0.83, 1.0, 0.05)
+	rays.position = Vector2(720, 120)
+	sky.add_child(rays)
+
+	# Éclats de miroir brisé, en suspension dans le vide, qui dérivent
+	# lentement — le vertige du gouffre, mesuré par leur chute sans fin.
+	var voidshards := ParallaxLayer.new()
+	voidshards.motion_scale = Vector2(0.4, 0.55)
+	bg.add_child(voidshards)
+	var vx := 200.0
+	var vi := 0
+	while vx < LEVEL_END:
+		var vy := 220.0 + float(vi * 71 % 260)
+		var vs := 10.0 + float(vi * 23 % 14)
+		var shard := _poly(voidshards, PackedVector2Array([
+			Vector2(0, -vs), Vector2(vs * 0.7, 0), Vector2(0, vs), Vector2(-vs * 0.7, 0),
+		]), Color(0.55, 0.7, 0.92, 0.4), Vector2(vx, vy))
+		var stw := shard.create_tween().set_loops()
+		var drop := 30.0 + float(vi % 4) * 14.0
+		var dur := 4.0 + float(vi % 3) * 1.4
+		stw.tween_property(shard, "position:y", vy + drop, dur).set_trans(Tween.TRANS_SINE)
+		stw.parallel().tween_property(shard, "rotation", deg_to_rad(25.0), dur * 2.0)
+		stw.tween_property(shard, "position:y", vy - drop, dur).set_trans(Tween.TRANS_SINE)
+		vx += 260.0 + float(vi * 43 % 220)
+		vi += 1
 
 	# Brume qui sourd du gouffre, tout en bas.
 	var deep := ParallaxLayer.new()
@@ -150,6 +179,20 @@ func _build_decor() -> void:
 		Vector2(-200, 600), Vector2(LEVEL_END + 400, 600),
 		Vector2(LEVEL_END + 400, 900), Vector2(-200, 900),
 	]), Color(0.06, 0.08, 0.14, 0.7))
+
+	# Lueurs lointaines, tout au fond du gouffre : le vide n'a pas de fond
+	# visible, seulement ces points qui scintillent, minuscules.
+	var gx := 150.0
+	var gi := 0
+	while gx < LEVEL_END:
+		var glim := _poly(deep, PackedVector2Array([
+			Vector2(-2, -2), Vector2(2, -2), Vector2(2, 2), Vector2(-2, 2),
+		]), Color(0.7, 0.85, 1.0, 0.0), Vector2(gx, 780.0 + float(gi * 37 % 90)))
+		var gtw := glim.create_tween().set_loops()
+		gtw.tween_property(glim, "modulate:a", 0.5, 1.6 + float(gi % 4) * 0.5).set_trans(Tween.TRANS_SINE)
+		gtw.tween_property(glim, "modulate:a", 0.0, 1.6 + float(gi % 4) * 0.5).set_trans(Tween.TRANS_SINE)
+		gx += 180.0 + float(gi * 29 % 160)
+		gi += 1
 
 	glass_motes = CPUParticles2D.new()
 	glass_motes.texture = load("res://assets/leaf.svg")
