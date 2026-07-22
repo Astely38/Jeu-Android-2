@@ -67,6 +67,10 @@ func _ready() -> void:
 	_build_visual()
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	position.y = SHIELD_Y
+	# Invisible tant qu'il n'est pas activé : il n'existe pas encore, il se
+	# matérialise du miroir au moment précis où activate() est appelé (voir
+	# _materialize) — jusque-là, le tain reste vide.
+	modulate.a = 0.0
 
 func set_arena_bounds(min_x: float, max_x: float) -> void:
 	_arena_min = min_x
@@ -75,6 +79,21 @@ func set_arena_bounds(min_x: float, max_x: float) -> void:
 
 func activate() -> void:
 	active = true
+	_materialize()
+
+## Sortie du miroir : le Reflet apparaît dans un éclat de verre, grandissant
+## depuis le tain jusqu'à sa taille normale.
+func _materialize() -> void:
+	scale = Vector2(0.5, 0.5)
+	var parent := get_parent()
+	if parent != null:
+		Atmosphere.spark_burst(parent, global_position + Vector2(0, -40), Color(0.75, 0.9, 1.0))
+	Sfx.varied(sfx_clink, 0.55, 0.7)
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(self, "modulate:a", 1.0, 0.55)
+	t.tween_property(self, "scale", Vector2(1.0, 1.0), 0.55) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 # --- Boucle ---------------------------------------------------------------
 
@@ -213,10 +232,22 @@ func die() -> bool:
 	if phase < 3 and health <= P3_HEALTH:
 		phase = 3
 		phase_changed.emit(3)
+		_shatter(Color(1.0, 0.7, 0.6))
 	elif phase < 2 and health <= P2_HEALTH:
 		phase = 2
 		phase_changed.emit(2)
+		_shatter(Color(0.8, 0.9, 1.0))
 	return false
+
+## Éclat de miroir à chaque changement de phase : une volée d'éclats plus
+## dense que le simple ricochet, et une secousse pour marquer le palier.
+func _shatter(tint: Color) -> void:
+	var parent := get_parent()
+	if parent != null:
+		Atmosphere.death_burst(parent, global_position + Vector2(0, -30), tint)
+		Atmosphere.spark_burst(parent, global_position + Vector2(0, -30), tint)
+	if _player != null and is_instance_valid(_player) and _player.has_method("add_shake"):
+		_player.add_shake(6.0)
 
 func _die_for_real() -> void:
 	_dying = true
@@ -224,7 +255,16 @@ func _die_for_real() -> void:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	Sfx.varied(sfx_die, 0.7, 0.9)
-	Atmosphere.spark_burst(get_parent(), global_position, Color(0.7, 0.9, 1.0))
+	# Explosion de miroir : le bouclier vole en éclats dans toutes les
+	# directions, une onde plus large que le ricochet habituel, et la caméra
+	# encaisse le choc — le climax visuel du combat.
+	var parent := get_parent()
+	Atmosphere.spark_burst(parent, global_position, Color(0.7, 0.9, 1.0))
+	Atmosphere.death_burst(parent, global_position + Vector2(0, -40), Color(0.85, 0.95, 1.0))
+	Atmosphere.death_burst(parent, global_position + Vector2(-16, -20), Color(0.7, 0.85, 1.0))
+	Atmosphere.death_burst(parent, global_position + Vector2(16, -55), Color(0.9, 0.98, 1.0))
+	if _player != null and is_instance_valid(_player) and _player.has_method("add_shake"):
+		_player.add_shake(8.0)
 	defeated.emit()
 	var t := create_tween()
 	t.set_parallel(true)

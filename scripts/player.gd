@@ -479,6 +479,11 @@ func _make_sfx(path: String, vol_db: float) -> AudioStreamPlayer:
 	add_child(p)
 	return p
 
+## Secousse de caméra déclenchée depuis l'extérieur (boss, mise en scène) —
+## se cumule avec les secousses internes sans jamais les réduire.
+func add_shake(amount: float) -> void:
+	_shake = maxf(_shake, amount)
+
 ## Atterrissage : écrasement du sprite + bouffée de poussière si la chute
 ## était rapide.
 func _on_landed() -> void:
