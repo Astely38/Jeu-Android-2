@@ -26,6 +26,11 @@ Les sprites du Shield Oni (`assets/enemies/shield_oni/`) proviennent du pack
 **Free Knight Character Sprites** de **CraftPix.net**
 (https://craftpix.net/, licence : https://craftpix.net/file-licenses/).
 
+Les frames du pack **Pixel DarkNinja** (`assets/enemies/dark_ninja/`), par
+**Zhen** (https://zhen.itch.io) — libre usage personnel et commercial,
+crédit apprécié mais non obligatoire — sont stockées pour un futur boss ;
+non encore intégrées dans un niveau.
+
 ## Musique
 
 Pistes d'ambiance au thème japonais provenant de **Pixabay**
