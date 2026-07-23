@@ -218,47 +218,85 @@ func _build_checkpoints() -> void:
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
 
 ## Faille glitchée : déchirure immobile, flush au sol, cerclée d'un liseré
-## lumineux et de bandes qui clignotent entre les deux teintes de corruption
-## du chapitre — pensée pour rester lisible même sur fond sombre.
+## lumineux, fendue d'une fêlure centrale vive et cernée d'éclats corrompus
+## en suspension — pensée pour rester lisible même sur fond sombre et se
+## voir de loin.
 func _build_glitch_rifts() -> void:
 	for x in GLITCH_RIFT_XS:
 		var y := _surface_y(x)
 		var rift := Area2D.new()
-		rift.position = Vector2(x, y - 14.0)
+		rift.position = Vector2(x, y - 16.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(60, 30)
+		rect.size = Vector2(70, 34)
 		shape.shape = rect
 		rift.add_child(shape)
 		# Lueur qui sourd de la faille : signale le danger de loin, sur le sol.
 		var glow := Sprite2D.new()
 		glow.texture = load("res://assets/mist.svg")
-		glow.modulate = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.35)
-		glow.scale = Vector2(1.4, 1.0)
+		glow.modulate = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.4)
+		glow.scale = Vector2(1.8, 1.2)
 		glow.position = Vector2(0, -4)
 		glow.z_index = -1
 		rift.add_child(glow)
-		Atmosphere.breathe(glow, 0.2, 1.6)
+		Atmosphere.breathe(glow, 0.25, 1.6)
 		var pts := PackedVector2Array([
-			Vector2(-30, 14), Vector2(30, 14), Vector2(24, -12), Vector2(-24, -12),
+			Vector2(-35, 16), Vector2(35, 16), Vector2(28, -14), Vector2(-28, -14),
 		])
 		_poly(rift, pts, Color(0.03, 0.02, 0.05))
 		# Liseré lumineux : détache la faille du fond, même immobile.
 		var outline := Line2D.new()
 		outline.points = pts
 		outline.closed = true
-		outline.width = 2.2
-		outline.default_color = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.8)
+		outline.width = 2.4
+		outline.default_color = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.85)
 		rift.add_child(outline)
+		# Fêlure centrale, fine et vive : le cœur de la déchirure, cerné d'un
+		# fin liseré clair pour bien la détacher du fond noir.
+		var crack := PackedVector2Array([
+			Vector2(-22, 14), Vector2(-8, -2), Vector2(-14, -10),
+			Vector2(2, 4), Vector2(10, -12), Vector2(22, 12),
+			Vector2(6, 6), Vector2(0, 14),
+		])
+		var crack_fill := _poly(rift, crack, Color(0.95, 0.95, 1.0, 0.9))
+		crack_fill.z_index = 1
+		var crack_edge := Line2D.new()
+		crack_edge.points = crack
+		crack_edge.closed = true
+		crack_edge.width = 1.0
+		crack_edge.default_color = Color(1, 1, 1, 0.7)
+		crack_edge.z_index = 1
+		rift.add_child(crack_edge)
 		for k in 3:
-			var ox := -18.0 + float(k) * 18.0
+			var ox := -20.0 + float(k) * 20.0
 			# Alpha de base 1.0 : _process pilote entièrement modulate (teinte +
 			# alpha pulsée). Avec un alpha de base à 0, la bande resterait
 			# invisible (0 × modulate.a = 0).
 			var band := _poly(rift, PackedVector2Array([
-				Vector2(ox - 5, 11), Vector2(ox + 5, 11), Vector2(ox + 7, -10), Vector2(ox - 7, -10),
+				Vector2(ox - 5, 13), Vector2(ox + 5, 13), Vector2(ox + 7, -12), Vector2(ox - 7, -12),
 			]), GLITCH_A)
 			_glitches.append({"node": band, "phase": float(k) * 1.3 + x * 0.01})
+		# Éclats corrompus en suspension au-dessus de la faille : dérivent
+		# lentement, clignotent, renforcent l'idée d'image brisée.
+		var debris := CPUParticles2D.new()
+		debris.texture = load("res://assets/leaf.svg")
+		debris.amount = 6
+		debris.lifetime = 2.6
+		debris.preprocess = 2.6
+		debris.position = Vector2(0, -18)
+		debris.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		debris.emission_rect_extents = Vector2(28, 6)
+		debris.direction = Vector2(0, -1)
+		debris.spread = 25.0
+		debris.gravity = Vector2.ZERO
+		debris.initial_velocity_min = 6.0
+		debris.initial_velocity_max = 14.0
+		debris.angular_velocity_min = -90.0
+		debris.angular_velocity_max = 90.0
+		debris.scale_amount_min = 0.35
+		debris.scale_amount_max = 0.6
+		debris.color = GLITCH_A
+		rift.add_child(debris)
 		add_child(rift)
 		rift.body_entered.connect(_on_trap_body_entered)
 

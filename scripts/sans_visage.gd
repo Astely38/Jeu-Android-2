@@ -17,6 +17,10 @@ const FADE_TIME := 0.35
 const HOLLOW_TIME := 1.5
 const FORM_TIME := 0.35
 
+## Silhouette agrandie : plus imposant qu'un simple Onre, à la mesure d'une
+## menace qui traverse deux états (le joueur doit le voir venir de loin).
+const VISUAL_SCALE := 1.4
+
 const ROBE := Color(0.2, 0.17, 0.28)
 const ROBE_HI := Color(0.34, 0.29, 0.45)
 const FACE := Color(0.9, 0.88, 0.96)
@@ -50,7 +54,7 @@ func _ready() -> void:
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
 	_ignore_player_body()
 	var sh := ContactShadow.new()
-	sh.width = 24.0
+	sh.width = 32.0
 	add_child(sh)
 	move_child(sh, 0)
 
@@ -105,8 +109,8 @@ func _enter(s: int) -> void:
 ## Y a-t-il du sol juste devant, dans la direction `dir` ?
 func _ground_ahead(dir: float) -> bool:
 	var space := get_world_2d().direct_space_state
-	var from := global_position + Vector2(dir * 24.0, -2.0)
-	var q := PhysicsRayQueryParameters2D.create(from, from + Vector2(0, 52.0), 1)
+	var from := global_position + Vector2(dir * 30.0, -2.0)
+	var q := PhysicsRayQueryParameters2D.create(from, from + Vector2(0, 64.0), 1)
 	q.exclude = [get_rid()]
 	return not space.intersect_ray(q).is_empty()
 
@@ -126,8 +130,8 @@ func die() -> bool:
 	_dying = true
 	var parent := get_parent()
 	if parent != null:
-		Atmosphere.release_soul(parent, global_position + Vector2(0, -22), Color(0.75, 0.72, 0.85))
-		Atmosphere.death_burst(parent, global_position + Vector2(0, -16), Color(0.8, 0.78, 0.9))
+		Atmosphere.release_soul(parent, global_position + Vector2(0, -30), Color(0.75, 0.72, 0.85))
+		Atmosphere.death_burst(parent, global_position + Vector2(0, -22), Color(0.8, 0.78, 0.9))
 	velocity = Vector2.ZERO
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
@@ -154,8 +158,8 @@ func _build_visual() -> void:
 	_aura = Sprite2D.new()
 	_aura.texture = load("res://assets/mist.svg")
 	_aura.modulate = Color(AURA.r, AURA.g, AURA.b, 0.5)
-	_aura.scale = Vector2(1.7, 2.0)
-	_aura.position = Vector2(0, -6)
+	_aura.scale = Vector2(2.2, 2.6)
+	_aura.position = Vector2(0, -8)
 	_aura.z_index = -1
 	add_child(_aura)
 
@@ -213,7 +217,8 @@ func _shape(parent: Node, pts: PackedVector2Array, fill: Color) -> void:
 func _animate() -> void:
 	if _gfx == null:
 		return
-	_gfx.scale.x = direction if direction != 0.0 else 1.0
+	var face := direction if direction != 0.0 else 1.0
+	_gfx.scale = Vector2(VISUAL_SCALE * face, VISUAL_SCALE)
 	# Balancement de marche, léger.
 	_gfx.position.y = sin(_t * 8.0) * 1.4 if is_on_floor() else 0.0
 

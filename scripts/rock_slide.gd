@@ -28,22 +28,59 @@ func _ready() -> void:
 	_t = phase
 	fall_dir = fall_dir.normalized()
 	z_index = 4
-	# Surplomb fissuré : silhouette de roche instable, au-dessus de la pente.
-	# Un peu plus claire que le fond et cerclée d'un liseré, pour ne jamais se
-	# fondre dans le décor sombre du chapitre — reste lisible même au repos.
-	var rock := Color(0.34, 0.31, 0.4)
+	# Surplomb fissuré : silhouette de roche instable, au-dessus de la pente,
+	# bâtie en plusieurs facettes (volume + relief) pour bien se détacher du
+	# fond sombre du chapitre même au repos.
+	var rock_dark := Color(0.22, 0.2, 0.27)
+	var rock := Color(0.36, 0.33, 0.42)
+	var rock_hi := Color(0.48, 0.44, 0.56)
 	var rock_pts := PackedVector2Array([
-		Vector2(-22, 8), Vector2(-10, -14), Vector2(6, -10), Vector2(20, 6), Vector2(10, 10),
+		Vector2(-28, 10), Vector2(-14, -18), Vector2(8, -13), Vector2(26, 8), Vector2(13, 13),
 	])
-	_poly(rock_pts, rock)
+	_poly(rock_pts, rock_dark)
+	var main := _poly(PackedVector2Array([
+		Vector2(-24, 8), Vector2(-12, -15), Vector2(6, -11), Vector2(22, 7), Vector2(10, 11),
+	]), rock)
+	# Facette éclairée du dessus : suggère une source de lumière et du volume.
+	_poly(PackedVector2Array([
+		Vector2(-12, -15), Vector2(6, -11), Vector2(14, -4), Vector2(-4, -6),
+	]), rock_hi)
 	var outline := Line2D.new()
-	outline.points = rock_pts
+	outline.points = main.polygon
 	outline.closed = true
-	outline.width = 1.8
-	outline.default_color = Color(tint.r, tint.g, tint.b, 0.7)
+	outline.width = 2.0
+	outline.default_color = Color(tint.r, tint.g, tint.b, 0.75)
 	add_child(outline)
+	# Lézardes statiques, toujours visibles : le surplomb a déjà commencé à
+	# se fendre, bien avant l'éboulis proprement dit.
+	for crack_pts in [
+		PackedVector2Array([Vector2(-8, -8), Vector2(-2, 0), Vector2(-6, 6)]),
+		PackedVector2Array([Vector2(4, -9), Vector2(9, -2), Vector2(6, 4)]),
+	]:
+		var crack := Line2D.new()
+		crack.points = crack_pts
+		crack.width = 1.0
+		crack.default_color = Color(0.1, 0.09, 0.13, 0.8)
+		add_child(crack)
+	# Poussière qui tombe en continu, discrète : le surplomb s'effrite déjà.
+	var dust := CPUParticles2D.new()
+	dust.amount = 4
+	dust.lifetime = 1.4
+	dust.preprocess = 1.4
+	dust.position = Vector2(0, 4)
+	dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	dust.emission_rect_extents = Vector2(16, 2)
+	dust.direction = Vector2(0, 1)
+	dust.spread = 10.0
+	dust.gravity = Vector2(0, 60)
+	dust.initial_velocity_min = 4.0
+	dust.initial_velocity_max = 10.0
+	dust.scale_amount_min = 0.5
+	dust.scale_amount_max = 0.9
+	dust.color = Color(tint.r, tint.g, tint.b, 0.5)
+	add_child(dust)
 	_warn_poly = _poly(PackedVector2Array([
-		Vector2(-6, -2), Vector2(-1, -10), Vector2(3, -3), Vector2(8, -8), Vector2(4, 4), Vector2(-2, 6),
+		Vector2(-8, -2), Vector2(-1, -13), Vector2(4, -4), Vector2(10, -10), Vector2(5, 5), Vector2(-3, 8),
 	]), Color(tint.r, tint.g, tint.b, 0.0))
 
 func _poly(pts: PackedVector2Array, c: Color) -> Polygon2D:

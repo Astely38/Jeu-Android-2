@@ -4,10 +4,10 @@
 [ext_resource type="AudioStream" path="res://assets/sfx/die.wav" id="2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
-size = Vector2(24, 44)
+size = Vector2(32, 60)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
-size = Vector2(32, 44)
+size = Vector2(42, 60)
 
 [node name="SansVisage" type="CharacterBody2D"]
 collision_layer = 2
