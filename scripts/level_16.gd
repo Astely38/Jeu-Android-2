@@ -83,6 +83,9 @@ var sfx_win: AudioStreamPlayer
 var void_motes: CPUParticles2D
 var _glitches: Array = []
 var _t := 0.0
+## Secousses périodiques, discrètes ici — le Chapitre IV commence, le chaos
+## ne fait que poindre (il s'aggravera dans les niveaux suivants).
+var _shake_t := 2.0
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -131,6 +134,11 @@ func _process(delta: float) -> void:
 		var node: Polygon2D = g["node"]
 		node.modulate = GLITCH_A if sin(_t * 9.0 + float(g["phase"])) > 0.3 else GLITCH_B
 		node.modulate.a = 0.35 + 0.35 * absf(sin(_t * 5.0 + float(g["phase"])))
+	_shake_t -= delta
+	if _shake_t <= 0.0 and is_instance_valid(player) and player.has_method("add_shake"):
+		var depth := clampf(player.global_position.x / LEVEL_END, 0.0, 1.0)
+		player.add_shake(1.0 + depth * 4.0)
+		_shake_t = randf_range(3.2, 4.8) * (1.0 - depth * 0.3)
 
 func _physics_process(_delta: float) -> void:
 	if void_motes != null and is_instance_valid(player):

@@ -45,7 +45,11 @@ const PLATFORMS := [
 const CHECKPOINT_XS := [2020.0, 4340.0, 6050.0]
 const PATROL_XS := [860.0, 3150.0, 6500.0]
 const SANS_VISAGE_XS := [1440.0, 4900.0]
-const GLITCH_RIFT_XS := [2580.0, 5480.0]
+## Failles glitchées, bien plus nombreuses que la première traversée du
+## Chapitre IV — le chaos gagne aussi les paliers entre les Portes Muettes.
+const GLITCH_RIFT_XS := [900.0, 1500.0, 2580.0, 3150.0, 4900.0, 5480.0, 6350.0]
+## Cratères de l'Éboulis de miroir, intercalés entre les failles.
+const ROCK_SLIDES := [550.0, 1150.0, 2850.0, 5150.0, 5750.0, 6200.0]
 ## Portes Muettes : n'admettent que l'écho, jamais Eneko lui-même — il faut
 ## rester immobile devant et attendre que le jumeau, différé, les rejoigne.
 const GATE_XS := [1950.0, 4300.0, 6000.0]
@@ -65,6 +69,9 @@ var echo: EchoTwin
 var _gates: Array = []
 var _glitches: Array = []
 var _t := 0.0
+## Secousses périodiques, plus marquées qu'au niveau 16 — le chaos du
+## Chapitre IV s'installe.
+var _shake_t := 1.8
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -79,6 +86,7 @@ func _ready() -> void:
 	_build_checkpoints()
 	_build_gates()
 	_build_glitch_rifts()
+	_build_rock_slides()
 	_build_goal()
 	_build_kill_zone(LEVEL_END, 720.0)
 	_spawn_entities()
@@ -109,6 +117,11 @@ func _process(delta: float) -> void:
 		var node: Polygon2D = g["node"]
 		node.modulate = GLITCH_A if sin(_t * 9.0 + float(g["phase"])) > 0.3 else GLITCH_B
 		node.modulate.a = 0.35 + 0.35 * absf(sin(_t * 5.0 + float(g["phase"])))
+	_shake_t -= delta
+	if _shake_t <= 0.0 and is_instance_valid(player) and player.has_method("add_shake"):
+		var depth := clampf(player.global_position.x / LEVEL_END, 0.0, 1.0)
+		player.add_shake(1.5 + depth * 5.5)
+		_shake_t = randf_range(2.8, 4.2) * (1.0 - depth * 0.35)
 	if echo != null and echo.is_active():
 		for g in _gates:
 			if not g["open"]:
@@ -174,6 +187,15 @@ func _build_glitch_rifts() -> void:
 		rift.color_a = GLITCH_A
 		rift.color_b = GLITCH_B
 		add_child(rift)
+
+## Cratères de l'Éboulis de miroir : classe partagée RockSlide, reprise du
+## niveau 16 — le chaos du Chapitre IV gagne aussi la traversée de l'Écho.
+func _build_rock_slides() -> void:
+	for x in ROCK_SLIDES:
+		var rs := RockSlide.new()
+		rs.position = Vector2(x, GROUND_Y - 50.0)
+		rs.tint = Color(0.5, 0.46, 0.56)
+		add_child(rs)
 
 ## Portes Muettes : un rideau d'énergie déchiqueté qui barre la plateforme,
 ## cerné d'un double liseré et marqué au sol d'une rune à diamants
@@ -396,22 +418,22 @@ func _build_decor() -> void:
 		ex += 340.0 + float(ei * 41 % 130)
 		ei += 1
 
-	var gx := 100.0
+	var gx := 90.0
 	var gi := 0
 	while gx < LEVEL_END:
-		var gy := 60.0 + float(gi * 37 % 300)
-		var gw := 30.0 + float(gi * 23 % 60)
+		var gy := 55.0 + float(gi * 37 % 310)
+		var gw := 28.0 + float(gi * 23 % 64)
 		var col := GLITCH_A if gi % 2 == 0 else GLITCH_B
 		var band := _poly(sky, PackedVector2Array([
 			Vector2(-gw, -2), Vector2(gw, -2), Vector2(gw, 2), Vector2(-gw, 2),
 		]), col, Vector2(gx, gy))
 		_glitches.append({"node": band, "phase": float(gi) * 1.7})
-		gx += 260.0 + float(gi * 47 % 220)
+		gx += 165.0 + float(gi * 47 % 150)
 		gi += 1
 
 	void_motes = CPUParticles2D.new()
 	void_motes.texture = load("res://assets/leaf.svg")
-	void_motes.amount = 24
+	void_motes.amount = 34
 	void_motes.lifetime = 7.0
 	void_motes.preprocess = 7.0
 	void_motes.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
