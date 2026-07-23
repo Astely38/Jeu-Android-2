@@ -1,29 +1,24 @@
 extends LevelBase
-## Chapitre IV — Niveau 16 : « Le Versant Aveugle ».
-## Au-delà du tain brisé, Eneko foule un monde qui ne renvoie plus rien : ni
-## ombre, ni reflet, ni écho. Le sol n'est plus une suite de plateformes
-## posées à plat mais un relief continu — pentes descendantes et montées
-## franches, jamais de repos horizontal bien long. Deux nouveautés y rôdent :
-## le Sans-Visage, esprit qui n'est solide que par intermittence, et deux
-## dangers inédits — la Faille glitchée (immobile) et l'Éboulis de miroir
-## (qui dévale les pentes en tournoyant).
+## Chapitre IV — Niveau 17 : « L'Écho Muet ».
+## Le tain reste brisé, et cette fois c'est le reflet d'Eneko lui-même qui
+## s'en détache : un jumeau glitché (EchoTwin) qui rejoue son tracé avec un
+## souffle de retard, intangible et sans malice. Mais certains passages —
+## les Portes Muettes — n'obéissent qu'à lui : il faut s'immobiliser devant
+## elles et attendre que l'écho, différé, vienne enfin les toucher.
 
 const ORB_SCENE := preload("res://scenes/orb.tscn")
 const PATROL_SCENE := preload("res://scenes/enemy.tscn")
 const SANS_VISAGE_SCENE := preload("res://scenes/sans_visage.tscn")
 const LEONIE_SCENE := preload("res://scenes/leonie.tscn")
 
-## Entre la surface du sol (déjà le bord praticable ici, contrairement aux
-## autres niveaux où GROUND_Y désigne le CENTRE de la plateforme) et la
-## position d'apparition d'un personnage.
-const SPAWN_Y_OFFSET := 23.0
+const GROUND_Y := 550.0
+const SPAWN_Y := 477.0
 const LEVEL_END := 7100.0
-const GOAL_X := 6950.0
-const LEVEL_ID := "level_16"
+const GOAL_X := 6650.0
+const LEVEL_ID := "level_17"
 
-## Palette du royaume sans écho : matière mate, sans le moindre poli
-## réfléchissant (à l'opposé du verre du Ch.3), et un glitch violet-magenta
-## qui trahit l'image corrompue de ce monde.
+## Même royaume sans écho que le niveau 16 : matière mate, aucun poli
+## réfléchissant, glitch violet-magenta / cyan qui trahit l'image corrompue.
 const VOID := Color(0.07, 0.06, 0.09)
 const VOID_DARK := Color(0.04, 0.03, 0.05)
 const ASH := Color(0.22, 0.19, 0.24)
@@ -39,42 +34,35 @@ const PLATFORM_THEME := {
 	"speck": Color(0.4, 0.36, 0.44),
 }
 
-## Profil du terrain : suite de points (x, hauteur de sol). Entre deux points
-## consécutifs de même hauteur → segment PLAT ; de hauteur différente →
-## PENTE. Un seul relief continu, du départ jusqu'à la crête finale.
-const PROFILE := [
-	Vector2(0, 550), Vector2(900, 550),       # plat de départ
-	Vector2(1500, 690),                        # descente
-	Vector2(2400, 690),                        # plat (vallée)
-	Vector2(3600, 400),                        # longue montée
-	Vector2(4400, 400),                        # plat (plateau, refuge)
-	Vector2(5000, 560),                        # descente
-	Vector2(5900, 560),                        # plat
-	Vector2(6700, 300),                        # montée finale
-	Vector2(7100, 300),                        # plat (crête, porte)
+## Plateformes (x = centre, y = demi-largeur) : sol plat, contrairement au
+## relief continu du niveau 16 — le nouveau défi est l'Écho, pas la pente.
+const PLATFORMS := [
+	Vector2(230, 260), Vector2(860, 210), Vector2(1440, 230),
+	Vector2(2020, 200), Vector2(2580, 220), Vector2(3150, 260),
+	Vector2(3760, 220), Vector2(4340, 200), Vector2(4900, 230),
+	Vector2(5480, 210), Vector2(6050, 230), Vector2(6650, 300),
 ]
-
-const CHECKPOINT_XS := [1500.0, 3600.0, 5000.0]
-const PATROL_XS := [1900.0, 5300.0]
-const SANS_VISAGE_XS := [2000.0, 5500.0, 6850.0]
-## Failles glitchées (immobiles) : sur le plat, jamais sur une pente.
-const GLITCH_RIFT_XS := [1700.0, 5150.0]
-## Éboulis de miroir : un par grande montée, en haut de la pente.
-const ROCK_SLIDES := [
-	{"x": 3420.0, "y": 430.0, "dir": Vector2(-1.0, 0.24)},
-	{"x": 6520.0, "y": 330.0, "dir": Vector2(-1.0, 0.33)},
-]
-const REFUGE_X := 4000.0
+const CHECKPOINT_XS := [2020.0, 4340.0, 6050.0]
+const PATROL_XS := [860.0, 3150.0, 6500.0]
+const SANS_VISAGE_XS := [1440.0, 4900.0]
+const GLITCH_RIFT_XS := [2580.0, 5480.0]
+## Portes Muettes : n'admettent que l'écho, jamais Eneko lui-même — il faut
+## rester immobile devant et attendre que le jumeau, différé, les rejoigne.
+const GATE_XS := [1950.0, 4300.0, 6000.0]
+const GATE_TRIGGER_RADIUS := 46.0
+const REFUGE_X := 3760.0
 
 const LEONIE_LINES := [
-	{ "name": "Léonie", "text": "Nous y sommes, Eneko : au-delà du tain brisé. Ce monde ne renvoie plus rien — ni ombre, ni reflet, ni écho." },
-	{ "name": "Léonie", "text": "Ces silhouettes robées qui rôdent... des Sans-Visage. Ils n'empruntent un corps que le temps d'un souffle, puis s'effacent en un rien intangible. Ne frappe que lorsqu'ils sont pleins." },
-	{ "name": "Léonie", "text": "Prends garde aux pentes, aussi : ce sol n'a jamais connu de pas avant les tiens. Des pans entiers peuvent s'ébouler sous ta traversée." },
-	{ "name": "Eneko", "text": "Alors je grimperai, je descendrai, aussi loin qu'il faudra. Ce qui m'a volé mon reflet me le rendra." },
+	{ "name": "Léonie", "text": "Regarde derrière toi, Eneko : ton reflet lui-même s'est détaché. Il te suit, muet, avec un souffle de retard." },
+	{ "name": "Léonie", "text": "Il ne te blessera jamais — la lame le traverse comme une brume. Mais certaines portes n'obéissent qu'à lui : reste immobile devant elles, et laisse-le te rejoindre." },
+	{ "name": "Eneko", "text": "Alors j'attendrai mon propre pas, aussi loin qu'il traîne derrière moi. Le silence, cette fois, ouvrira la voie." },
 ]
 
 var sfx_win: AudioStreamPlayer
+var sfx_gate: AudioStreamPlayer
 var void_motes: CPUParticles2D
+var echo: EchoTwin
+var _gates: Array = []
 var _glitches: Array = []
 var _t := 0.0
 
@@ -87,37 +75,33 @@ var _t := 0.0
 func _ready() -> void:
 	_build_decor()
 	Atmosphere.add_foreground(self, Color(0.05, 0.04, 0.07, 0.35))
-	_build_terrain()
-	_build_bounds()
+	_build_platforms()
 	_build_checkpoints()
+	_build_gates()
 	_build_glitch_rifts()
-	_build_rock_slides()
 	_build_goal()
-	# Filet de sécurité PURE défense : le relief est continu (aucun trou) et
-	# borné par des murs aux deux bouts, donc une chute est en principe
-	# impossible. On place quand même la zone bien SOUS le point le plus bas
-	# du sol (la vallée, y=690) pour ne jamais frapper un joueur au sol.
-	_build_kill_zone(LEVEL_END, 950.0, 200.0)
+	_build_kill_zone(LEVEL_END, 720.0)
 	_spawn_entities()
+	_build_echo()
 	_setup_audio()
 	_setup_ambient()
 	player.set_land_dust_color(Color(0.3, 0.26, 0.34, 0.75))
 	win_label.visible = false
 	Music.play_level(LEVEL_ID)
 	SaveManager.set_last_level(LEVEL_ID)
-	# Relique cachée, tapie au tout début.
+	# Relique cachée, au-dessus du refuge (Double Saut).
 	var relic := Relic.new()
 	relic.level_id = LEVEL_ID
-	relic.position = Vector2(60, _surface_y(60.0) - SPAWN_Y_OFFSET)
+	relic.position = Vector2(REFUGE_X, GROUND_Y - 220.0)
 	add_child(relic)
 	Challenge.start_level(LEVEL_ID, _orb_positions().size())
 	dialogue.finished.connect(_on_dialogue_finished)
 	menu_button.pressed.connect(_on_menu_pressed)
-	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_17", "")
+	var next_scene: String = SaveManager.LEVEL_SCENES.get("level_18", "")
 	next_button.visible = next_scene != ""
 	if next_scene != "":
 		next_button.pressed.connect(func(): Transition.goto(next_scene))
-	player.intro_pan(Vector2(GOAL_X, _surface_y(GOAL_X) - 220.0))
+	player.intro_pan(Vector2(GOAL_X, GROUND_Y - 220.0))
 
 func _process(delta: float) -> void:
 	_t += delta
@@ -125,84 +109,47 @@ func _process(delta: float) -> void:
 		var node: Polygon2D = g["node"]
 		node.modulate = GLITCH_A if sin(_t * 9.0 + float(g["phase"])) > 0.3 else GLITCH_B
 		node.modulate.a = 0.35 + 0.35 * absf(sin(_t * 5.0 + float(g["phase"])))
+	if echo != null and echo.is_active():
+		for g in _gates:
+			if not g["open"]:
+				var gx: float = (g["node"] as Node2D).global_position.x
+				if absf(echo.global_position.x - gx) < GATE_TRIGGER_RADIUS:
+					_open_gate(g)
 
 func _physics_process(_delta: float) -> void:
 	if void_motes != null and is_instance_valid(player):
 		void_motes.position = Vector2(player.position.x, player.position.y - 260.0)
 
-# --- Profil du terrain ------------------------------------------------------
+# --- Orbes ------------------------------------------------------------------
 
-## Hauteur du sol (interpolation linéaire du profil) à la position `x`.
-func _surface_y(x: float) -> float:
-	for i in PROFILE.size() - 1:
-		var a: Vector2 = PROFILE[i]
-		var b: Vector2 = PROFILE[i + 1]
-		if x >= a.x and x <= b.x:
-			if b.x == a.x:
-				return a.y
-			var f := (x - a.x) / (b.x - a.x)
-			return lerpf(a.y, b.y, f)
-	return PROFILE[PROFILE.size() - 1].y
-
-## Position d'apparition (personnages/objets) à la position `x`, un peu
-## au-dessus du sol.
-func _stand_y(x: float) -> float:
-	return _surface_y(x) - SPAWN_Y_OFFSET
-
-## Positions des orbes, calculées une seule fois : garantit que le total
-## annoncé (Challenge.start_level) corresponde exactement au nombre réel
-## d'orbes semées par _spawn_entities.
 func _orb_positions() -> Array:
 	var out := []
 	var x := 260.0
 	var i := 0
 	while x < LEVEL_END - 200.0:
-		out.append(Vector2(x, _surface_y(x) - 80.0 - float(i % 2) * 35.0))
+		out.append(Vector2(x, GROUND_Y - 130.0 - float(i % 2) * 35.0))
 		x += 260.0
 		i += 1
 	return out
 
 # --- Construction ------------------------------------------------------------
 
-func _build_terrain() -> void:
-	for i in PROFILE.size() - 1:
-		var a: Vector2 = PROFILE[i]
-		var b: Vector2 = PROFILE[i + 1]
-		if a.y == b.y:
-			var mid := (a.x + b.x) * 0.5
-			var half_w := (b.x - a.x) * 0.5
-			var body := StaticBody2D.new()
-			body.position = Vector2(mid, a.y + 50.0)
-			var shape := CollisionShape2D.new()
-			var rect := RectangleShape2D.new()
-			rect.size = Vector2(half_w * 2.0, 100.0)
-			shape.shape = rect
-			body.add_child(shape)
-			PlatformPainter.paint(body, half_w, PLATFORM_THEME)
-			add_child(body)
-		else:
-			SlopePainter.build(self, a.x, a.y, b.x, b.y, PLATFORM_THEME)
-
-## Murs invisibles aux deux extrémités du relief : le profil ne définit rien
-## au-delà, un joueur qui déborderait (recul, poussée d'un piège) tomberait
-## sinon dans le vide sans que le filet de la zone de mort n'intervienne à
-## temps. Bien plus hauts que le relief pour ne jamais être sautés.
-func _build_bounds() -> void:
-	for edge_x in [PROFILE[0].x - 40.0, PROFILE[PROFILE.size() - 1].x + 40.0]:
-		var wall := StaticBody2D.new()
-		wall.position = Vector2(edge_x, 0.0)
+func _build_platforms() -> void:
+	for p in PLATFORMS:
+		var body := StaticBody2D.new()
+		body.position = Vector2(p.x, GROUND_Y)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(80.0, 4000.0)
+		rect.size = Vector2(p.y * 2.0, 100.0)
 		shape.shape = rect
-		wall.add_child(shape)
-		add_child(wall)
+		body.add_child(shape)
+		PlatformPainter.paint(body, p.y, PLATFORM_THEME)
+		add_child(body)
 
 func _build_checkpoints() -> void:
 	for x in CHECKPOINT_XS:
-		var y := _surface_y(x) - 70.0
 		var cp := Area2D.new()
-		cp.position = Vector2(x, y)
+		cp.position = Vector2(x, GROUND_Y - 120.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
 		rect.size = Vector2(60, 120)
@@ -217,36 +164,81 @@ func _build_checkpoints() -> void:
 		add_child(cp)
 		cp.body_entered.connect(_on_checkpoint_body_entered.bind(cp, flag))
 
-## Faille glitchée : déchirure immobile, flush au sol — voir GlitchRift
-## (classe partagée, reprise telle quelle par le niveau 17).
+## Faille glitchée : hasard fixe, repris tel quel du niveau 16 (classe
+## partagée GlitchRift) — même langage visuel pour tout le Chapitre IV.
 func _build_glitch_rifts() -> void:
 	for x in GLITCH_RIFT_XS:
 		var rift := GlitchRift.new()
-		rift.position = Vector2(x, _surface_y(x))
+		rift.position = Vector2(x, GROUND_Y - 50.0)
 		rift.phase = x * 0.01
 		rift.color_a = GLITCH_A
 		rift.color_b = GLITCH_B
 		add_child(rift)
 
-func _build_rock_slides() -> void:
-	for r in ROCK_SLIDES:
-		var rs := RockSlide.new()
-		rs.position = Vector2(float(r["x"]), float(r["y"]))
-		rs.fall_dir = r["dir"]
-		rs.tint = Color(0.5, 0.46, 0.56)
-		add_child(rs)
+## Portes Muettes : un mur de glitch qui barre la plateforme, cerné d'un
+## liseré et marqué au sol d'une rune de résonance — le signe que ce point
+## attend une seconde présence pour s'ouvrir.
+func _build_gates() -> void:
+	for x in GATE_XS:
+		var gate := StaticBody2D.new()
+		gate.position = Vector2(x, GROUND_Y - 120.0)
+		var shape := CollisionShape2D.new()
+		var rect := RectangleShape2D.new()
+		rect.size = Vector2(26, 200)
+		shape.shape = rect
+		gate.add_child(shape)
+		var pts := PackedVector2Array([
+			Vector2(-13, -100), Vector2(13, -100), Vector2(13, 100), Vector2(-13, 100),
+		])
+		var body_poly := _poly(gate, pts, Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.4))
+		var outline := Line2D.new()
+		outline.points = pts
+		outline.closed = true
+		outline.width = 2.2
+		outline.default_color = Color(GLITCH_B.r, GLITCH_B.g, GLITCH_B.b, 0.9)
+		gate.add_child(outline)
+		var glow := Sprite2D.new()
+		glow.texture = load("res://assets/mist.svg")
+		glow.modulate = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.3)
+		glow.scale = Vector2(1.4, 3.2)
+		gate.add_child(glow)
+		Atmosphere.breathe(glow, 0.2, 1.8)
+		# Rune de résonance, au pied de la porte : le point que l'écho doit
+		# atteindre pour que la porte cède.
+		var rune := Polygon2D.new()
+		var rp := PackedVector2Array()
+		for i in 12:
+			var a := i * TAU / 12.0
+			rp.append(Vector2(cos(a) * 11.0, sin(a) * 11.0 * 0.4))
+		rune.polygon = rp
+		rune.position = Vector2(0, 70)
+		rune.color = Color(GLITCH_B.r, GLITCH_B.g, GLITCH_B.b, 0.6)
+		gate.add_child(rune)
+		add_child(gate)
+		_gates.append({"node": gate, "shape": shape, "poly": body_poly, "outline": outline, "rune": rune, "glow": glow, "open": false})
+
+func _open_gate(g: Dictionary) -> void:
+	g["open"] = true
+	(g["shape"] as CollisionShape2D).set_deferred("disabled", true)
+	var at: Vector2 = (g["node"] as Node2D).global_position
+	Atmosphere.spark_burst(self, at, GLITCH_B)
+	if sfx_gate != null:
+		Sfx.varied(sfx_gate, 0.92, 1.08)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(g["poly"], "modulate:a", 0.0, 0.7)
+	tw.tween_property(g["outline"], "modulate:a", 0.0, 0.7)
+	tw.tween_property(g["rune"], "modulate:a", 0.0, 0.7)
+	tw.tween_property(g["glow"], "modulate:a", 0.0, 0.7)
 
 func _build_goal() -> void:
-	var y := _surface_y(GOAL_X)
 	var goal := Area2D.new()
-	goal.position = Vector2(GOAL_X, y - 70.0)
+	goal.position = Vector2(GOAL_X, GROUND_Y - 120.0)
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
 	rect.size = Vector2(60, 140)
 	shape.shape = rect
 	goal.add_child(shape)
-	# Déchirure verticale dans le vide : la porte de ce monde n'est plus un
-	# torii mais une faille béante, cerclée de glitch.
 	_poly(goal, PackedVector2Array([
 		Vector2(-36, -70), Vector2(36, -70), Vector2(30, 70), Vector2(-30, 70),
 	]), Color(0.1, 0.08, 0.14, 0.9))
@@ -268,15 +260,15 @@ func _build_goal() -> void:
 func _spawn_entities() -> void:
 	for x in PATROL_XS:
 		var e := PATROL_SCENE.instantiate()
-		e.position = Vector2(x, _stand_y(x))
+		e.position = Vector2(x, SPAWN_Y)
 		add_child(e)
 	for x in SANS_VISAGE_XS:
 		var sv := SANS_VISAGE_SCENE.instantiate()
-		sv.position = Vector2(x, _stand_y(x))
+		sv.position = Vector2(x, SPAWN_Y)
 		add_child(sv)
-	PlatformPainter.build_sanctuary(self, REFUGE_X, _surface_y(REFUGE_X))
+	PlatformPainter.build_sanctuary(self, REFUGE_X, GROUND_Y - 50.0)
 	var leonie := LEONIE_SCENE.instantiate()
-	leonie.position = Vector2(REFUGE_X, _stand_y(REFUGE_X))
+	leonie.position = Vector2(REFUGE_X, SPAWN_Y)
 	leonie.set_lines(LEONIE_LINES)
 	add_child(leonie)
 	for o in _orb_positions():
@@ -284,13 +276,23 @@ func _spawn_entities() -> void:
 		orb.position = o
 		add_child(orb)
 
+## Le jumeau glitché : réplique visuelle et retardée du joueur, seule clé des
+## Portes Muettes. Sans effet ni collision — jamais un danger.
+func _build_echo() -> void:
+	echo = EchoTwin.new()
+	echo.color_a = GLITCH_A
+	echo.color_b = GLITCH_B
+	echo.delay = 1.4
+	add_child(echo)
+	echo.target = player
+
 func _setup_ambient() -> void:
 	var amb := AmbientDialogue.new()
 	add_child(amb)
-	amb.add_line(self, 1100.0, "Eneko", "Le sol se dérobe sous moi. Aucun écho ne me répond plus.")
-	amb.add_line(self, 2900.0, "Eneko", "Cette montée n'en finit pas. Et pourtant, quelque chose m'y attend.")
-	amb.add_line(self, 5600.0, "Eneko", "Je ne me vois plus nulle part. Ni dans l'eau, ni dans le verre, ni ici.")
-	amb.add_line(self, 6800.0, "Eneko", "La faille, là-haut. C'est par elle que je reprendrai mon visage.")
+	amb.add_line(self, 1000.0, "Eneko", "Il marche dans mes pas, un souffle après moi. Étrange, de se voir suivre ainsi.")
+	amb.add_line(self, 2650.0, "Eneko", "Cette porte ne cède à rien que je fasse. Il faut... attendre.")
+	amb.add_line(self, 4600.0, "Eneko", "Mon écho s'attarde à mesure que j'avance. Rejoindra-t-il un jour mon ombre ?")
+	amb.add_line(self, 6200.0, "Eneko", "La dernière porte. Encore un instant, et mon reflet me rejoint enfin.")
 
 func _setup_audio() -> void:
 	var wind := AudioStreamPlayer.new()
@@ -304,6 +306,10 @@ func _setup_audio() -> void:
 	sfx_win.stream = load("res://assets/sfx/win.wav")
 	sfx_win.volume_db = -4.0
 	add_child(sfx_win)
+	sfx_gate = AudioStreamPlayer.new()
+	sfx_gate.stream = load("res://assets/sfx/checkpoint.wav")
+	sfx_gate.volume_db = -3.0
+	add_child(sfx_gate)
 
 # --- Décor --------------------------------------------------------------
 
@@ -311,8 +317,6 @@ func _build_decor() -> void:
 	var bg: ParallaxBackground = $ParallaxBackground
 	var mist_tex: Texture2D = load("res://assets/mist.svg")
 
-	# Ciel sans astre : une lueur pâle et froide, sans source précise —
-	# ce monde n'a pas de soleil qui vaille la peine d'être reflété.
 	var sky := ParallaxLayer.new()
 	sky.motion_scale = Vector2(0.05, 0.05)
 	bg.add_child(sky)
@@ -324,7 +328,7 @@ func _build_decor() -> void:
 	sky.add_child(haze)
 	TextureLab.add_clouds(sky, 4, 30.0, 160.0, LEVEL_END, Color(0.18, 0.15, 0.22, 0.16))
 
-	# Crêtes lointaines, dentelées, qui suivent grossièrement le relief.
+	# Crêtes lointaines, dentelées.
 	var far := ParallaxLayer.new()
 	far.motion_scale = Vector2(0.14, 0.35)
 	bg.add_child(far)
@@ -338,8 +342,22 @@ func _build_decor() -> void:
 		mx += 340.0 + float(mi * 41 % 130)
 		mi += 1
 
-	# Failles de glitch dans le ciel lui-même : bandes qui se décalent, comme
-	# une image mal reconstruite.
+	# Écho des crêtes : la même silhouette, légèrement décalée et translucide,
+	# comme un second tracé qui traîne derrière le premier — le motif visuel
+	# du niveau, jusque dans le décor.
+	var echo_layer := ParallaxLayer.new()
+	echo_layer.motion_scale = Vector2(0.1, 0.3)
+	bg.add_child(echo_layer)
+	var ex := -170.0
+	var ei := 0
+	while ex < LEVEL_END + 700.0:
+		var eh := 170.0 + float(ei * 53 % 140)
+		_poly(echo_layer, PackedVector2Array([
+			Vector2(-260, 0), Vector2(-40, -eh + 30), Vector2(0, -eh), Vector2(70, -eh + 50), Vector2(260, 0),
+		]), Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.08), Vector2(ex, 604.0))
+		ex += 340.0 + float(ei * 41 % 130)
+		ei += 1
+
 	var gx := 100.0
 	var gi := 0
 	while gx < LEVEL_END:
