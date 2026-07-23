@@ -51,20 +51,25 @@ const PROFILE := [
 ]
 
 const CHECKPOINT_XS := [1300.0, 3600.0, 5900.0]
-const PATROL_XS := [1700.0, 4700.0]
-const SANS_VISAGE_XS := [900.0, 2600.0, 5300.0, 6300.0]
-## Failles glitchées : de plus en plus nombreuses à mesure qu'on descend —
-## la corruption s'aggrave avec la profondeur. Toujours sur le plat.
-const GLITCH_RIFT_XS := [400.0, 1500.0, 1900.0, 4500.0, 4900.0, 6200.0, 6700.0, 7000.0]
+const PATROL_XS := [1700.0, 4700.0, 6500.0]
+const SANS_VISAGE_XS := [900.0, 1600.0, 2600.0, 4400.0, 5300.0, 6300.0, 6900.0]
+## Failles glitchées : de plus en plus nombreuses et de plus en plus serrées
+## à mesure qu'on descend — le chaos s'aggrave avec la profondeur, jusqu'à
+## l'enchaînement quasi continu du fond du puits. Toujours sur le plat.
+const GLITCH_RIFT_XS := [
+	350.0, 600.0,
+	1450.0, 1700.0, 1950.0,
+	4450.0, 4700.0, 4950.0,
+	6050.0, 6300.0, 6550.0, 6800.0, 7050.0,
+]
 ## Cratères de l'Éboulis de miroir, intercalés entre les failles — le
-## plateau-refuge (2900-3600) reste seul épargné.
+## plateau-refuge (2900-3600) reste seul épargné. Densité maximale sur le
+## dernier tronçon : le fond du puits ne laisse presque plus de répit.
 const ROCK_SLIDES := [
-	Vector2(600.0, 300.0),
-	Vector2(1700.0, 480.0),
-	Vector2(4700.0, 780.0),
-	Vector2(6000.0, 920.0),
-	Vector2(6450.0, 920.0),
-	Vector2(6850.0, 920.0),
+	Vector2(475.0, 300.0),
+	Vector2(1575.0, 480.0), Vector2(1825.0, 480.0),
+	Vector2(4575.0, 780.0), Vector2(4825.0, 780.0),
+	Vector2(6175.0, 920.0), Vector2(6425.0, 920.0), Vector2(6675.0, 920.0), Vector2(6925.0, 920.0),
 ]
 const REFUGE_X := 3600.0
 
@@ -79,6 +84,9 @@ var sfx_win: AudioStreamPlayer
 var void_motes: CPUParticles2D
 var _glitches: Array = []
 var _t := 0.0
+## Secousses périodiques, de plus en plus fréquentes et fortes à mesure que
+## le joueur descend — le puits lui-même tremble davantage vers le fond.
+var _shake_t := 1.5
 
 @onready var player: CharacterBody2D = $Player
 @onready var win_label: CanvasLayer = $WinLabel
@@ -127,6 +135,11 @@ func _process(delta: float) -> void:
 		var node: Polygon2D = g["node"]
 		node.modulate = GLITCH_A if sin(_t * 9.0 + float(g["phase"])) > 0.3 else GLITCH_B
 		node.modulate.a = 0.35 + 0.35 * absf(sin(_t * 5.0 + float(g["phase"])))
+	_shake_t -= delta
+	if _shake_t <= 0.0 and is_instance_valid(player) and player.has_method("add_shake"):
+		var depth := clampf(player.global_position.x / LEVEL_END, 0.0, 1.0)
+		player.add_shake(2.0 + depth * 8.0)
+		_shake_t = randf_range(2.4, 3.8) * (1.0 - depth * 0.5)
 
 func _physics_process(_delta: float) -> void:
 	if void_motes != null and is_instance_valid(player):
@@ -348,26 +361,26 @@ func _build_decor() -> void:
 	silhouette.z_index = -1
 
 	# Failles de glitch dans le ciel lui-même : bandes qui se décalent, comme
-	# une image mal reconstruite — plus denses ici que dans les niveaux
-	# précédents, à mesure que la corruption s'aggrave.
-	var gx := 100.0
+	# une image mal reconstruite — bien plus denses que dans les niveaux
+	# précédents, jusqu'au chaos visuel pur sur le dernier tronçon.
+	var gx := 80.0
 	var gi := 0
 	while gx < LEVEL_END:
-		var gy := 60.0 + float(gi * 37 % 300)
-		var gw := 30.0 + float(gi * 23 % 60)
+		var gy := 50.0 + float(gi * 37 % 320)
+		var gw := 26.0 + float(gi * 23 % 70)
 		var col := GLITCH_A if gi % 2 == 0 else GLITCH_B
 		var band := _poly(sky, PackedVector2Array([
 			Vector2(-gw, -2), Vector2(gw, -2), Vector2(gw, 2), Vector2(-gw, 2),
 		]), col, Vector2(gx, gy))
 		_glitches.append({"node": band, "phase": float(gi) * 1.7})
-		gx += 220.0 + float(gi * 47 % 200)
+		gx += 130.0 + float(gi * 47 % 110)
 		gi += 1
 
 	void_motes = CPUParticles2D.new()
 	void_motes.texture = load("res://assets/leaf.svg")
-	void_motes.amount = 30
-	void_motes.lifetime = 7.5
-	void_motes.preprocess = 7.5
+	void_motes.amount = 42
+	void_motes.lifetime = 6.5
+	void_motes.preprocess = 6.5
 	void_motes.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
 	void_motes.emission_rect_extents = Vector2(560, 240)
 	void_motes.direction = Vector2(0, 1)
