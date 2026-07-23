@@ -186,24 +186,26 @@ func _build_gates() -> void:
 		gate.position = Vector2(x, GROUND_Y - 120.0)
 		var shape := CollisionShape2D.new()
 		var rect := RectangleShape2D.new()
-		rect.size = Vector2(26, 200)
+		rect.size = Vector2(30, 200)
 		shape.shape = rect
 		gate.add_child(shape)
-		# Silhouette déchiquetée plutôt qu'un simple rectangle : un rideau
-		# d'énergie instable, pas un mur plein.
+		# Silhouette abîmée plutôt qu'un rectangle plein : deux longues arêtes
+		# droites, entaillées d'un seul éclat qui dépasse et d'une seule morsure
+		# par côté — pas un zigzag continu (qui finit par onduler comme un tube
+		# à l'échelle du jeu), juste quelques dégâts nets et lisibles.
 		var pts := PackedVector2Array([
-			Vector2(-13, -100), Vector2(13, -100), Vector2(7, -68), Vector2(13, -38),
-			Vector2(6, -8), Vector2(13, 22), Vector2(7, 52), Vector2(13, 82),
-			Vector2(13, 100), Vector2(-13, 100), Vector2(-7, 80), Vector2(-13, 50),
-			Vector2(-6, 20), Vector2(-13, -10), Vector2(-7, -40), Vector2(-13, -70),
+			Vector2(-15, -100), Vector2(15, -100), Vector2(21, -52), Vector2(15, -22),
+			Vector2(15, 8), Vector2(7, 24), Vector2(15, 40), Vector2(15, 100),
+			Vector2(-15, 100), Vector2(-15, 58), Vector2(-22, 42), Vector2(-15, 26),
+			Vector2(-15, -8), Vector2(-6, -24), Vector2(-15, -42),
 		])
 		var body_poly := _poly(gate, pts, Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.35))
 		var outlines: Array = []
-		for off in [Vector2(-1.0, 0.0), Vector2(1.0, 0.0)]:
+		for off in [Vector2(-2.5, 0.0), Vector2(2.5, 0.0)]:
 			var outline := Line2D.new()
 			outline.points = pts
 			outline.closed = true
-			outline.width = 1.6
+			outline.width = 1.8
 			outline.position = off
 			outline.default_color = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.75) if off.x < 0.0 else Color(GLITCH_B.r, GLITCH_B.g, GLITCH_B.b, 0.75)
 			gate.add_child(outline)
@@ -213,13 +215,13 @@ func _build_gates() -> void:
 		glow.modulate = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.3)
 		glow.scale = Vector2(1.4, 3.2)
 		gate.add_child(glow)
-		# Bandes de scintillement internes, prises dans le même cycle que la
-		# Faille et le reste du niveau — pas de tween concurrent à gérer.
+		# Bandes de scintillement internes, plus étroites que la silhouette
+		# (jamais en saillie) pour ne pas fragmenter le contour en tranches.
 		var gate_bands: Array = []
 		for k in 4:
 			var oy := -70.0 + float(k) * 45.0
 			var band := _poly(gate, PackedVector2Array([
-				Vector2(-11, oy), Vector2(11, oy), Vector2(11, oy + 10), Vector2(-11, oy + 10),
+				Vector2(-13, oy), Vector2(13, oy), Vector2(13, oy + 6), Vector2(-13, oy + 6),
 			]), GLITCH_A)
 			var entry := {"node": band, "phase": float(k) * 1.2 + x * 0.01}
 			_glitches.append(entry)

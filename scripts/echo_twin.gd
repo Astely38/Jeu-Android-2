@@ -30,8 +30,8 @@ func _ready() -> void:
 	z_index = 5
 	var glow := Sprite2D.new()
 	glow.texture = load("res://assets/mist.svg")
-	glow.modulate = Color(color_a.r, color_a.g, color_a.b, 0.35)
-	glow.scale = Vector2(1.6, 1.8)
+	glow.modulate = Color(color_a.r, color_a.g, color_a.b, 0.25)
+	glow.scale = Vector2(1.2, 1.4)
 	glow.position = Vector2(0, -10)
 	glow.z_index = -1
 	add_child(glow)
@@ -53,29 +53,35 @@ func _ready() -> void:
 	_shape(_gfx, PackedVector2Array([
 		Vector2(6, -16), Vector2(14, -8), Vector2(11, -4), Vector2(4, -12),
 	]), color_a)
-	var head := Polygon2D.new()
+	# Tête, bien détachée du corps par son propre liseré (sinon elle se fond
+	# dans le halo et le buste au lieu de se lire comme une tête).
 	var hp := PackedVector2Array()
 	for i in 10:
 		var a := i * TAU / 10.0
-		hp.append(Vector2(cos(a) * 6.5, sin(a) * 6.5))
-	head.polygon = hp
-	head.position = Vector2(0, -24)
-	head.color = color_a
-	_gfx.add_child(head)
-	# Sabre : une lame fine qui capte la seconde teinte du glitch — le seul
-	# détail qui n'est jamais de la même couleur que le corps.
+		hp.append(Vector2(cos(a) * 8.0, sin(a) * 8.0))
+	var head := _shape_fill(_gfx, hp, color_a)
+	head.position = Vector2(0, -25)
+	var head_edge := Line2D.new()
+	head_edge.points = hp
+	head_edge.closed = true
+	head_edge.width = 1.4
+	head_edge.default_color = Color(color_b.r, color_b.g, color_b.b, 0.8)
+	head_edge.position = Vector2(0, -25)
+	_gfx.add_child(head_edge)
+	# Sabre : une lame courte qui prolonge la main sans s'en détacher — capte
+	# la seconde teinte du glitch, seul détail jamais de la couleur du corps.
 	var blade := Line2D.new()
-	blade.points = PackedVector2Array([Vector2(12, -6), Vector2(25, -23)])
+	blade.points = PackedVector2Array([Vector2(13, -8), Vector2(21, -19)])
 	blade.width = 1.8
 	blade.default_color = Color(color_b.r, color_b.g, color_b.b, 0.95)
 	_gfx.add_child(blade)
-	# Bandes de scintillement horizontales, sur toute la hauteur : lecture
-	# immédiate « ceci est un glitch », jamais confondu avec un vrai
-	# personnage malgré la silhouette désormais reconnaissable.
+	# Bandes de scintillement horizontales, cantonnées à la largeur du corps
+	# (jamais en saillie, sans quoi elles se lisent comme des tranches
+	# flottantes plutôt qu'un scintillement).
 	for k in 5:
 		var oy := -22.0 + float(k) * 10.0
 		var band := _shape_fill(_gfx, PackedVector2Array([
-			Vector2(-11, oy), Vector2(15, oy), Vector2(15, oy + 3), Vector2(-11, oy + 3),
+			Vector2(-9, oy), Vector2(14, oy), Vector2(14, oy + 2), Vector2(-9, oy + 2),
 		]), color_b)
 		_bands.append({"node": band, "phase": float(k) * 1.1})
 
