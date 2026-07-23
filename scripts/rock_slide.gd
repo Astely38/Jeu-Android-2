@@ -1,17 +1,19 @@
 class_name RockSlide
 extends Node2D
-## Piège du Chapitre IV : un cratère qui déchire le sol — pas une simple
-## tache posée dessus, un vrai puits aux parois dégradées, cerné de
-## fissures qui courent dans la plateforme (même langage que GlitchRift).
-## Par intermittence, il crache une salve de BOULES DE LUMIÈRE en CLOCHE,
-## visée sur la position du joueur au moment du tir — plus imprévisible
-## qu'un éboulis qui suivrait toujours la même trajectoire. Télégraphié
-## par une lueur qui gonfle au fond du cratère juste avant chaque salve.
+## Cratère du Chapitre IV : pas un trou creusé proprement, une FRACTURE QUI
+## JAILLIT DU SOL — le miroir brisé qui cède par en dessous. Un puits en
+## dégradé (rebord clair, fond presque noir) cerné d'un éclatement de
+## fissures en étoile qui courent dans la plateforme (même langage que
+## GlitchRift), hérissées d'éclats de verre dressés et de motes de débris
+## en suspension. L'énergie du glitch (magenta/cyan) remonte le long des
+## fissures à mesure que la salve se charge — le chaos du reflet visible
+## avant même le tir. Par intermittence, il crache une salve de BOULES DE
+## LUMIÈRE en CLOCHE, visée sur la position du joueur au moment du tir.
 ##
 ## Usage : RockSlide.new() ; `position` au sol, au centre du cratère ;
 ## `phase` pour désynchroniser plusieurs cratères d'un même niveau ;
-## `tint` pour la pierre du pourtour, `glow_a`/`glow_b` pour la couleur
-## des boules de lumière (par défaut le glitch magenta/cyan du chapitre).
+## `tint` pour la pierre du puits, `glow_a`/`glow_b` pour l'énergie du
+## glitch (par défaut le magenta/cyan du chapitre).
 
 const PERIOD := 3.4
 const WARN := 0.65
@@ -24,6 +26,16 @@ const SPREAD := 26.0
 ## permanence, même à l'autre bout du niveau.
 const RANGE := 340.0
 
+## Fissures en étoile qui jaillissent du bord du cratère (direction, longueur).
+const CRACKS := [
+	{"vec": Vector2(-0.95, -0.1), "len": 46.0}, {"vec": Vector2(-0.7, -0.65), "len": 34.0},
+	{"vec": Vector2(-0.2, -0.95), "len": 40.0}, {"vec": Vector2(0.35, -0.9), "len": 30.0},
+	{"vec": Vector2(0.85, -0.35), "len": 44.0}, {"vec": Vector2(0.95, 0.15), "len": 32.0},
+	{"vec": Vector2(0.5, 0.55), "len": 26.0}, {"vec": Vector2(-0.55, 0.5), "len": 28.0},
+]
+## Éclats de verre dressés autour du rebord (angle en degrés, hauteur).
+const SHARDS := [-150.0, -100.0, -55.0, -15.0, 25.0, 70.0, 115.0, 160.0]
+
 @export var phase := 0.0
 @export var tint := Color(0.5, 0.46, 0.56)
 @export var glow_a := Color(0.85, 0.25, 0.55)
@@ -31,48 +43,51 @@ const RANGE := 340.0
 
 var _t := 0.0
 var _core: Polygon2D
+var _cracks: Array = []
 
 func _ready() -> void:
 	_t = phase
 	z_index = 4
 	_build_crater()
 
-## Cratère qui déchire le sol : assise sombre pour l'ancrer, fissures qui
-## courent dans la plateforme depuis son bord, puis un vrai puits en
-## dégradé (rebord clair, fond presque noir) — pas une tache plate.
+## Cratère-fracture : assise sombre, éclatement de fissures en étoile
+## (le sol jaillit et se déchire, pas un trou creusé proprement), puits
+## en dégradé, éclats de verre dressés au rebord, débris en suspension.
 func _build_crater() -> void:
 	# Assise : ombre large et diffuse sous le pourtour, pour que le cratère
 	# ne semble jamais simplement "collé" sur la plateforme.
 	var ao := Sprite2D.new()
 	ao.texture = load("res://assets/mist.svg")
-	ao.modulate = Color(0, 0, 0, 0.4)
-	ao.scale = Vector2(1.0, 0.5)
+	ao.modulate = Color(0, 0, 0, 0.45)
+	ao.scale = Vector2(1.3, 0.6)
 	ao.position = Vector2(0, 4)
 	ao.z_index = -1
 	add_child(ao)
 
-	# Fissures qui déchirent la plateforme depuis le bord du trou — le sol
-	# lui-même cède, pas juste un rond creusé proprement.
-	for side: float in [-1.0, 1.0]:
-		for k in 2:
-			var base_x := side * (28.0 + float(k) * 16.0)
-			var crack := Line2D.new()
-			crack.points = PackedVector2Array([
-				Vector2(side * 20.0, 2.0), Vector2(base_x * 0.6, -3.0),
-				Vector2(base_x, 1.0), Vector2(base_x + side * 10.0, -4.0),
-			])
-			crack.width = 1.1
-			crack.default_color = Color(0.04, 0.03, 0.05, 0.75)
-			add_child(crack)
-			var glint := Line2D.new()
-			glint.points = crack.points
-			glint.width = 0.5
-			glint.default_color = Color(glow_a.r, glow_a.g, glow_a.b, 0.3)
-			add_child(glint)
+	# Éclatement de fissures en étoile : le sol jaillit et se fend dans
+	# toutes les directions depuis le cratère, comme une vitre brisée par
+	# en dessous — l'énergie du glitch (magenta/cyan) y remontera à la
+	# charge de la salve.
+	for c in CRACKS:
+		var vec: Vector2 = c["vec"]
+		var length: float = c["len"]
+		var mid := vec * length * 0.55 + vec.orthogonal() * 4.0
+		var end := vec * length
+		var crack := Line2D.new()
+		crack.points = PackedVector2Array([Vector2.ZERO, mid, end])
+		crack.width = 1.3
+		crack.default_color = Color(0.03, 0.025, 0.04, 0.85)
+		add_child(crack)
+		var col := glow_a if randf() > 0.5 else glow_b
+		var glint := Line2D.new()
+		glint.points = crack.points
+		glint.width = 0.6
+		glint.default_color = Color(col.r, col.g, col.b, 0.0)
+		add_child(glint)
+		_cracks.append({"node": glint, "base": col, "phase": randf() * TAU})
 
 	# Puits en dégradé : trois strates emboîtées, du rebord clair (encore
-	# éclairé) au fond presque noir — la profondeur se lit d'un coup d'œil,
-	# plus besoin d'attendre la lueur d'alerte pour reconnaître un trou.
+	# éclairé) au fond presque noir — la profondeur se lit d'un coup d'œil.
 	var rim_lit := Color(tint.r * 0.85, tint.g * 0.8, tint.b * 0.9, 0.9)
 	var wall := Color(0.1, 0.09, 0.12, 0.95)
 	var pit_dark := Color(0.03, 0.025, 0.04, 0.98)
@@ -97,12 +112,50 @@ func _build_crater() -> void:
 	rim_edge.width = 2.2
 	rim_edge.default_color = Color(tint.r + 0.15, tint.g + 0.12, tint.b + 0.18)
 	add_child(rim_edge)
+
+	# Éclats de verre dressés au rebord : le miroir brisé qui hérisse le
+	# trou, pas un simple tas de gravats — quelques triangles fins, tantôt
+	# magenta tantôt cyan, plantés en couronne irrégulière.
+	for i in SHARDS.size():
+		var ang: float = deg_to_rad(SHARDS[i])
+		var dir := Vector2(cos(ang), sin(ang) * 0.5)
+		var base: Vector2 = dir * 20.0
+		var h := 8.0 + float(i % 3) * 5.0
+		var side := dir.orthogonal() * 2.5
+		var tip := base + dir * h
+		var col := glow_a if i % 2 == 0 else glow_b
+		_poly(PackedVector2Array([base - side, base + side, tip]), Color(col.r, col.g, col.b, 0.55))
+
 	# Lueur qui gonfle au fond du cratère : seul vrai télégraphe de la salve.
 	_core = _poly(PackedVector2Array([
 		Vector2(-8, 5), Vector2(-3, 10), Vector2(4, 9), Vector2(8, 2), Vector2(1, -3), Vector2(-4, -1),
 	]), Color(glow_b.r, glow_b.g, glow_b.b, 0.0))
 	_core.position = Vector2(0, 4)
 	_core.z_index = 1
+
+	# Motes de débris en suspension : des éclats du miroir qui n'ont jamais
+	# fini de retomber, comme autour d'une GlitchRift.
+	for col in [glow_a, glow_b]:
+		var debris := CPUParticles2D.new()
+		debris.texture = load("res://assets/leaf.svg")
+		debris.amount = 4
+		debris.lifetime = 2.2
+		debris.preprocess = 2.2
+		debris.position = Vector2(0, -6)
+		debris.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		debris.emission_rect_extents = Vector2(26, 6)
+		debris.direction = Vector2(0, -1)
+		debris.spread = 40.0
+		debris.gravity = Vector2.ZERO
+		debris.initial_velocity_min = 4.0
+		debris.initial_velocity_max = 12.0
+		debris.angular_velocity_min = -80.0
+		debris.angular_velocity_max = 80.0
+		debris.scale_amount_min = 0.25
+		debris.scale_amount_max = 0.45
+		debris.color = col
+		add_child(debris)
+
 	# Poussière qui s'échappe en continu : le cratère reste instable au repos.
 	var dust := CPUParticles2D.new()
 	dust.amount = 5
@@ -133,11 +186,17 @@ func _process(delta: float) -> void:
 	if _t >= PERIOD:
 		_t -= PERIOD
 		_spit()
-	# Télégraphe : la lueur du cratère gonfle dans le dernier tiers du cycle.
+	# Télégraphe : la lueur du cratère gonfle dans le dernier tiers du cycle,
+	# et l'énergie remonte le long des fissures — le chaos se lit avant le tir.
 	var warn := clampf((_t - (PERIOD - WARN)) / WARN, 0.0, 1.0)
 	if _core != null:
 		_core.color.a = warn * 0.95
 		_core.scale = Vector2.ONE * (1.0 + 0.4 * warn)
+	for c in _cracks:
+		var node: Line2D = c["node"]
+		var base: Color = c["base"]
+		var shimmer := 0.12 + 0.1 * absf(sin(_t * 6.0 + float(c["phase"])))
+		node.default_color = Color(base.r, base.g, base.b, shimmer + warn * 0.6)
 
 ## Crache une salve de boules de lumière visant la position du joueur au
 ## moment du tir (trajectoire en cloche), décalées latéralement pour former
@@ -155,9 +214,9 @@ func _spit() -> void:
 		var lateral := float(i - 1) * SPREAD
 		_launch_orb(host, target + Vector2(lateral, 0))
 
-## Boule de lumière : halo doux + cœur radieux + fin anneau scintillant,
-## pas un caillou anguleux — le cratère crache l'énergie du miroir brisé,
-## pas des gravats.
+## Boule de lumière : halo doux + cœur radieux + éclats orbitaux (fragments
+## du miroir brisé qui tournent autour) — pas un caillou anguleux, le
+## cratère crache l'énergie du reflet, pas des gravats.
 func _launch_orb(host: Node, target: Vector2) -> void:
 	var orb := Area2D.new()
 	var r := randf_range(6.0, 9.0)
@@ -183,12 +242,23 @@ func _launch_orb(host: Node, target: Vector2) -> void:
 	tinted.scale = Vector2(0.7, 0.7)
 	tinted.color = Color(col.r, col.g, col.b, 0.8)
 	orb.add_child(tinted)
-	var ring := Line2D.new()
-	ring.points = poly
-	ring.closed = true
-	ring.width = 1.2
-	ring.default_color = Color(col.r, col.g, col.b, 0.95)
-	orb.add_child(ring)
+
+	# Éclats orbitaux : trois fragments du miroir qui tournent autour du
+	# cœur lumineux, tantôt magenta tantôt cyan — le chaos du reflet en vol.
+	var shards := Node2D.new()
+	orb.add_child(shards)
+	for i in 3:
+		var sa := float(i) * TAU / 3.0
+		var sc := glow_b if i % 2 == 0 else glow_a
+		var pos := Vector2(cos(sa), sin(sa)) * (r + 4.0)
+		var tri := Polygon2D.new()
+		tri.polygon = PackedVector2Array([Vector2(-2, -3), Vector2(2, -3), Vector2(0, 4)])
+		tri.color = Color(sc.r, sc.g, sc.b, 0.9)
+		tri.position = pos
+		tri.rotation = sa + PI / 2.0
+		shards.add_child(tri)
+	var st := shards.create_tween().set_loops()
+	st.tween_property(shards, "rotation", TAU, 0.7).set_trans(Tween.TRANS_LINEAR)
 
 	var shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
@@ -203,7 +273,6 @@ func _launch_orb(host: Node, target: Vector2) -> void:
 	var start := orb.global_position
 	var tw := orb.create_tween()
 	tw.tween_method(_update_arc.bind(orb, start, target), 0.0, 1.0, FLIGHT_TIME)
-	tw.parallel().tween_property(ring, "rotation", randf_range(4.0, 7.0) * (1.0 if randf() > 0.5 else -1.0), FLIGHT_TIME)
 	tw.tween_callback(_on_orb_spent.bind(orb))
 
 ## Trajectoire en cloche : interpolation linéaire vers la cible, moins un
@@ -222,7 +291,7 @@ func _on_orb_hit(body: Node2D, orb: Area2D) -> void:
 		body.take_damage(1, orb.global_position)
 		orb.queue_free()
 
-## À l'impact, la boule de lumière s'éteint dans un petit éclat au lieu de
+## À l'impact, la boule de lumière éclate en fragments au lieu de
 ## simplement disparaître.
 func _on_orb_spent(orb: Area2D) -> void:
 	if not is_instance_valid(orb):
@@ -230,21 +299,21 @@ func _on_orb_spent(orb: Area2D) -> void:
 	var host := get_parent()
 	if host != null:
 		var puff := CPUParticles2D.new()
-		puff.amount = 8
-		puff.lifetime = 0.4
+		puff.amount = 10
+		puff.lifetime = 0.45
 		puff.one_shot = true
 		puff.emitting = true
 		puff.global_position = orb.global_position
 		puff.direction = Vector2(0, -1)
 		puff.spread = 180.0
 		puff.gravity = Vector2.ZERO
-		puff.initial_velocity_min = 30.0
-		puff.initial_velocity_max = 70.0
+		puff.initial_velocity_min = 35.0
+		puff.initial_velocity_max = 80.0
 		puff.scale_amount_min = 0.4
-		puff.scale_amount_max = 0.8
-		puff.color = Color(glow_a.r, glow_a.g, glow_a.b, 0.7)
+		puff.scale_amount_max = 0.85
+		puff.color = Color(glow_a.r, glow_a.g, glow_a.b, 0.75)
 		host.add_child(puff)
 		var pt := puff.create_tween()
-		pt.tween_interval(0.45)
+		pt.tween_interval(0.5)
 		pt.tween_callback(puff.queue_free)
 	orb.queue_free()
