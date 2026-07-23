@@ -1,132 +1,78 @@
 class_name RockSlide
 extends Node2D
-## Piège du Chapitre IV, propre aux pentes : un surplomb instable qui, par
-## intermittence, libère une volée d'éclats qui DÉVALENT la pente en
-## tournoyant. Télégraphié par un tremblement bref (le surplomb se fissure)
-## avant l'éboulis — un joueur attentif a le temps de s'écarter ou de
-## franchir la pente avant la chute.
+## Piège du Chapitre IV : un cratère instable qui, par intermittence, crache
+## une salve d'éclats en CLOCHE, visée sur la position du joueur au moment
+## du tir — plus imprévisible qu'un éboulis qui suivrait toujours la même
+## trajectoire. Télégraphié par une lueur qui gonfle au fond du cratère
+## juste avant chaque salve.
 ##
-## Usage : RockSlide.new() ; `position` en haut de la pente ; `fall_dir` =
-## vecteur de chute normalisé (suit la pente, ex. Vector2(1, 0.4).normalized()
-## pour une descente vers la droite) ; `phase` pour désynchroniser plusieurs
-## éboulis d'un même niveau.
+## Usage : RockSlide.new() ; `position` au sol, au centre du cratère ;
+## `phase` pour désynchroniser plusieurs cratères d'un même niveau.
 
-const PERIOD := 3.6
-const WARN := 0.7
-const FALL_SPEED := 260.0
-const RANGE := 420.0
+const PERIOD := 3.4
+const WARN := 0.65
 const SHARD_COUNT := 3
+const FLIGHT_TIME := 0.85
+const ARC_HEIGHT := 70.0
+const SPREAD := 26.0
+## Cible de repli si aucun joueur n'est trouvé dans la scène.
+const DEFAULT_TARGET_OFFSET := Vector2(140.0, -20.0)
 
-@export var fall_dir := Vector2(1, 0.4)
 @export var phase := 0.0
-@export var tint := Color(0.5, 0.55, 0.65)
+@export var tint := Color(0.5, 0.46, 0.56)
 
 var _t := 0.0
-var _warn_poly: Polygon2D
+var _core: Polygon2D
 
 func _ready() -> void:
 	_t = phase
-	fall_dir = fall_dir.normalized()
 	z_index = 4
-	# Surplomb fissuré : silhouette de roche instable, au-dessus de la pente,
-	# bâtie en plusieurs facettes (volume + relief) pour bien se détacher du
-	# fond sombre du chapitre même au repos.
-	var rock_dark := Color(0.22, 0.2, 0.27)
-	var rock := Color(0.36, 0.33, 0.42)
-	var rock_hi := Color(0.48, 0.44, 0.56)
-	var rock_pts := PackedVector2Array([
-		Vector2(-28, 10), Vector2(-14, -18), Vector2(8, -13), Vector2(26, 8), Vector2(13, 13),
-	])
-	_poly(rock_pts, rock_dark)
-	var main := _poly(PackedVector2Array([
-		Vector2(-24, 8), Vector2(-12, -15), Vector2(6, -11), Vector2(22, 7), Vector2(10, 11),
-	]), rock)
-	# Facette éclairée du dessus : suggère une source de lumière et du volume.
+	_build_crater()
+
+## Cratère enfoncé dans le sol, rebord fissuré, lueur d'alerte au fond.
+func _build_crater() -> void:
+	var pit_dark := Color(0.08, 0.07, 0.09)
+	var pit := Color(0.18, 0.16, 0.21)
+	var rim := Color(0.34, 0.31, 0.4)
 	_poly(PackedVector2Array([
-		Vector2(-12, -15), Vector2(6, -11), Vector2(14, -4), Vector2(-4, -6),
-	]), rock_hi)
-	var outline := Line2D.new()
-	outline.points = main.polygon
-	outline.closed = true
-	outline.width = 2.0
-	outline.default_color = Color(tint.r, tint.g, tint.b, 0.75)
-	add_child(outline)
-	# Lézardes statiques, toujours visibles : le surplomb a déjà commencé à
-	# se fendre, bien avant l'éboulis proprement dit.
-	for crack_pts in [
-		PackedVector2Array([Vector2(-8, -8), Vector2(-2, 0), Vector2(-6, 6)]),
-		PackedVector2Array([Vector2(4, -9), Vector2(9, -2), Vector2(6, 4)]),
-	]:
-		var crack := Line2D.new()
-		crack.points = crack_pts
-		crack.width = 1.0
-		crack.default_color = Color(0.1, 0.09, 0.13, 0.8)
-		add_child(crack)
-	# Poussière qui tombe en continu, discrète : le surplomb s'effrite déjà.
+		Vector2(-30, 6), Vector2(-20, 20), Vector2(0, 26), Vector2(20, 19), Vector2(30, 5),
+		Vector2(24, -4), Vector2(0, -8), Vector2(-24, -3),
+	]), pit_dark)
+	_poly(PackedVector2Array([
+		Vector2(-24, 4), Vector2(-15, 15), Vector2(0, 19), Vector2(15, 14), Vector2(24, 3),
+		Vector2(18, -3), Vector2(0, -6), Vector2(-18, -2),
+	]), pit)
+	# Rebord fissuré, irrégulier — instable, prêt à s'ébouler encore.
+	var rim_edge := Line2D.new()
+	rim_edge.points = PackedVector2Array([
+		Vector2(-32, -2), Vector2(-24, -9), Vector2(-14, -5), Vector2(-4, -10),
+		Vector2(6, -4), Vector2(16, -9), Vector2(26, -3), Vector2(32, -6),
+	])
+	rim_edge.width = 2.2
+	rim_edge.default_color = rim
+	add_child(rim_edge)
+	# Lueur qui gonfle au fond du cratère : seul vrai télégraphe de la salve.
+	_core = _poly(PackedVector2Array([
+		Vector2(-9, 6), Vector2(-4, 12), Vector2(5, 11), Vector2(9, 3), Vector2(2, -4), Vector2(-5, -2),
+	]), Color(tint.r + 0.3, tint.g + 0.15, tint.b + 0.05, 0.0))
+	_core.position = Vector2(0, 6)
+	# Poussière qui s'échappe en continu : le cratère reste instable au repos.
 	var dust := CPUParticles2D.new()
-	dust.amount = 4
-	dust.lifetime = 1.4
-	dust.preprocess = 1.4
+	dust.amount = 5
+	dust.lifetime = 1.2
+	dust.preprocess = 1.2
 	dust.position = Vector2(0, 4)
 	dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	dust.emission_rect_extents = Vector2(16, 2)
-	dust.direction = Vector2(0, 1)
-	dust.spread = 10.0
-	dust.gravity = Vector2(0, 60)
-	dust.initial_velocity_min = 4.0
-	dust.initial_velocity_max = 10.0
-	dust.scale_amount_min = 0.5
-	dust.scale_amount_max = 0.9
-	dust.color = Color(tint.r, tint.g, tint.b, 0.5)
+	dust.emission_rect_extents = Vector2(20, 3)
+	dust.direction = Vector2(0, -1)
+	dust.spread = 20.0
+	dust.gravity = Vector2(0, -10)
+	dust.initial_velocity_min = 5.0
+	dust.initial_velocity_max = 14.0
+	dust.scale_amount_min = 0.4
+	dust.scale_amount_max = 0.8
+	dust.color = Color(tint.r, tint.g, tint.b, 0.45)
 	add_child(dust)
-	_warn_poly = _poly(PackedVector2Array([
-		Vector2(-8, -2), Vector2(-1, -13), Vector2(4, -4), Vector2(10, -10), Vector2(5, 5), Vector2(-3, 8),
-	]), Color(tint.r, tint.g, tint.b, 0.0))
-	# Panneau d'avertissement, en amont sur la pente : le joueur qui grimpe
-	# le croise avant d'atteindre le surplomb lui-même.
-	_build_warning_sign(-fall_dir * 56.0)
-
-## Petit panneau triangulaire, toujours visible, planté un peu avant le
-## surplomb sur le chemin du joueur — un repère lisible avant même le
-## tremblement du télégraphe.
-func _build_warning_sign(offset: Vector2) -> void:
-	var sign_node := Node2D.new()
-	sign_node.position = offset
-	var post := Polygon2D.new()
-	post.polygon = PackedVector2Array([
-		Vector2(-1.5, 0), Vector2(1.5, 0), Vector2(1.5, -14), Vector2(-1.5, -14),
-	])
-	post.color = Color(0.15, 0.13, 0.11)
-	sign_node.add_child(post)
-	var amber := Color(0.85, 0.62, 0.2)
-	var tri := PackedVector2Array([
-		Vector2(0, -30), Vector2(11, -12), Vector2(-11, -12),
-	])
-	var plate := Polygon2D.new()
-	plate.polygon = tri
-	plate.color = Color(0.16, 0.12, 0.08, 0.92)
-	sign_node.add_child(plate)
-	var tri_edge := Line2D.new()
-	tri_edge.points = tri
-	tri_edge.closed = true
-	tri_edge.width = 1.6
-	tri_edge.default_color = amber
-	sign_node.add_child(tri_edge)
-	var mark := Polygon2D.new()
-	mark.polygon = PackedVector2Array([
-		Vector2(-1.4, -25), Vector2(1.4, -25), Vector2(1.0, -17), Vector2(-1.0, -17),
-	])
-	mark.color = amber
-	sign_node.add_child(mark)
-	var dot := Polygon2D.new()
-	var dp := PackedVector2Array()
-	for i in 8:
-		var a := i * TAU / 8.0
-		dp.append(Vector2(cos(a), sin(a)) * 1.3 + Vector2(0, -14.5))
-	dot.polygon = dp
-	dot.color = amber
-	sign_node.add_child(dot)
-	add_child(sign_node)
 
 func _poly(pts: PackedVector2Array, c: Color) -> Polygon2D:
 	var p := Polygon2D.new()
@@ -139,67 +85,73 @@ func _process(delta: float) -> void:
 	_t += delta
 	if _t >= PERIOD:
 		_t -= PERIOD
-		_release()
-	# Télégraphe : la fissure s'illumine dans le dernier tiers du cycle.
+		_spit()
+	# Télégraphe : la lueur du cratère gonfle dans le dernier tiers du cycle.
 	var warn := clampf((_t - (PERIOD - WARN)) / WARN, 0.0, 1.0)
-	if _warn_poly != null:
-		_warn_poly.color.a = warn * 0.9
-		_warn_poly.scale = Vector2.ONE * (1.0 + 0.15 * warn)
+	if _core != null:
+		_core.color.a = warn * 0.95
+		_core.scale = Vector2.ONE * (1.0 + 0.4 * warn)
 
-## Libère une volée d'éclats qui dévalent la pente en tournoyant, chacun
-## infligeant un dégât au contact avant de disparaître à distance.
-func _release() -> void:
+## Crache une salve d'éclats visant la position du joueur au moment du tir
+## (trajectoire en cloche), décalés latéralement pour former un éventail.
+func _spit() -> void:
 	var host := get_parent()
 	if host == null:
 		return
+	var player := get_tree().get_first_node_in_group("player")
+	var target := global_position + DEFAULT_TARGET_OFFSET
+	if player != null:
+		target = (player as Node2D).global_position
 	for i in SHARD_COUNT:
-		var shard := Area2D.new()
-		var poly := PackedVector2Array()
-		# Éclats plus imposants, en gros plan sur la pente : petit, moyen,
-		# grand, comme les variantes de la planche de référence.
-		var r := randf_range(8.0, 15.0)
-		for k in 6:
-			var a := k * TAU / 6.0
-			poly.append(Vector2(cos(a) * r, sin(a) * r * 0.8))
-		# Halo : détache l'éclat du fond sombre du chapitre pendant sa chute.
-		var glow := Sprite2D.new()
-		glow.texture = load("res://assets/mist.svg")
-		glow.modulate = Color(0.8, 0.7, 0.95, 0.4)
-		glow.scale = Vector2.ONE * (r / 14.0)
-		shard.add_child(glow)
-		var body := Polygon2D.new()
-		body.polygon = poly
-		body.color = Color(tint.r + 0.12, tint.g + 0.1, tint.b + 0.14, 0.98)
-		shard.add_child(body)
-		# Facette miroir : un triangle clair au sommet, comme un reflet vif —
-		# vend l'idée d'un éclat de verre plutôt qu'un simple caillou.
-		var hi := Polygon2D.new()
-		hi.polygon = PackedVector2Array([
-			poly[0] * 0.75, poly[1] * 0.7, Vector2.ZERO,
-		])
-		hi.color = Color(0.95, 0.92, 1.0, 0.8)
-		shard.add_child(hi)
-		var edge := Line2D.new()
-		edge.points = poly
-		edge.closed = true
-		edge.width = 1.4
-		edge.default_color = Color(0.85, 0.78, 1.0, 0.85)
-		shard.add_child(edge)
-		var shape := CollisionShape2D.new()
-		var circle := CircleShape2D.new()
-		circle.radius = r
-		shape.shape = circle
-		shard.add_child(shape)
-		shard.z_index = 3
-		host.add_child(shard)
-		var offset := Vector2(-fall_dir.y, fall_dir.x) * float(i - 1) * 16.0
-		shard.global_position = global_position + offset
-		shard.body_entered.connect(_on_shard_hit.bind(shard))
-		var t := shard.create_tween()
-		t.set_parallel(true)
-		t.tween_property(shard, "position", shard.position + fall_dir * RANGE, RANGE / FALL_SPEED)
-		t.tween_property(shard, "rotation", (8.0 + float(i)) * (1.0 if fall_dir.x >= 0.0 else -1.0), RANGE / FALL_SPEED)
-		t.chain().tween_callback(_on_shard_spent.bind(shard))
+		var lateral := float(i - 1) * SPREAD
+		_launch_shard(host, target + Vector2(lateral, 0))
+
+func _launch_shard(host: Node, target: Vector2) -> void:
+	var shard := Area2D.new()
+	var r := randf_range(6.0, 10.0)
+	var poly := PackedVector2Array()
+	for k in 6:
+		var a := k * TAU / 6.0
+		poly.append(Vector2(cos(a) * r, sin(a) * r * 0.85))
+	var body := Polygon2D.new()
+	body.polygon = poly
+	body.color = Color(tint.r + 0.1, tint.g + 0.08, tint.b + 0.12, 0.98)
+	shard.add_child(body)
+	# Facette claire au sommet : vend le volume du caillou en plein vol.
+	var hi := Polygon2D.new()
+	hi.polygon = PackedVector2Array([poly[0] * 0.7, poly[1] * 0.65, Vector2.ZERO])
+	hi.color = Color(0.9, 0.86, 0.95, 0.75)
+	shard.add_child(hi)
+	var edge := Line2D.new()
+	edge.points = poly
+	edge.closed = true
+	edge.width = 1.2
+	edge.default_color = Color(0.15, 0.13, 0.17, 0.9)
+	shard.add_child(edge)
+	var shape := CollisionShape2D.new()
+	var circle := CircleShape2D.new()
+	circle.radius = r
+	shape.shape = circle
+	shard.add_child(shape)
+	shard.z_index = 3
+	shard.global_position = global_position + Vector2(0, -6)
+	host.add_child(shard)
+	shard.body_entered.connect(_on_shard_hit.bind(shard))
+
+	var start := shard.global_position
+	var tw := shard.create_tween()
+	tw.tween_method(_update_arc.bind(shard, start, target), 0.0, 1.0, FLIGHT_TIME)
+	tw.parallel().tween_property(shard, "rotation", randf_range(6.0, 10.0) * (1.0 if randf() > 0.5 else -1.0), FLIGHT_TIME)
+	tw.tween_callback(_on_shard_spent.bind(shard))
+
+## Trajectoire en cloche : interpolation linéaire vers la cible, moins un
+## arc de sinus qui la soulève au-dessus de la ligne droite.
+func _update_arc(f: float, shard: Area2D, start: Vector2, target: Vector2) -> void:
+	if not is_instance_valid(shard):
+		return
+	var pos := start.lerp(target, f)
+	pos.y -= sin(f * PI) * ARC_HEIGHT
+	shard.global_position = pos
 
 func _on_shard_hit(body: Node2D, shard: Area2D) -> void:
 	if not is_instance_valid(shard):
@@ -208,29 +160,29 @@ func _on_shard_hit(body: Node2D, shard: Area2D) -> void:
 		body.take_damage(1, shard.global_position)
 		shard.queue_free()
 
-## En fin de course, l'éclat s'efface dans un nuage de poussière au lieu de
-## simplement disparaître — un petit impact qui vend sa masse.
+## À l'impact, l'éclat s'efface dans un petit nuage de poussière au lieu de
+## simplement disparaître.
 func _on_shard_spent(shard: Area2D) -> void:
 	if not is_instance_valid(shard):
 		return
 	var host := get_parent()
 	if host != null:
 		var puff := CPUParticles2D.new()
-		puff.amount = 8
-		puff.lifetime = 0.5
+		puff.amount = 7
+		puff.lifetime = 0.45
 		puff.one_shot = true
 		puff.emitting = true
 		puff.global_position = shard.global_position
-		puff.direction = -fall_dir
-		puff.spread = 50.0
-		puff.gravity = Vector2(0, 40)
-		puff.initial_velocity_min = 30.0
-		puff.initial_velocity_max = 70.0
-		puff.scale_amount_min = 0.5
-		puff.scale_amount_max = 0.9
+		puff.direction = Vector2(0, -1)
+		puff.spread = 60.0
+		puff.gravity = Vector2(0, 50)
+		puff.initial_velocity_min = 25.0
+		puff.initial_velocity_max = 55.0
+		puff.scale_amount_min = 0.4
+		puff.scale_amount_max = 0.8
 		puff.color = Color(tint.r, tint.g, tint.b, 0.6)
 		host.add_child(puff)
 		var pt := puff.create_tween()
-		pt.tween_interval(0.6)
+		pt.tween_interval(0.5)
 		pt.tween_callback(puff.queue_free)
 	shard.queue_free()

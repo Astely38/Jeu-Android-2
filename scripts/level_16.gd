@@ -59,10 +59,10 @@ const PATROL_XS := [1900.0, 5300.0]
 const SANS_VISAGE_XS := [2000.0, 5500.0, 6850.0]
 ## Failles glitchées (immobiles) : sur le plat, jamais sur une pente.
 const GLITCH_RIFT_XS := [1700.0, 5150.0]
-## Éboulis de miroir : un par grande montée, en haut de la pente.
+## Cratères de l'Éboulis de miroir : un par grande montée.
 const ROCK_SLIDES := [
-	{"x": 3420.0, "y": 430.0, "dir": Vector2(-1.0, 0.24)},
-	{"x": 6520.0, "y": 330.0, "dir": Vector2(-1.0, 0.33)},
+	Vector2(3420.0, 430.0),
+	Vector2(6520.0, 330.0),
 ]
 const REFUGE_X := 4000.0
 
@@ -229,10 +229,9 @@ func _build_glitch_rifts() -> void:
 		add_child(rift)
 
 func _build_rock_slides() -> void:
-	for r in ROCK_SLIDES:
+	for p in ROCK_SLIDES:
 		var rs := RockSlide.new()
-		rs.position = Vector2(float(r["x"]), float(r["y"]))
-		rs.fall_dir = r["dir"]
+		rs.position = p
 		rs.tint = Color(0.5, 0.46, 0.56)
 		add_child(rs)
 

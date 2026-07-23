@@ -1,6 +1,7 @@
 class_name GlitchRift
 extends Node2D
-## Faille glitchée du Chapitre IV : déchirure immobile, flush au sol, cerclée
+## Faille glitchée du Chapitre IV : déchirure EMBOÎTÉE dans le sol (sa moitié
+## basse enfoncée sous la ligne de marche, seuls les pics dépassent), cerclée
 ## d'un double liseré (aberration chromatique), hérissée d'une crête de pics
 ## numériques d'hauteur irrégulière, et prolongée au sol par des lézardes qui
 ## trahissent l'instabilité du terrain bien au-delà de son bord. Danger fixe,
@@ -46,7 +47,10 @@ func _ready() -> void:
 	rect.size = Vector2(76, 36)
 	shape.shape = rect
 	var rift := Area2D.new()
-	rift.position = Vector2(0, -17.0)
+	# Centre la déchirure sur la ligne de marche (au lieu de caler son bord
+	# bas dessus) : la moitié basse du corps sombre s'enfonce dans le sol,
+	# seuls les pics et la crevasse dépassent.
+	rift.position = Vector2(0, -1.0)
 	rift.add_child(shape)
 	# Lueur qui sourd de la faille : signale le danger de loin, sur le sol.
 	var glow := Sprite2D.new()
