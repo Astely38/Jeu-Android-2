@@ -37,28 +37,45 @@ func _ready() -> void:
 	add_child(glow)
 	_gfx = Node2D.new()
 	add_child(_gfx)
-	# Silhouette simplifiée, en aplat unique : ce n'est pas Eneko lui-même,
-	# juste l'idée d'une trace qui lui ressemble — jamais un vrai second
-	# personnage à animer en détail.
+	# Silhouette articulée — jambes, torse, bras, sabre levé — pensée pour se
+	# lire comme UN DOUBLE d'Eneko, pas comme un simple bloc coloré : le
+	# glitch doit se voir dans le scintillement, pas dans la forme.
+	# Jambes : un seul polygone échancré au centre (illusion de deux jambes).
 	_shape(_gfx, PackedVector2Array([
-		Vector2(-9, 26), Vector2(9, 26), Vector2(11, -3), Vector2(6, -17),
-		Vector2(-6, -17), Vector2(-11, -3),
+		Vector2(-9, 26), Vector2(-4, 26), Vector2(-4, 4), Vector2(0, 9),
+		Vector2(4, 4), Vector2(4, 26), Vector2(9, 26), Vector2(8, -3), Vector2(-8, -3),
+	]), color_a)
+	# Torse, légèrement évasé — silhouette du gi d'Eneko.
+	_shape(_gfx, PackedVector2Array([
+		Vector2(-8, -3), Vector2(8, -3), Vector2(7, -19), Vector2(-7, -19),
+	]), color_a)
+	# Bras armé, replié vers l'épaule opposée — porte le sabre.
+	_shape(_gfx, PackedVector2Array([
+		Vector2(6, -16), Vector2(14, -8), Vector2(11, -4), Vector2(4, -12),
 	]), color_a)
 	var head := Polygon2D.new()
 	var hp := PackedVector2Array()
 	for i in 10:
 		var a := i * TAU / 10.0
-		hp.append(Vector2(cos(a) * 7.0, sin(a) * 7.0))
+		hp.append(Vector2(cos(a) * 6.5, sin(a) * 6.5))
 	head.polygon = hp
-	head.position = Vector2(0, -23)
+	head.position = Vector2(0, -24)
 	head.color = color_a
 	_gfx.add_child(head)
-	# Bandes de scintillement horizontales : lecture immédiate « ceci est un
-	# glitch », jamais confondu avec un vrai personnage.
-	for k in 4:
-		var oy := -16.0 + float(k) * 10.0
+	# Sabre : une lame fine qui capte la seconde teinte du glitch — le seul
+	# détail qui n'est jamais de la même couleur que le corps.
+	var blade := Line2D.new()
+	blade.points = PackedVector2Array([Vector2(12, -6), Vector2(25, -23)])
+	blade.width = 1.8
+	blade.default_color = Color(color_b.r, color_b.g, color_b.b, 0.95)
+	_gfx.add_child(blade)
+	# Bandes de scintillement horizontales, sur toute la hauteur : lecture
+	# immédiate « ceci est un glitch », jamais confondu avec un vrai
+	# personnage malgré la silhouette désormais reconnaissable.
+	for k in 5:
+		var oy := -22.0 + float(k) * 10.0
 		var band := _shape_fill(_gfx, PackedVector2Array([
-			Vector2(-11, oy), Vector2(11, oy), Vector2(11, oy + 3), Vector2(-11, oy + 3),
+			Vector2(-11, oy), Vector2(15, oy), Vector2(15, oy + 3), Vector2(-11, oy + 3),
 		]), color_b)
 		_bands.append({"node": band, "phase": float(k) * 1.1})
 

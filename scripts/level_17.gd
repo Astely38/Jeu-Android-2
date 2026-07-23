@@ -175,9 +175,11 @@ func _build_glitch_rifts() -> void:
 		rift.color_b = GLITCH_B
 		add_child(rift)
 
-## Portes Muettes : un mur de glitch qui barre la plateforme, cerné d'un
-## liseré et marqué au sol d'une rune de résonance — le signe que ce point
-## attend une seconde présence pour s'ouvrir.
+## Portes Muettes : un rideau d'énergie déchiqueté qui barre la plateforme,
+## cerné d'un double liseré et marqué au sol d'une rune à diamants
+## concentriques — le signe que ce point attend une seconde présence pour
+## s'ouvrir. Même famille visuelle que la Faille (silhouette irrégulière,
+## bandes qui clignotent), pour rester dans le langage du Chapitre IV.
 func _build_gates() -> void:
 	for x in GATE_XS:
 		var gate := StaticBody2D.new()
@@ -187,35 +189,61 @@ func _build_gates() -> void:
 		rect.size = Vector2(26, 200)
 		shape.shape = rect
 		gate.add_child(shape)
+		# Silhouette déchiquetée plutôt qu'un simple rectangle : un rideau
+		# d'énergie instable, pas un mur plein.
 		var pts := PackedVector2Array([
-			Vector2(-13, -100), Vector2(13, -100), Vector2(13, 100), Vector2(-13, 100),
+			Vector2(-13, -100), Vector2(13, -100), Vector2(7, -68), Vector2(13, -38),
+			Vector2(6, -8), Vector2(13, 22), Vector2(7, 52), Vector2(13, 82),
+			Vector2(13, 100), Vector2(-13, 100), Vector2(-7, 80), Vector2(-13, 50),
+			Vector2(-6, 20), Vector2(-13, -10), Vector2(-7, -40), Vector2(-13, -70),
 		])
-		var body_poly := _poly(gate, pts, Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.4))
-		var outline := Line2D.new()
-		outline.points = pts
-		outline.closed = true
-		outline.width = 2.2
-		outline.default_color = Color(GLITCH_B.r, GLITCH_B.g, GLITCH_B.b, 0.9)
-		gate.add_child(outline)
+		var body_poly := _poly(gate, pts, Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.35))
+		var outlines: Array = []
+		for off in [Vector2(-1.0, 0.0), Vector2(1.0, 0.0)]:
+			var outline := Line2D.new()
+			outline.points = pts
+			outline.closed = true
+			outline.width = 1.6
+			outline.position = off
+			outline.default_color = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.75) if off.x < 0.0 else Color(GLITCH_B.r, GLITCH_B.g, GLITCH_B.b, 0.75)
+			gate.add_child(outline)
+			outlines.append(outline)
 		var glow := Sprite2D.new()
 		glow.texture = load("res://assets/mist.svg")
 		glow.modulate = Color(GLITCH_A.r, GLITCH_A.g, GLITCH_A.b, 0.3)
 		glow.scale = Vector2(1.4, 3.2)
 		gate.add_child(glow)
-		Atmosphere.breathe(glow, 0.2, 1.8)
-		# Rune de résonance, au pied de la porte : le point que l'écho doit
-		# atteindre pour que la porte cède.
-		var rune := Polygon2D.new()
-		var rp := PackedVector2Array()
-		for i in 12:
-			var a := i * TAU / 12.0
-			rp.append(Vector2(cos(a) * 11.0, sin(a) * 11.0 * 0.4))
-		rune.polygon = rp
+		# Bandes de scintillement internes, prises dans le même cycle que la
+		# Faille et le reste du niveau — pas de tween concurrent à gérer.
+		var gate_bands: Array = []
+		for k in 4:
+			var oy := -70.0 + float(k) * 45.0
+			var band := _poly(gate, PackedVector2Array([
+				Vector2(-11, oy), Vector2(11, oy), Vector2(11, oy + 10), Vector2(-11, oy + 10),
+			]), GLITCH_A)
+			var entry := {"node": band, "phase": float(k) * 1.2 + x * 0.01}
+			_glitches.append(entry)
+			gate_bands.append(entry)
+		# Rune de résonance, au pied de la porte : diamants concentriques,
+		# le point que l'écho doit atteindre pour que la porte cède.
+		var rune := Node2D.new()
 		rune.position = Vector2(0, 70)
-		rune.color = Color(GLITCH_B.r, GLITCH_B.g, GLITCH_B.b, 0.6)
+		for r: float in [11.0, 6.0]:
+			var dp := PackedVector2Array([
+				Vector2(0, -r), Vector2(r, 0), Vector2(0, r), Vector2(-r, 0),
+			])
+			var d_line := Line2D.new()
+			d_line.points = dp
+			d_line.closed = true
+			d_line.width = 1.4
+			d_line.default_color = Color(GLITCH_B.r, GLITCH_B.g, GLITCH_B.b, 0.85)
+			rune.add_child(d_line)
 		gate.add_child(rune)
 		add_child(gate)
-		_gates.append({"node": gate, "shape": shape, "poly": body_poly, "outline": outline, "rune": rune, "glow": glow, "open": false})
+		_gates.append({
+			"node": gate, "shape": shape, "poly": body_poly, "outlines": outlines,
+			"rune": rune, "glow": glow, "bands": gate_bands, "open": false,
+		})
 
 func _open_gate(g: Dictionary) -> void:
 	g["open"] = true
@@ -224,10 +252,18 @@ func _open_gate(g: Dictionary) -> void:
 	Atmosphere.spark_burst(self, at, GLITCH_B)
 	if sfx_gate != null:
 		Sfx.varied(sfx_gate, 0.92, 1.08)
+	# Les bandes internes sont pilotées par _process via _glitches : il faut
+	# les en retirer avant de les faire disparaître, sinon la boucle continue
+	# de réécrire leur modulate par-dessus le fondu.
+	for entry in (g["bands"] as Array):
+		_glitches.erase(entry)
 	var tw := create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(g["poly"], "modulate:a", 0.0, 0.7)
-	tw.tween_property(g["outline"], "modulate:a", 0.0, 0.7)
+	for outline in (g["outlines"] as Array):
+		tw.tween_property(outline, "modulate:a", 0.0, 0.7)
+	for entry in (g["bands"] as Array):
+		tw.tween_property(entry["node"], "modulate:a", 0.0, 0.7)
 	tw.tween_property(g["rune"], "modulate:a", 0.0, 0.7)
 	tw.tween_property(g["glow"], "modulate:a", 0.0, 0.7)
 
