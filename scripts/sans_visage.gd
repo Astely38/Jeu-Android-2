@@ -17,15 +17,23 @@ const FADE_TIME := 0.35
 const HOLLOW_TIME := 1.5
 const FORM_TIME := 0.35
 
-## Silhouette agrandie : plus imposant qu'un simple Onre, à la mesure d'une
-## menace qui traverse deux états (le joueur doit le voir venir de loin).
-const VISUAL_SCALE := 1.4
+## Échelle du sprite peint : plus imposant qu'un simple Onre, à la mesure
+## d'une menace qui traverse deux états (le joueur doit le voir venir de loin).
+const VISUAL_SCALE := 0.56
 
-const ROBE := Color(0.2, 0.17, 0.28)
-const ROBE_HI := Color(0.34, 0.29, 0.45)
-const FACE := Color(0.9, 0.88, 0.96)
-const EDGE := Color(0.72, 0.64, 0.9)
 const AURA := Color(0.62, 0.5, 0.95)  # halo spectral violet, marque sa position
+
+const ART_DIR := "res://assets/enemies/sans_visage/"
+## Nom d'animation -> (nombre de frames, images/seconde, en boucle).
+const ANIMS := {
+	"idle": [5, 5.0, true],
+	"float": [4, 7.0, true],
+	"solid": [3, 5.0, true],
+	"hollow": [3, 3.0, true],
+	"transition": [3, 8.5, false],
+	"hurt": [3, 9.0, false],
+	"death": [3, 3.5, false],
+}
 
 enum { SOLID, FADING, HOLLOW, FORMING }
 
@@ -36,8 +44,7 @@ var _state := SOLID
 var _state_t := 0.0
 var _t := 0.0
 
-var _gfx: Node2D
-var _face_poly: Polygon2D
+var _sprite: AnimatedSprite2D
 var _aura: Sprite2D
 
 @onready var hitbox: Area2D = $Hitbox
@@ -105,6 +112,17 @@ func _physics_process(delta: float) -> void:
 func _enter(s: int) -> void:
 	_state = s
 	_state_t = 0.0
+	if _sprite == null:
+		return
+	match s:
+		SOLID:
+			_sprite.play("float")
+		FADING:
+			_sprite.play("transition")
+		HOLLOW:
+			_sprite.play("hollow")
+		FORMING:
+			_sprite.play("transition", 1.0, true)
 
 ## Y a-t-il du sol juste devant, dans la direction `dir` ?
 func _ground_ahead(dir: float) -> bool:
@@ -136,20 +154,37 @@ func die() -> bool:
 	hitbox.set_deferred("monitoring", false)
 	body_shape.set_deferred("disabled", true)
 	Sfx.varied(sfx_die, 0.88, 1.08)
-	if _gfx != null:
-		var tw := _gfx.create_tween()
-		tw.set_parallel(true)
-		tw.tween_property(_gfx, "modulate:a", 0.0, 0.4)
-		tw.tween_property(_gfx, "scale", _gfx.scale * 0.6, 0.4)
-		tw.chain().tween_callback(queue_free)
-	else:
-		queue_free()
+	if _aura != null:
+		var atw := _aura.create_tween()
+		atw.tween_property(_aura, "modulate:a", 0.0, 0.9)
+	_play_death_sequence()
 	return true
+
+## Recul bref (hurt) puis dissolution (death), sans bloquer le retour
+## synchrone de die() dont dépendent l'appelant (score/combo immédiats).
+func _play_death_sequence() -> void:
+	if _sprite == null:
+		queue_free()
+		return
+	_sprite.play("hurt")
+	await _sprite.animation_finished
+	if not is_instance_valid(self):
+		return
+	_sprite.play("death")
+	await _sprite.animation_finished
+	if not is_instance_valid(self):
+		return
+	var tw := _sprite.create_tween()
+	tw.tween_property(_sprite, "modulate:a", 0.0, 0.3)
+	await tw.finished
+	queue_free()
 
 # --- Visuel ---------------------------------------------------------------
 
-## Silhouette robée simple, capuche vide et visage pâle et VIERGE (ovale
-## uni, sans traits) — « il n'a plus de visage à emprunter ».
+## Silhouette peinte (planche fournie), capuche vide et visage pâle et VIERGE
+## — « il n'a plus de visage à emprunter ». Sept animations : idle, float
+## (patrouille), solid, hollow, transition (fondu solide<->creux, rejouée à
+## l'envers pour FORMING), hurt et death.
 func _build_visual() -> void:
 	# Halo spectral, INDÉPENDANT de l'opacité du corps : il reste discrètement
 	# visible même quand l'esprit est creux, pour qu'on repère toujours où il
@@ -163,82 +198,49 @@ func _build_visual() -> void:
 	_aura.z_index = -1
 	add_child(_aura)
 
-	_gfx = Node2D.new()
-	add_child(_gfx)
+	_sprite = AnimatedSprite2D.new()
+	_sprite.sprite_frames = _build_sprite_frames()
+	_sprite.scale = Vector2(VISUAL_SCALE, VISUAL_SCALE)
+	_sprite.position = Vector2(0, -4)
+	add_child(_sprite)
+	_sprite.play("float")
 
-	# Robe : triangle évasé qui touche le sol.
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-14, 24), Vector2(14, 24), Vector2(9, -6),
-		Vector2(0, -12), Vector2(-9, -6),
-	]), ROBE)
-	# Pan plus clair, pour donner du volume.
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-2, 24), Vector2(9, 24), Vector2(6, -8), Vector2(-1, -10),
-	]), ROBE_HI)
-	# Capuche.
-	_shape(_gfx, PackedVector2Array([
-		Vector2(-11, -8), Vector2(-8, -20), Vector2(0, -25),
-		Vector2(8, -20), Vector2(11, -8), Vector2(6, -10),
-		Vector2(0, -14), Vector2(-6, -10),
-	]), ROBE)
-
-	# Visage : ovale pâle et lisse, sans traits.
-	_face_poly = Polygon2D.new()
-	var fp := PackedVector2Array()
-	for i in 14:
-		var a := i * TAU / 14.0
-		fp.append(Vector2(cos(a) * 6.0, sin(a) * 8.0))
-	_face_poly.polygon = fp
-	_face_poly.position = Vector2(0, -13)
-	_face_poly.color = FACE
-	_gfx.add_child(_face_poly)
-
-	# Manches qui pendent, de part et d'autre.
-	for s in [-1.0, 1.0]:
-		_shape(_gfx, PackedVector2Array([
-			Vector2(s * 8, -4), Vector2(s * 15, 10), Vector2(s * 9, 14), Vector2(s * 4, -2),
-		]), ROBE)
-
-## Polygone plein cerné d'un liseré (Line2D), même langage que les autres
-## esprits récents — se détache des fonds sombres du royaume sans écho.
-func _shape(parent: Node, pts: PackedVector2Array, fill: Color) -> void:
-	var p := Polygon2D.new()
-	p.polygon = pts
-	p.color = fill
-	parent.add_child(p)
-	var l := Line2D.new()
-	l.points = pts
-	l.closed = true
-	l.width = 1.6
-	l.default_color = EDGE
-	l.joint_mode = Line2D.LINE_JOINT_ROUND
-	parent.add_child(l)
+## Construit la SpriteFrames à partir des PNG découpés dans ART_DIR — aucune
+## ressource .tres à part, cohérent avec le reste du projet (visuels bâtis
+## en code, pas de fichiers d'édition annexes).
+func _build_sprite_frames() -> SpriteFrames:
+	var sf := SpriteFrames.new()
+	for anim_name in ANIMS.keys():
+		var cfg: Array = ANIMS[anim_name]
+		var count: int = cfg[0]
+		var fps: float = cfg[1]
+		var loop: bool = cfg[2]
+		sf.add_animation(anim_name)
+		sf.set_animation_speed(anim_name, fps)
+		sf.set_animation_loop(anim_name, loop)
+		for i in count:
+			var tex := load("%s%s_%d.png" % [ART_DIR, anim_name, i])
+			sf.add_frame(anim_name, tex)
+	sf.remove_animation("default")
+	return sf
 
 func _animate() -> void:
-	if _gfx == null:
+	if _sprite == null:
 		return
-	var face := direction if direction != 0.0 else 1.0
-	_gfx.scale = Vector2(VISUAL_SCALE * face, VISUAL_SCALE)
+	_sprite.flip_h = direction < 0.0
 	# Balancement de marche, léger.
-	_gfx.position.y = sin(_t * 8.0) * 1.4 if is_on_floor() else 0.0
+	_sprite.position.y = -4.0 + (sin(_t * 8.0) * 1.4 if is_on_floor() else 0.0)
 
-	# Opacité selon l'état : plein en SOLID, creux et scintillant en HOLLOW,
-	# transition télégraphiée (le joueur voit venir chaque bascule).
-	var target_a := 1.0
 	# Le halo suit l'état : franc quand l'esprit est SOLIDE (donc dangereux et
-	# frappable), faible mais jamais nul quand il est creux (repérable).
+	# frappable), faible mais jamais nul quand il est creux (repérable) — les
+	# frames elles-mêmes portent déjà la bonne opacité par état.
 	var aura_a := 0.55
 	match _state:
 		FADING:
-			target_a = 1.0 - (_state_t / FADE_TIME) * 0.7
 			aura_a = 0.55 - (_state_t / FADE_TIME) * 0.3
 		HOLLOW:
-			# Vacillement fantomatique pendant toute la phase creuse.
-			target_a = 0.28 + 0.08 * sin(_t * 16.0)
 			aura_a = 0.22 + 0.06 * sin(_t * 10.0)
 		FORMING:
-			target_a = 0.3 + (_state_t / FORM_TIME) * 0.7
 			aura_a = 0.25 + (_state_t / FORM_TIME) * 0.3
-	_gfx.modulate.a = target_a
 	if _aura != null:
 		_aura.modulate.a = aura_a
