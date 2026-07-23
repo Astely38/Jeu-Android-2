@@ -1,11 +1,15 @@
 name: Screenshot Probe
 
-# Expérimental : capture de vraies images rendues des niveaux du Chapitre IV
-# en CI (headless ne rend RIEN — il faut un faux écran + un vrai pilote de
-# rendu). Job séparé du pipeline de build principal pour ne rien risquer
-# dessus. Le résultat est poussé sur la branche ci-screenshots (dépôt
-# git frais, indépendant du checkout principal, pour éviter tout souci
-# d'état du repo).
+# Capture de vraies images rendues des niveaux du Chapitre IV en CI
+# (headless ne rend RIEN — il faut un faux écran + un vrai pilote de rendu).
+# Job séparé du pipeline de build principal pour ne rien risquer dessus.
+# Utilise tools/ci_capture.gd : téléporte le joueur à plusieurs points de
+# repère répartis sur chaque niveau et prend une image à chaque arrêt, pour
+# couvrir tout le niveau plutôt qu'un seul point de vue au spawn. Le
+# résultat est poussé sur la branche ci-screenshots (dépôt git frais,
+# indépendant du checkout principal, pour éviter tout souci d'état du repo
+# — l'API de téléchargement des artefacts, sur Azure Blob, n'est pas
+# accessible depuis la session qui pilote cette CI).
 
 on:
   workflow_dispatch: {}
@@ -41,24 +45,18 @@ jobs:
           apt-get update -qq
           apt-get install -y -qq xvfb libgl1-mesa-dri mesa-utils
 
-      # 20 frames à 10 FPS (2s de jeu simulé) par niveau ; on ne garde que les
-      # 3 dernières (le temps que le décor/les pièges apparaissent) pour
-      # limiter le nombre d'images à passer en revue.
-      - name: Capture screenshots (levels 16-20)
+      # Plusieurs points de repère par niveau (voir tools/ci_capture.gd),
+      # au lieu d'un seul point de vue figé au spawn.
+      - name: Capture screenshots (levels 16-20, multi-waypoints)
         run: |
           set +e
           mkdir -p ci_shots
           for lvl in level_16 level_17 level_18 level_19 level_20; do
             echo "=== Capture: $lvl ==="
-            mkdir -p "raw_$lvl"
             xvfb-run -a -s "-screen 0 1280x720x24" \
-              godot --path . "res://levels/${lvl}.tscn" \
+              godot --path . res://tools/ci_capture.tscn \
               --rendering-driver opengl3 \
-              --write-movie "raw_$lvl/f.png" \
-              --fixed-fps 10 --quit-after 20 2>&1 | tail -30
-            ls "raw_$lvl" | sort | tail -3 | while read -r f; do
-              cp "raw_$lvl/$f" "ci_shots/${lvl}_${f}"
-            done
+              -- --level="$lvl" --out=ci_shots 2>&1 | tail -40
           done
           echo "--- ci_shots content ---"
           ls -la ci_shots/
@@ -71,10 +69,6 @@ jobs:
           path: ci_shots/
           if-no-files-found: warn
 
-      # Récupération fiable : pousse aussi le résultat sur une branche dédiée,
-      # depuis un dépôt git flambant neuf (indépendant du checkout principal)
-      # — l'API de téléchargement des artefacts (Azure Blob) n'est pas
-      # accessible depuis la session qui pilote cette CI.
       - name: Push screenshots to ci-screenshots branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,6 +85,6 @@ jobs:
           git config user.name "ci-screenshots-bot"
           git config user.email "actions@github.com"
           git add -A
-          git commit -q -m "Screenshots Chapitre IV ($GITHUB_SHA)"
+          git commit -q -m "Screenshots Chapitre IV multi-points ($GITHUB_SHA)"
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push -f origin HEAD:ci-screenshots
