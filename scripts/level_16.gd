@@ -57,11 +57,17 @@ const PROFILE := [
 const CHECKPOINT_XS := [1500.0, 3600.0, 5000.0]
 const PATROL_XS := [1900.0, 5300.0]
 const SANS_VISAGE_XS := [2000.0, 5500.0, 6850.0]
-## Failles glitchées (immobiles) : sur le plat, jamais sur une pente.
-const GLITCH_RIFT_XS := [1700.0, 5150.0]
-## Cratères de l'Éboulis de miroir : un par grande montée.
+## Failles glitchées (immobiles) : sur le plat, jamais sur une pente. Le
+## niveau doit se lire comme un monde qui se fend de partout — plusieurs
+## failles par tronçon plat, à franchir en enchaînant les esquives.
+const GLITCH_RIFT_XS := [550.0, 1700.0, 2150.0, 5150.0, 5650.0, 6900.0]
+## Cratères de l'Éboulis de miroir, intercalés entre les failles : le
+## plateau-refuge (3600-4400) reste seul épargné, comme une vraie pause.
 const ROCK_SLIDES := [
+	Vector2(850.0, 550.0),
+	Vector2(1950.0, 690.0),
 	Vector2(3420.0, 430.0),
+	Vector2(5450.0, 560.0),
 	Vector2(6520.0, 330.0),
 ]
 const REFUGE_X := 4000.0
