@@ -162,6 +162,7 @@ func _build_glitch_rifts() -> void:
 func _build_rock_slide() -> void:
 	var rs := RockSlide.new()
 	rs.position = Vector2(ROCK_SLIDE_X, GROUND_Y - 50.0)
+	rs.phase = ROCK_SLIDE_X * 0.017
 	rs.tint = Color(0.5, 0.46, 0.56)
 	add_child(rs)
 

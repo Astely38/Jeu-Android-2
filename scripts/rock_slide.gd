@@ -15,8 +15,10 @@ const SHARD_COUNT := 3
 const FLIGHT_TIME := 0.85
 const ARC_HEIGHT := 70.0
 const SPREAD := 26.0
-## Cible de repli si aucun joueur n'est trouvé dans la scène.
-const DEFAULT_TARGET_OFFSET := Vector2(140.0, -20.0)
+## Portée maximale : au-delà, le cratère reste actif (poussière, lueur) mais
+## ne tire pas — sans ça, TOUS les cratères d'un niveau visent le joueur en
+## permanence, même à l'autre bout du niveau.
+const RANGE := 340.0
 
 @export var phase := 0.0
 @export var tint := Color(0.5, 0.46, 0.56)
@@ -93,15 +95,17 @@ func _process(delta: float) -> void:
 		_core.scale = Vector2.ONE * (1.0 + 0.4 * warn)
 
 ## Crache une salve d'éclats visant la position du joueur au moment du tir
-## (trajectoire en cloche), décalés latéralement pour former un éventail.
+## (trajectoire en cloche), décalés latéralement pour former un éventail —
+## seulement si le joueur est à portée : un cratère loin derrière ou devant
+## reste actif visuellement mais ne tire pas dans le vide.
 func _spit() -> void:
 	var host := get_parent()
 	if host == null:
 		return
 	var player := get_tree().get_first_node_in_group("player")
-	var target := global_position + DEFAULT_TARGET_OFFSET
-	if player != null:
-		target = (player as Node2D).global_position
+	if player == null or not (player as Node2D).global_position.distance_to(global_position) <= RANGE:
+		return
+	var target: Vector2 = (player as Node2D).global_position
 	for i in SHARD_COUNT:
 		var lateral := float(i - 1) * SPREAD
 		_launch_shard(host, target + Vector2(lateral, 0))

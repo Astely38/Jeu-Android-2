@@ -246,6 +246,7 @@ func _build_rock_slides() -> void:
 	for p in ROCK_SLIDES:
 		var rs := RockSlide.new()
 		rs.position = p
+		rs.phase = p.x * 0.017
 		rs.tint = Color(0.5, 0.46, 0.56)
 		add_child(rs)
 
