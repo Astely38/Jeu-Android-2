@@ -1,0 +1,80 @@
+name: Screenshot Probe
+
+# Expérimental : tente de capturer une vraie image rendue d'une scène en CI
+# (headless ne rend RIEN — il faut un faux écran + un vrai pilote de rendu).
+# Job séparé du pipeline de build principal pour ne rien risquer dessus.
+
+on:
+  workflow_dispatch: {}
+
+env:
+  GODOT_VERSION: 4.6.3
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    name: Probe screenshot capture
+    runs-on: ubuntu-24.04
+    container:
+      image: barichello/godot-ci:4.6.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup export templates and Android/Java editor config
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -v -p ~/.config/
+          mv /root/.config/godot ~/.config/godot
+
+      - name: Import project resources
+        run: godot --headless --verbose --editor --quit
+
+      - name: Install Xvfb + Mesa (faux écran + rendu logiciel)
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq xvfb libgl1-mesa-dri mesa-utils
+
+      - name: Probe screenshot capture (level_16)
+        run: |
+          mkdir -p ci_shots
+          set +e
+          xvfb-run -a -s "-screen 0 1280x720x24" \
+            godot --path . res://levels/level_16.tscn \
+            --rendering-driver opengl3 \
+            --write-movie ci_shots/probe.png \
+            --fixed-fps 10 --quit-after 15 2>&1 | tail -80
+          echo "--- exit code: $? ---"
+          echo "--- ci_shots content ---"
+          ls -la ci_shots/ || echo "(dossier vide ou absent)"
+          for f in ci_shots/*.png; do
+            [ -e "$f" ] && file "$f"
+          done
+          exit 0
+
+      - name: Upload probe result (even if empty)
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-probe
+          path: ci_shots/
+          if-no-files-found: warn
+
+      # Récupération fiable : pousse aussi le résultat sur une branche dédiée
+      # (l'API de téléchargement des artefacts n'est pas accessible depuis la
+      # session qui pilote cette CI).
+      - name: Push probe result to ci-screenshots branch
+        run: |
+          if [ -z "$(ls -A ci_shots/ 2>/dev/null)" ]; then
+            echo "Rien à pousser (dossier vide)."
+            exit 0
+          fi
+          git config user.name "ci-screenshots-bot"
+          git config user.email "actions@github.com"
+          git checkout --orphan ci-screenshots
+          git rm -rf --cached . > /dev/null 2>&1 || true
+          git add -f ci_shots/
+          git commit -m "Screenshot probe ($GITHUB_SHA)"
+          git push -f origin HEAD:ci-screenshots
