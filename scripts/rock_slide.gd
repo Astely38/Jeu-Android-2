@@ -82,6 +82,51 @@ func _ready() -> void:
 	_warn_poly = _poly(PackedVector2Array([
 		Vector2(-8, -2), Vector2(-1, -13), Vector2(4, -4), Vector2(10, -10), Vector2(5, 5), Vector2(-3, 8),
 	]), Color(tint.r, tint.g, tint.b, 0.0))
+	# Panneau d'avertissement, en amont sur la pente : le joueur qui grimpe
+	# le croise avant d'atteindre le surplomb lui-même.
+	_build_warning_sign(-fall_dir * 56.0)
+
+## Petit panneau triangulaire, toujours visible, planté un peu avant le
+## surplomb sur le chemin du joueur — un repère lisible avant même le
+## tremblement du télégraphe.
+func _build_warning_sign(offset: Vector2) -> void:
+	var sign_node := Node2D.new()
+	sign_node.position = offset
+	var post := Polygon2D.new()
+	post.polygon = PackedVector2Array([
+		Vector2(-1.5, 0), Vector2(1.5, 0), Vector2(1.5, -14), Vector2(-1.5, -14),
+	])
+	post.color = Color(0.15, 0.13, 0.11)
+	sign_node.add_child(post)
+	var amber := Color(0.85, 0.62, 0.2)
+	var tri := PackedVector2Array([
+		Vector2(0, -30), Vector2(11, -12), Vector2(-11, -12),
+	])
+	var plate := Polygon2D.new()
+	plate.polygon = tri
+	plate.color = Color(0.16, 0.12, 0.08, 0.92)
+	sign_node.add_child(plate)
+	var tri_edge := Line2D.new()
+	tri_edge.points = tri
+	tri_edge.closed = true
+	tri_edge.width = 1.6
+	tri_edge.default_color = amber
+	sign_node.add_child(tri_edge)
+	var mark := Polygon2D.new()
+	mark.polygon = PackedVector2Array([
+		Vector2(-1.4, -25), Vector2(1.4, -25), Vector2(1.0, -17), Vector2(-1.0, -17),
+	])
+	mark.color = amber
+	sign_node.add_child(mark)
+	var dot := Polygon2D.new()
+	var dp := PackedVector2Array()
+	for i in 8:
+		var a := i * TAU / 8.0
+		dp.append(Vector2(cos(a), sin(a)) * 1.3 + Vector2(0, -14.5))
+	dot.polygon = dp
+	dot.color = amber
+	sign_node.add_child(dot)
+	add_child(sign_node)
 
 func _poly(pts: PackedVector2Array, c: Color) -> Polygon2D:
 	var p := Polygon2D.new()
@@ -110,7 +155,9 @@ func _release() -> void:
 	for i in SHARD_COUNT:
 		var shard := Area2D.new()
 		var poly := PackedVector2Array()
-		var r := randf_range(5.0, 9.0)
+		# Éclats plus imposants, en gros plan sur la pente : petit, moyen,
+		# grand, comme les variantes de la planche de référence.
+		var r := randf_range(8.0, 15.0)
 		for k in 6:
 			var a := k * TAU / 6.0
 			poly.append(Vector2(cos(a) * r, sin(a) * r * 0.8))
@@ -124,6 +171,14 @@ func _release() -> void:
 		body.polygon = poly
 		body.color = Color(tint.r + 0.12, tint.g + 0.1, tint.b + 0.14, 0.98)
 		shard.add_child(body)
+		# Facette miroir : un triangle clair au sommet, comme un reflet vif —
+		# vend l'idée d'un éclat de verre plutôt qu'un simple caillou.
+		var hi := Polygon2D.new()
+		hi.polygon = PackedVector2Array([
+			poly[0] * 0.75, poly[1] * 0.7, Vector2.ZERO,
+		])
+		hi.color = Color(0.95, 0.92, 1.0, 0.8)
+		shard.add_child(hi)
 		var edge := Line2D.new()
 		edge.points = poly
 		edge.closed = true
@@ -144,7 +199,7 @@ func _release() -> void:
 		t.set_parallel(true)
 		t.tween_property(shard, "position", shard.position + fall_dir * RANGE, RANGE / FALL_SPEED)
 		t.tween_property(shard, "rotation", (8.0 + float(i)) * (1.0 if fall_dir.x >= 0.0 else -1.0), RANGE / FALL_SPEED)
-		t.chain().tween_callback(shard.queue_free)
+		t.chain().tween_callback(_on_shard_spent.bind(shard))
 
 func _on_shard_hit(body: Node2D, shard: Area2D) -> void:
 	if not is_instance_valid(shard):
@@ -152,3 +207,30 @@ func _on_shard_hit(body: Node2D, shard: Area2D) -> void:
 	if body.is_in_group("player") and body.has_method("take_damage"):
 		body.take_damage(1, shard.global_position)
 		shard.queue_free()
+
+## En fin de course, l'éclat s'efface dans un nuage de poussière au lieu de
+## simplement disparaître — un petit impact qui vend sa masse.
+func _on_shard_spent(shard: Area2D) -> void:
+	if not is_instance_valid(shard):
+		return
+	var host := get_parent()
+	if host != null:
+		var puff := CPUParticles2D.new()
+		puff.amount = 8
+		puff.lifetime = 0.5
+		puff.one_shot = true
+		puff.emitting = true
+		puff.global_position = shard.global_position
+		puff.direction = -fall_dir
+		puff.spread = 50.0
+		puff.gravity = Vector2(0, 40)
+		puff.initial_velocity_min = 30.0
+		puff.initial_velocity_max = 70.0
+		puff.scale_amount_min = 0.5
+		puff.scale_amount_max = 0.9
+		puff.color = Color(tint.r, tint.g, tint.b, 0.6)
+		host.add_child(puff)
+		var pt := puff.create_tween()
+		pt.tween_interval(0.6)
+		pt.tween_callback(puff.queue_free)
+	shard.queue_free()
