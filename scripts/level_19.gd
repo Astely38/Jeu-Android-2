@@ -32,6 +32,9 @@ const PLATFORM_THEME := {
 	"body_b": VOID_DARK,
 	"dark": VOID_DARK,
 	"speck": Color(0.37, 0.33, 0.41),
+	# Pierre taillée plutôt que le style "naturel" (racines, touffes d'herbe) :
+	# ce monde sans écho n'a rien de vivant ni d'organique.
+	"cut": true,
 }
 
 ## Profil du terrain : contrairement au Puits (une seule direction, vers le

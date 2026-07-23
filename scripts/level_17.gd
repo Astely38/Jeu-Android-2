@@ -32,6 +32,9 @@ const PLATFORM_THEME := {
 	"body_b": VOID_DARK,
 	"dark": VOID_DARK,
 	"speck": Color(0.4, 0.36, 0.44),
+	# Pierre taillée plutôt que le style "naturel" (racines, touffes d'herbe) :
+	# ce monde sans écho n'a rien de vivant ni d'organique.
+	"cut": true,
 }
 
 ## Plateformes (x = centre, y = demi-largeur) : sol plat, contrairement au

@@ -33,6 +33,9 @@ const PLATFORM_THEME := {
 	"body_b": VOID_DARK,
 	"dark": VOID_DARK,
 	"speck": Color(0.38, 0.34, 0.42),
+	# Pierre taillée plutôt que le style "naturel" (racines, touffes d'herbe) :
+	# ce monde sans écho n'a rien de vivant ni d'organique.
+	"cut": true,
 }
 
 ## Profil du terrain : contrairement au Versant Aveugle (qui alternait

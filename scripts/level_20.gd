@@ -26,6 +26,9 @@ const PLATFORM_THEME := {
 	"body_b": VOID_DARK,
 	"dark": VOID_DARK,
 	"speck": Color(0.36, 0.32, 0.4),
+	# Pierre taillée plutôt que le style "naturel" (racines, touffes d'herbe) :
+	# ce monde sans écho n'a rien de vivant ni d'organique.
+	"cut": true,
 }
 
 ## Approche en 4 plateformes, puis la grande arène du combat.
