@@ -11,9 +11,11 @@ extends Node
 ## CI_SHOOT_LEVEL / CI_SHOOT_OUT.
 
 const WAYPOINTS := {
-	"level_16": [100.0, 1500.0, 3600.0, 5000.0, 6950.0],
+	# Points 850/1950/6425 ajoutés temporairement (preview) pour cadrer
+	# pile sur un cratère RockSlide.
+	"level_16": [850.0, 1950.0, 3600.0, 5000.0, 6950.0],
 	"level_17": [230.0, 2020.0, 4340.0, 6050.0, 6650.0],
-	"level_18": [100.0, 1300.0, 4700.0, 5900.0, 7150.0],
+	"level_18": [100.0, 1300.0, 4700.0, 6425.0, 7150.0],
 	"level_19": [100.0, 1200.0, 4100.0, 5800.0, 6850.0],
 	"level_20": [230.0, 830.0, 1450.0, 2200.0],
 }
