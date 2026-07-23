@@ -24,9 +24,9 @@ func _ready() -> void:
 	_t = phase
 	# Lézardes au sol : le terrain se fend bien au-delà du bord de la faille,
 	# comme si l'instabilité gagnait la plateforme elle-même.
-	for side in [-1.0, 1.0]:
+	for side: float in [-1.0, 1.0]:
 		for k in 2:
-			var base_x := side * (42.0 + float(k) * 22.0)
+			var base_x: float = side * (42.0 + float(k) * 22.0)
 			var crack := Line2D.new()
 			crack.points = PackedVector2Array([
 				Vector2(side * 26.0, 4.0), Vector2(base_x * 0.6, -1.0),
