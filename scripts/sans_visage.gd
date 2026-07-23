@@ -26,13 +26,13 @@ const AURA := Color(0.62, 0.5, 0.95)  # halo spectral violet, marque sa position
 const ART_DIR := "res://assets/enemies/sans_visage/"
 ## Nom d'animation -> (nombre de frames, images/seconde, en boucle).
 const ANIMS := {
-	"idle": [5, 5.0, true],
-	"float": [4, 7.0, true],
-	"solid": [3, 5.0, true],
-	"hollow": [3, 3.0, true],
+	"idle": [4, 5.0, true],
+	"float": [7, 9.0, true],
+	"solid": [2, 4.0, true],
+	"hollow": [2, 3.0, true],
 	"transition": [3, 8.5, false],
-	"hurt": [3, 9.0, false],
-	"death": [3, 3.5, false],
+	"hurt": [4, 10.0, false],
+	"death": [9, 7.0, false],
 }
 
 enum { SOLID, FADING, HOLLOW, FORMING }
