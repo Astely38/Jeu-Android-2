@@ -48,6 +48,23 @@ func _run(level_name: String, out_dir: String) -> void:
 	var full_out := ProjectSettings.globalize_path("res://").path_join(out_dir)
 	DirAccess.make_dir_recursive_absolute(full_out)
 
+	# [preview] Capture qui attend volontairement un tir de cratère pour voir
+	# les boules de lumière en plein vol — AVANT le tour normal des points de
+	# repère, sinon le niveau est déjà gagné (dernier point = l'objectif) et
+	# plus rien ne se passe.
+	if level_name == "level_16":
+		player.global_position = Vector2(850.0, _target_y(level, 850.0))
+		if player is CharacterBody2D:
+			(player as CharacterBody2D).velocity = Vector2.ZERO
+		# Attend un cycle complet (PERIOD) + une marge dans la fenêtre de vol
+		# (FLIGHT_TIME) : garantit un tir pendant l'attente, quel que soit le
+		# déphasage de départ.
+		await get_tree().create_timer(RockSlide.PERIOD + 0.3, true, false, true).timeout
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var img2 := get_viewport().get_texture().get_image()
+		img2.save_png("%s/%s_orb.png" % [full_out, level_name])
+
 	var points: Array = WAYPOINTS[level_name]
 	for i in points.size():
 		var x: float = points[i]
@@ -64,21 +81,6 @@ func _run(level_name: String, out_dir: String) -> void:
 		await get_tree().process_frame
 		var img := get_viewport().get_texture().get_image()
 		img.save_png("%s/%s_%02d.png" % [full_out, level_name, i])
-
-	# [preview] Capture supplémentaire qui attend volontairement un tir de
-	# cratère pour voir les boules de lumière en plein vol.
-	if level_name == "level_16":
-		player.global_position = Vector2(850.0, _target_y(level, 850.0))
-		if player is CharacterBody2D:
-			(player as CharacterBody2D).velocity = Vector2.ZERO
-		# Attend un cycle complet (PERIOD) + une marge dans la fenêtre de vol
-		# (FLIGHT_TIME) : garantit un tir pendant l'attente, quel que soit le
-		# déphasage de départ.
-		await get_tree().create_timer(RockSlide.PERIOD + 0.3, true, false, true).timeout
-		await get_tree().process_frame
-		await get_tree().process_frame
-		var img2 := get_viewport().get_texture().get_image()
-		img2.save_png("%s/%s_orb.png" % [full_out, level_name])
 
 ## Hauteur d'un point du niveau : utilise `_surface_y(x)` du niveau si elle
 ## existe (relief continu), sinon retombe sur sa constante GROUND_Y (sol
