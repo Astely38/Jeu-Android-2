@@ -1,8 +1,11 @@
 name: Screenshot Probe
 
-# Expérimental : tente de capturer une vraie image rendue d'une scène en CI
-# (headless ne rend RIEN — il faut un faux écran + un vrai pilote de rendu).
-# Job séparé du pipeline de build principal pour ne rien risquer dessus.
+# Expérimental : capture de vraies images rendues des niveaux du Chapitre IV
+# en CI (headless ne rend RIEN — il faut un faux écran + un vrai pilote de
+# rendu). Job séparé du pipeline de build principal pour ne rien risquer
+# dessus. Le résultat est poussé sur la branche ci-screenshots (dépôt
+# git frais, indépendant du checkout principal, pour éviter tout souci
+# d'état du repo).
 
 on:
   workflow_dispatch: {}
@@ -15,7 +18,7 @@ permissions:
 
 jobs:
   probe:
-    name: Probe screenshot capture
+    name: Capture Chapitre IV screenshots
     runs-on: ubuntu-24.04
     container:
       image: barichello/godot-ci:4.6.3
@@ -38,21 +41,27 @@ jobs:
           apt-get update -qq
           apt-get install -y -qq xvfb libgl1-mesa-dri mesa-utils
 
-      - name: Probe screenshot capture (level_16)
+      # 20 frames à 10 FPS (2s de jeu simulé) par niveau ; on ne garde que les
+      # 3 dernières (le temps que le décor/les pièges apparaissent) pour
+      # limiter le nombre d'images à passer en revue.
+      - name: Capture screenshots (levels 16-20)
         run: |
-          mkdir -p ci_shots
           set +e
-          xvfb-run -a -s "-screen 0 1280x720x24" \
-            godot --path . res://levels/level_16.tscn \
-            --rendering-driver opengl3 \
-            --write-movie ci_shots/probe.png \
-            --fixed-fps 10 --quit-after 15 2>&1 | tail -80
-          echo "--- exit code: $? ---"
-          echo "--- ci_shots content ---"
-          ls -la ci_shots/ || echo "(dossier vide ou absent)"
-          for f in ci_shots/*.png; do
-            [ -e "$f" ] && file "$f"
+          mkdir -p ci_shots
+          for lvl in level_16 level_17 level_18 level_19 level_20; do
+            echo "=== Capture: $lvl ==="
+            mkdir -p "raw_$lvl"
+            xvfb-run -a -s "-screen 0 1280x720x24" \
+              godot --path . "res://levels/${lvl}.tscn" \
+              --rendering-driver opengl3 \
+              --write-movie "raw_$lvl/f.png" \
+              --fixed-fps 10 --quit-after 20 2>&1 | tail -30
+            ls "raw_$lvl" | sort | tail -3 | while read -r f; do
+              cp "raw_$lvl/$f" "ci_shots/${lvl}_${f}"
+            done
           done
+          echo "--- ci_shots content ---"
+          ls -la ci_shots/
           exit 0
 
       - name: Upload probe result (even if empty)
@@ -62,19 +71,26 @@ jobs:
           path: ci_shots/
           if-no-files-found: warn
 
-      # Récupération fiable : pousse aussi le résultat sur une branche dédiée
-      # (l'API de téléchargement des artefacts n'est pas accessible depuis la
-      # session qui pilote cette CI).
-      - name: Push probe result to ci-screenshots branch
+      # Récupération fiable : pousse aussi le résultat sur une branche dédiée,
+      # depuis un dépôt git flambant neuf (indépendant du checkout principal)
+      # — l'API de téléchargement des artefacts (Azure Blob) n'est pas
+      # accessible depuis la session qui pilote cette CI.
+      - name: Push screenshots to ci-screenshots branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -z "$(ls -A ci_shots/ 2>/dev/null)" ]; then
             echo "Rien à pousser (dossier vide)."
             exit 0
           fi
+          rm -rf /tmp/shots_push
+          mkdir -p /tmp/shots_push
+          cp -r ci_shots/. /tmp/shots_push/
+          cd /tmp/shots_push
+          git init -q
           git config user.name "ci-screenshots-bot"
           git config user.email "actions@github.com"
-          git checkout --orphan ci-screenshots
-          git rm -rf --cached . > /dev/null 2>&1 || true
-          git add -f ci_shots/
-          git commit -m "Screenshot probe ($GITHUB_SHA)"
+          git add -A
+          git commit -q -m "Screenshots Chapitre IV ($GITHUB_SHA)"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push -f origin HEAD:ci-screenshots
