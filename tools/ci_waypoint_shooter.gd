@@ -56,14 +56,16 @@ func _run(level_name: String, out_dir: String) -> void:
 		player.global_position = Vector2(850.0, _target_y(level, 850.0))
 		if player is CharacterBody2D:
 			(player as CharacterBody2D).velocity = Vector2.ZERO
-		# Attend un cycle complet (PERIOD) + une marge dans la fenêtre de vol
-		# (FLIGHT_TIME) : garantit un tir pendant l'attente, quel que soit le
-		# déphasage de départ.
-		await get_tree().create_timer(RockSlide.PERIOD + 0.3, true, false, true).timeout
-		await get_tree().process_frame
-		await get_tree().process_frame
-		var img2 := get_viewport().get_texture().get_image()
-		img2.save_png("%s/%s_orb.png" % [full_out, level_name])
+		# Rafale de captures espacées de 0.6s (< FLIGHT_TIME=0.85s) sur toute
+		# la fenêtre PERIOD+marge : garantit qu'au moins une image tombe en
+		# plein vol d'une salve, quel que soit le déphasage de départ.
+		var burst := 0
+		while burst < 7:
+			await get_tree().create_timer(0.6, true, false, true).timeout
+			await get_tree().process_frame
+			var imgb := get_viewport().get_texture().get_image()
+			imgb.save_png("%s/%s_orb_%d.png" % [full_out, level_name, burst])
+			burst += 1
 
 	var points: Array = WAYPOINTS[level_name]
 	for i in points.size():
