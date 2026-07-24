@@ -66,13 +66,9 @@ const SANS_VISAGE_XS := [2000.0, 5500.0, 6850.0]
 const GLITCH_RIFT_XS := [550.0, 1700.0, 2150.0, 5150.0, 5650.0, 6900.0]
 ## Cratères de l'Éboulis de miroir, intercalés entre les failles : le
 ## plateau-refuge (3600-4400) reste seul épargné, comme une vraie pause.
-const ROCK_SLIDES := [
-	Vector2(850.0, 550.0),
-	Vector2(1950.0, 690.0),
-	Vector2(3420.0, 430.0),
-	Vector2(5450.0, 560.0),
-	Vector2(6520.0, 330.0),
-]
+## Hauteur calculée depuis le profil (_surface_y), jamais codée en dur —
+## sur une pente, une hauteur figée finit décalée du sol (le cône flotte).
+const ROCK_SLIDE_XS := [850.0, 1950.0, 3420.0, 5450.0, 6520.0]
 const REFUGE_X := 4000.0
 
 const LEONIE_LINES := [
@@ -246,10 +242,10 @@ func _build_glitch_rifts() -> void:
 		add_child(rift)
 
 func _build_rock_slides() -> void:
-	for p in ROCK_SLIDES:
+	for x in ROCK_SLIDE_XS:
 		var rs := RockSlide.new()
-		rs.position = p
-		rs.phase = p.x * 0.017
+		rs.position = Vector2(x, _surface_y(x))
+		rs.phase = x * 0.017
 		rs.tint = Color(0.5, 0.46, 0.56)
 		add_child(rs)
 

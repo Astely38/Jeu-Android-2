@@ -60,13 +60,14 @@ const SANS_VISAGE_XS := [800.0, 1750.0, 2700.0, 4150.0, 5450.0, 6300.0, 6900.0]
 ## Failles glitchées, sur chaque tronçon plat sauf le refuge — le chaos du
 ## Chapitre IV atteint ici son comble, juste avant la porte.
 const GLITCH_RIFT_XS := [250.0, 450.0, 1400.0, 1650.0, 4000.0, 4250.0, 5350.0, 5600.0, 6500.0, 6700.0]
-## Cratères de l'Éboulis de miroir, intercalés entre les failles.
-const ROCK_SLIDES := [
-	Vector2(350.0, 900.0),
-	Vector2(1525.0, 750.0),
-	Vector2(4125.0, 700.0),
-	Vector2(5475.0, 820.0),
-	Vector2(6600.0, 650.0),
+## Cratères de l'Éboulis de miroir, intercalés entre les failles. Hauteur
+## calculée depuis le profil (_surface_y), jamais codée en dur.
+const ROCK_SLIDE_XS := [
+	350.0,
+	1525.0,
+	4125.0,
+	5475.0,
+	6600.0,
 ]
 const REFUGE_X := 3200.0
 
@@ -240,10 +241,10 @@ func _build_glitch_rifts() -> void:
 		add_child(rift)
 
 func _build_rock_slides() -> void:
-	for p in ROCK_SLIDES:
+	for x in ROCK_SLIDE_XS:
 		var rs := RockSlide.new()
-		rs.position = p
-		rs.phase = p.x * 0.017
+		rs.position = Vector2(x, _surface_y(x))
+		rs.phase = x * 0.017
 		rs.tint = Color(0.5, 0.46, 0.56)
 		add_child(rs)
 
