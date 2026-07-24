@@ -39,7 +39,9 @@ const PLATFORMS := [
 	Vector2(4700, 900),  # l'arène du combat final
 ]
 const CHECKPOINT_XS := [1470.0, 3520.0]
-const PATROL_XS := [1470.0, 2090.0, 3520.0]
+## Décalés du centre exact des points de contrôle pour ne jamais se
+## superposer visuellement au mât du drapeau.
+const PATROL_XS := [1400.0, 2090.0, 3580.0]
 const SHADOW_XS := [1300.0]
 ## Yūrei tireurs : toujours au-dessus d'une plateforme — le passage aux
 ## dalles effondrables reste un défi de plateforme pur, sans tirs.
@@ -275,12 +277,17 @@ func _build_decor() -> void:
 	bg.add_child(banners)
 	var bx := 400.0
 	while bx < ARENA_TRIGGER_X:
+		# Presque de la même teinte que le ciel : sans un tissu plus contrasté,
+		# seul le fin cordon d'attache (ci-dessous) reste visible — un trait
+		# qui semble flotter sans rien accroché dessus.
 		var cloth := _poly(banners, PackedVector2Array([
 			Vector2(-14, 0), Vector2(14, 0), Vector2(14, 90), Vector2(0, 78), Vector2(-14, 90),
-		]), Color(0.95, 0.9, 0.8, 0.85), Vector2(bx, 250.0))
+		]), Color(0.9, 0.78, 0.5, 0.95), Vector2(bx, 250.0))
 		# La bannière ondule doucement, comme sous une brise sacrée.
 		_banners.append({"node": cloth, "phase": bx * 0.013})
-		_poly(banners, _rect_points(2.0, -40.0, 90.0), GOLD_TRIM, Vector2(bx, 250.0))
+		# Cordon raccourci : juste de quoi relier la toile à son point
+		# d'attache, jamais de moignon qui dépasse au-dessus sans raison.
+		_poly(banners, _rect_points(2.0, -6.0, 4.0), GOLD_TRIM, Vector2(bx, 250.0))
 		bx += 420.0
 
 	# Motes de lumière dorée qui flottent autour d'Eneko.

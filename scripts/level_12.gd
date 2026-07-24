@@ -77,9 +77,11 @@ const HIGH_ORBS := [
 ]
 
 ## Masques d'Oni : fauteurs de trouble sur les îlots de repos (jamais au
-## milieu d'un gantelet). Ombre : une seule, gardienne d'un îlot.
-const MASK_XS := [3900.0, 5300.0]
-const SHADOW_XS := [1500.0, 6720.0]
+## milieu d'un gantelet). Ombre : une seule, gardienne d'un îlot. Décalés du
+## centre exact des îlots (où tombent le point de contrôle / la porte) pour
+## ne jamais se superposer visuellement au mât du drapeau.
+const MASK_XS := [3830.0, 5230.0]
+const SHADOW_XS := [1420.0, 6650.0]
 ## Karasu-tengu : ils patrouillent en vol AU-DESSUS des gantelets effondrables
 ## et plongent sur Eneko en pleine traversée — la seule menace qui l'atteigne
 ## là où le sol se dérobe.

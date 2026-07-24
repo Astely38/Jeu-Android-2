@@ -47,7 +47,9 @@ const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
 ## La plateforme 2440-2920 est le refuge : aucun ennemi ni piège n'y est
 ## placé (la lueur de Léonie y veille).
 const PATROL_XS := [1380.0, 3900.0, 6300.0]
-const SHADOW_XS := [1470.0, 3300.0, 5780.0]
+## Décalées du centre exact des points de contrôle (3300, 5780) pour ne
+## jamais se superposer visuellement au mât du drapeau.
+const SHADOW_XS := [1470.0, 3400.0, 5880.0]
 ## Ombre d'élite : rare, deux coups à placer, orbe dorée (3 orbes) à la clé.
 const ELITE_XS := [5160.0]
 ## Masques d'Oni : au-dessus de plateformes dégagées (jamais d'un trou). Plus

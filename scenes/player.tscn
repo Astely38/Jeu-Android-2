@@ -126,6 +126,7 @@ scale_amount_max = 4.0
 color = Color(0.9, 0.95, 1, 0.14)
 
 [node name="HUD" type="CanvasLayer" parent="."]
+layer = 10
 
 [node name="Vignette" type="Sprite2D" parent="HUD"]
 position = Vector2(480, 270)

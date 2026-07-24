@@ -50,23 +50,26 @@ func _build_scenery() -> void:
 	var sc := Node2D.new()
 	add_child(sc)  # au-dessus du dégradé de fond, sous le titre et Eneko
 
+	# Décalée du centre (pas derrière le titre, qui y est centré) — un coin de
+	# ciel dégagé plutôt que pile au-dessus d'Eneko.
+	var moon_pos := Vector2(790.0, 110.0)
 	_sun_glow = Sprite2D.new()
 	_sun_glow.texture = load("res://assets/mist.svg")
 	_sun_glow.modulate = Color(0.75, 0.7, 0.95, 0.5)
 	_sun_glow.scale = Vector2(9.5, 9.5)
-	_sun_glow.position = Vector2(480, 150)
+	_sun_glow.position = moon_pos
 	sc.add_child(_sun_glow)
 	var moon_pts := PackedVector2Array()
 	for i in 22:
 		var a := i * TAU / 22.0
 		moon_pts.append(Vector2(cos(a) * 42.0, sin(a) * 42.0))
-	_poly(sc, moon_pts, Color(0.92, 0.9, 1.0, 0.9), Vector2(480, 150))
+	_poly(sc, moon_pts, Color(0.92, 0.9, 1.0, 0.9), moon_pos)
 	var rays := GodRays.new()
 	rays.ray_count = 10
 	rays.half_spread = 2.6
 	rays.length = 480.0
 	rays.color = Color(0.7, 0.65, 0.95, 0.05)
-	rays.position = Vector2(480, 150)
+	rays.position = moon_pos
 	sc.add_child(rays)
 
 	# Montagnes lointaines, dentelées.

@@ -58,9 +58,19 @@ func _on_dialogue_finished() -> void:
 func _reach_goal(body: Node2D, id: String, win_sound: AudioStreamPlayer = null) -> void:
 	if not body.is_in_group("player"):
 		return
+	# Cas limite : un dégât encaissé pile à l'instant où le torii est touché
+	# peut vider le dernier cœur la même frame — l'écrasement mortel prend le
+	# dessus, pas la peine d'empiler l'écran de victoire par-dessus.
+	if int(body.get("health")) <= 0:
+		return
 	body.set_physics_process(false)
 	if win_sound != null:
 		win_sound.play()
+	# Une réplique d'ambiance encore affichée ne doit jamais rester par-dessus
+	# l'écran de victoire.
+	for child in get_children():
+		if child is AmbientDialogue:
+			(child as AmbientDialogue).dismiss()
 	SaveManager.complete_level(id, body.orbs)
 	_display_challenge_results()
 	var win_label := get_node_or_null("WinLabel")

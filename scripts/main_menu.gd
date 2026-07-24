@@ -111,18 +111,19 @@ func _build_scenery() -> void:
 	_poly(sc, PackedVector2Array([
 		Vector2(0, 430), Vector2(960, 430), Vector2(960, 540), Vector2(0, 540),
 	]), Color(0.09, 0.08, 0.18))
-	# Reflet du soleil dans l'eau
-	var ry := 438.0
-	var rw := 54.0
-	var ra := 0.3
-	while ry < 528.0:
+	# Reflet du soleil dans l'eau — reste au ras de l'horizon (430) : plus bas,
+	# il empiète sur l'indication des contrôles tactiles (qui commence à 448).
+	var ry := 432.0
+	var rw := 50.0
+	var ra := 0.26
+	while ry < 446.0:
 		_poly(sc, PackedVector2Array([
 			Vector2(250 - rw, ry), Vector2(250 + rw, ry),
-			Vector2(250 + rw, ry + 4), Vector2(250 - rw, ry + 4),
+			Vector2(250 + rw, ry + 3), Vector2(250 - rw, ry + 3),
 		]), Color(1.0, 0.72, 0.4, ra))
-		ry += 14.0 + (ry - 430.0) * 0.2
-		rw *= 0.82
-		ra *= 0.78
+		ry += 5.5
+		rw *= 0.78
+		ra *= 0.7
 
 	# Torii silhouette sur la colline
 	var torii := Node2D.new()
@@ -453,11 +454,14 @@ func _open_prologue() -> void:
 	close.pressed.connect(_close_prologue)
 	_prologue.add_child(close)
 
-	# Corps défilable : le texte long ne peut plus cacher le bouton.
+	# Corps défilable : le texte long ne peut plus cacher le bouton. Assez
+	# haut pour ne pas couper la première phrase en plein milieu — le texte
+	# est long, la barre de défilement seule n'était pas un signal assez
+	# clair qu'il restait du texte à lire.
 	var scroll := ScrollContainer.new()
 	scroll.position = Vector2(130, 72)
-	scroll.custom_minimum_size = Vector2(700, 400)
-	scroll.size = Vector2(700, 400)
+	scroll.custom_minimum_size = Vector2(700, 446)
+	scroll.size = Vector2(700, 446)
 	UiScroll.make_touch_friendly(scroll)
 	_prologue.add_child(scroll)
 
@@ -649,6 +653,11 @@ func _setting_row(label_text: String, key: String, default_on: bool = true) -> H
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(lbl)
 	var check := CheckButton.new()
+	# L'icône par défaut du moteur pour l'état "off" est presque invisible sur
+	# ce fond sombre (juste un point gris, sans piste) — icônes maison pour
+	# que les deux états restent aussi lisibles l'un que l'autre.
+	check.add_theme_icon_override("on", _toggle_icon(true))
+	check.add_theme_icon_override("off", _toggle_icon(false))
 	check.button_pressed = SaveManager.setting_on(key, default_on)
 	check.toggled.connect(func(on: bool) -> void:
 		SaveManager.set_setting(key, on)
@@ -658,3 +667,32 @@ func _setting_row(label_text: String, key: String, default_on: bool = true) -> H
 	)
 	row.add_child(check)
 	return row
+
+## Piste + curseur d'un interrupteur, dessinés en code (capsule pleine avec
+## un curseur blanc à l'extrémité active) — cohérent avec le reste de
+## l'interface, entièrement peinte à la main plutôt que via l'icône moteur.
+func _toggle_icon(on: bool) -> ImageTexture:
+	var w := 40
+	var h := 22
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	var track := Color(0.92, 0.65, 0.3, 0.95) if on else Color(0.24, 0.21, 0.28, 0.95)
+	var border := Color(1.0, 0.8, 0.5, 0.9) if on else Color(0.5, 0.46, 0.53, 0.9)
+	var r := h * 0.5
+	var cx0 := r
+	var cx1 := w - r
+	var cy := h * 0.5
+	var knob_cx := cx1 if on else cx0
+	var knob_r := r - 3.0
+	for y in h:
+		for x in w:
+			var p := Vector2(x + 0.5, y + 0.5)
+			var seg_x := clampf(p.x, cx0, cx1)
+			var d_track := p.distance_to(Vector2(seg_x, cy))
+			var d_knob := p.distance_to(Vector2(knob_cx, cy))
+			var col := Color(0, 0, 0, 0)
+			if d_track <= r:
+				col = border if d_track >= r - 1.5 else track
+			if d_knob <= knob_r:
+				col = Color(1, 1, 1, 0.95)
+			img.set_pixel(x, y, col)
+	return ImageTexture.create_from_image(img)

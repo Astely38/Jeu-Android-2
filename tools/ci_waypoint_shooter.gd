@@ -82,12 +82,28 @@ func _waypoints(level: Node) -> Array:
 	return xs
 
 ## Hauteur d'un point du niveau : utilise `_surface_y(x)` du niveau si elle
-## existe (relief continu), sinon retombe sur sa constante GROUND_Y (sol
-## plat), sinon une hauteur par défaut raisonnable.
+## existe ET prend bien un x continu en paramètre (relief continu — un
+## niveau en escalier par indices, comme level_2, expose une `_surface_y`
+## de signature différente qu'il ne faut surtout pas appeler avec un x brut),
+## sinon retombe sur sa constante GROUND_Y (sol plat), sinon une hauteur par
+## défaut raisonnable.
 func _target_y(level: Node, x: float) -> float:
-	if level.has_method("_surface_y"):
+	if level.has_method("_surface_y") and _surface_y_takes_float(level):
 		return float(level.call("_surface_y", x)) - 30.0
 	var ground_y = level.get("GROUND_Y")
 	if ground_y != null:
 		return float(ground_y) - 30.0
 	return 480.0
+
+## Inspecte la signature de `_surface_y` : true seulement si son premier
+## paramètre est un float (position continue), pas un int (index de
+## plateforme, comme level_2 — l'appeler avec un x brut y indexerait un
+## tableau hors bornes).
+func _surface_y_takes_float(level: Node) -> bool:
+	for m in level.get_method_list():
+		if m["name"] == "_surface_y":
+			var args: Array = m["args"]
+			if args.is_empty():
+				return false
+			return int(args[0]["type"]) == TYPE_FLOAT
+	return false

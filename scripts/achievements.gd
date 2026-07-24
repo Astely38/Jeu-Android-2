@@ -202,11 +202,19 @@ func _next_toast() -> void:
 
 	# Une frame pour que le panneau connaisse sa taille, puis glissade.
 	await get_tree().process_frame
+	# Un succès se débloque très souvent pile en atteignant le torii (temps,
+	# dégâts, orbes...) : si l'écran de victoire est affiché, on se pose plus
+	# bas pour ne pas recouvrir son titre, tout en haut de l'écran lui aussi.
+	var rest_y := 14.0
+	var scene := get_tree().current_scene
+	var win_label := scene.get_node_or_null("WinLabel") if scene != null else null
+	if win_label != null and (win_label as CanvasLayer).visible:
+		rest_y = 110.0
 	panel.position = Vector2(480.0 - panel.size.x * 0.5, -panel.size.y - 6.0)
 	chime.play()
 	SaveManager.vibrate(30)
 	var t := create_tween()
-	t.tween_property(panel, "position:y", 14.0, 0.35) \
+	t.tween_property(panel, "position:y", rest_y, 0.35) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	t.tween_interval(2.6)
 	t.tween_property(panel, "position:y", -panel.size.y - 6.0, 0.3)

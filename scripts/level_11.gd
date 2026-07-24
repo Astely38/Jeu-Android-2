@@ -45,11 +45,13 @@ const PLATFORMS := [
 const CHECKPOINT_XS := [1600.0, 3300.0, 5780.0]
 ## La plateforme 2440-2920 est le refuge (la lueur de Léonie y veille).
 const PATROL_XS := [900.0, 2080.0, 3850.0, 6300.0, 7040.0]
-const SHADOW_XS := [1470.0, 3300.0, 4540.0, 5780.0]
+## Décalées du centre exact des points de contrôle (3300, 5780) pour ne
+## jamais se superposer visuellement au mât du drapeau.
+const SHADOW_XS := [1470.0, 3420.0, 4540.0, 5880.0]
 const ELITE_XS := [5160.0]
 const MASK_XS := [2080.0, 4540.0, 6420.0]
 ## Onis au pavois (au sol) : à contourner à la ruée pour frapper le dos.
-const SHIELD_ONI_XS := [3300.0, 5160.0]
+const SHIELD_ONI_XS := [3230.0, 5160.0]
 const TRAP_XS := [700.0, 2000.0, 3160.0, 4430.0, 5670.0, 6850.0]
 ## Stèles-miroir dressées qui bordent le royaume (décor, sans collision).
 const STELE_XS := [500.0, 2500.0, 3920.0, 5160.0, 6600.0]

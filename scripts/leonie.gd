@@ -49,7 +49,10 @@ func _heal(body: Node2D) -> void:
 	if body.has_method("heal_full"):
 		body.heal_full()
 	if body.has_method("set_checkpoint"):
-		body.set_checkpoint(Vector2(global_position.x, body.global_position.y))
+		# Légèrement en retrait de sa position exacte : un joueur qui revient
+		# ici après une chute (checkpoint) doit se poser À CÔTÉ de Léonie,
+		# jamais pile sur elle (les deux silhouettes se confondraient).
+		body.set_checkpoint(Vector2(global_position.x - 50.0, body.global_position.y))
 	# En mode Kensei, Léonie soigne mais ne peut plus bénir : le Gardien
 	# vaincu a affaibli son pouvoir… et le défi n'en est que plus pur.
 	if body.has_method("bless") and not Challenge.kensei:

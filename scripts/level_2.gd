@@ -58,18 +58,21 @@ const TRAP_IDX := [3, 8, 11]
 const BRAZIER_IDX := [1, 5, 9, 12]
 
 ## Orbes : une traînée le long des marches, trois sur les larges terrasses.
+## Sur chaque terrasse qui porte un ennemi (PATROL_IDX / SHADOW_IDX /
+## ELITE_IDX), l'orbe est relevée d'environ 67px : à la hauteur générique de
+## la traînée, elle flotte pile sur la tête de l'ennemi posté là.
 const ORBS := [
 	Vector2(280, 465), Vector2(210, 465), Vector2(350, 465),
-	Vector2(660, 417),
-	Vector2(1010, 371),
-	Vector2(1360, 325),
+	Vector2(660, 350),
+	Vector2(1010, 305),
+	Vector2(1360, 258),
 	Vector2(1740, 281), Vector2(1670, 281), Vector2(1810, 281),
-	Vector2(2120, 235),
-	Vector2(2470, 189),
+	Vector2(2120, 168),
+	Vector2(2470, 122),
 	Vector2(2850, 143), Vector2(2780, 143), Vector2(2920, 143),
-	Vector2(3230, 97),
+	Vector2(3230, 30),
 	Vector2(3600, 51), Vector2(3530, 51), Vector2(3670, 51),
-	Vector2(3980, 5),
+	Vector2(3980, -62),
 	Vector2(4330, -41),
 	Vector2(4710, -87),
 ]

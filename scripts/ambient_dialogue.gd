@@ -31,7 +31,9 @@ func _ready() -> void:
 	_panel.offset_top = -150.0
 	_panel.offset_bottom = -104.0
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.06, 0.05, 0.1, 0.74)
+	# Assez opaque pour rester lisible même par-dessus un décor clair (lune,
+	# lueur de soin...) : un fond translucide se délave contre un fond vif.
+	sb.bg_color = Color(0.06, 0.05, 0.1, 0.94)
 	sb.border_color = Color(0.85, 0.7, 0.4, 0.5)
 	sb.set_border_width_all(1)
 	sb.set_corner_radius_all(10)
@@ -67,6 +69,14 @@ func add_line(host: Node, x: float, speaker: String, text: String) -> void:
 			_show(speaker, text)
 			a.queue_free()
 	)
+
+## Efface immédiatement la réplique en cours (ex. le joueur atteint le
+## torii pendant qu'une phrase est encore affichée) : l'écran de victoire ne
+## doit jamais se disputer la lisibilité avec un dialogue résiduel.
+func dismiss() -> void:
+	if _tween != null and _tween.is_valid():
+		_tween.kill()
+	_panel.modulate.a = 0.0
 
 func _show(speaker: String, text: String) -> void:
 	if speaker != "":

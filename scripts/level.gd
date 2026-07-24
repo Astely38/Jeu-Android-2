@@ -65,7 +65,9 @@ const GEYSER_XS := [2050.0, 4520.0]
 ## dessert les trois orbes bonus placées en hauteur.
 const LIFTS := [Vector2(3060, 470)]
 const ORBS := [
-	Vector2(350, 440), Vector2(565, 405), Vector2(890, 440),
+	# La 2e orbe est relevée (405 -> 340) : à hauteur normale, elle flotte
+	# pile devant la pancarte « Sauter » (x=470, planche entre y=392 et 428).
+	Vector2(350, 440), Vector2(565, 340), Vector2(890, 440),
 	Vector2(1210, 405), Vector2(1520, 440), Vector2(1835, 405),
 	Vector2(2140, 440), Vector2(2455, 405), Vector2(2760, 440),
 	Vector2(3060, 405), Vector2(3390, 440), Vector2(3710, 405),
