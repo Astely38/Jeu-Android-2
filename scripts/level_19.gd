@@ -55,18 +55,18 @@ const PROFILE := [
 ]
 
 const CHECKPOINT_XS := [1200.0, 3200.0, 5800.0]
-const PATROL_XS := [450.0, 3950.0, 5700.0, 6600.0]
-const SANS_VISAGE_XS := [800.0, 1750.0, 2700.0, 4150.0, 5450.0, 6300.0, 6900.0]
+const PATROL_XS := [520.0, 3950.0, 5700.0, 6670.0]
+const SANS_VISAGE_XS := [800.0, 1750.0, 2700.0, 4195.0, 5450.0, 6300.0, 6900.0]
 ## Failles glitchées, sur chaque tronçon plat sauf le refuge — le chaos du
 ## Chapitre IV atteint ici son comble, juste avant la porte.
-const GLITCH_RIFT_XS := [250.0, 450.0, 1400.0, 1650.0, 4000.0, 4250.0, 5350.0, 5600.0, 6500.0, 6700.0]
+const GLITCH_RIFT_XS := [250.0, 450.0, 1400.0, 1650.0, 4020.0, 4265.0, 5350.0, 5600.0, 6500.0, 6740.0]
 ## Cratères de l'Éboulis de miroir, intercalés entre les failles. Hauteur
 ## calculée depuis le profil (_surface_y), jamais codée en dur.
 const ROCK_SLIDE_XS := [
 	350.0,
 	1525.0,
 	4125.0,
-	5475.0,
+	5520.0,
 	6600.0,
 ]
 const REFUGE_X := 3200.0

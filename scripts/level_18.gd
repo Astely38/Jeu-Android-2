@@ -54,16 +54,19 @@ const PROFILE := [
 ]
 
 const CHECKPOINT_XS := [1300.0, 3600.0, 5900.0]
-const PATROL_XS := [1700.0, 4700.0, 6500.0]
-const SANS_VISAGE_XS := [900.0, 1600.0, 2600.0, 4400.0, 5300.0, 6300.0, 6900.0]
+const PATROL_XS := [1785.0, 4770.0, 6510.0]
+const SANS_VISAGE_XS := [900.0, 1645.0, 2600.0, 4400.0, 5300.0, 6370.0, 6900.0]
 ## Failles glitchées : de plus en plus nombreuses et de plus en plus serrées
 ## à mesure qu'on descend — le chaos s'aggrave avec la profondeur, jusqu'à
 ## l'enchaînement quasi continu du fond du puits. Toujours sur le plat.
+## Chaque piège (faille, cratère, esprit, patrouille) garde au moins ~70px
+## d'écart avec ses voisins, même à densité maximale — sans ça, deux dangers
+## se superposent exactement et deviennent indistinguables/inévitables.
 const GLITCH_RIFT_XS := [
 	350.0, 600.0,
-	1450.0, 1700.0, 1950.0,
-	4450.0, 4700.0, 4950.0,
-	6050.0, 6300.0, 6550.0, 6800.0, 7050.0,
+	1450.0, 1715.0, 1950.0,
+	4470.0, 4700.0, 4950.0,
+	6050.0, 6300.0, 6580.0, 6800.0, 7050.0,
 ]
 ## Cratères de l'Éboulis de miroir, intercalés entre les failles — le
 ## plateau-refuge (2900-3600) reste seul épargné. Densité maximale sur le
@@ -71,9 +74,9 @@ const GLITCH_RIFT_XS := [
 ## Hauteur calculée depuis le profil (_surface_y), jamais codée en dur.
 const ROCK_SLIDE_XS := [
 	475.0,
-	1575.0, 1825.0,
-	4575.0, 4825.0,
-	6175.0, 6425.0, 6675.0, 6925.0,
+	1575.0, 1855.0,
+	4575.0, 4840.0,
+	6175.0, 6440.0, 6675.0, 6970.0,
 ]
 const REFUGE_X := 3600.0
 

@@ -46,11 +46,11 @@ const PLATFORMS := [
 	Vector2(5480, 210), Vector2(6050, 230), Vector2(6650, 300),
 ]
 const CHECKPOINT_XS := [2020.0, 4340.0, 6050.0]
-const PATROL_XS := [860.0, 3150.0, 6500.0]
-const SANS_VISAGE_XS := [1440.0, 4900.0]
+const PATROL_XS := [860.0, 3220.0, 6500.0]
+const SANS_VISAGE_XS := [1440.0, 4970.0]
 ## Failles glitchées, bien plus nombreuses que la première traversée du
 ## Chapitre IV — le chaos gagne aussi les paliers entre les Portes Muettes.
-const GLITCH_RIFT_XS := [900.0, 1500.0, 2580.0, 3150.0, 4900.0, 5480.0, 6350.0]
+const GLITCH_RIFT_XS := [930.0, 1510.0, 2580.0, 3150.0, 4900.0, 5480.0, 6350.0]
 ## Cratères de l'Éboulis de miroir, intercalés entre les failles.
 const ROCK_SLIDES := [550.0, 1150.0, 2850.0, 5150.0, 5750.0, 6200.0]
 ## Portes Muettes : n'admettent que l'écho, jamais Eneko lui-même — il faut
